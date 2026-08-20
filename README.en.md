@@ -104,6 +104,10 @@ Instructions will arrive with the code. Building requires the
 [sing-box](https://github.com/SagerNet/sing-box) core, which is **not part of**
 this repository and is fetched separately (see the licence section).
 
+## Copyright
+
+Copyright (C) 2026 Kovalyov Georgiy — see [COPYRIGHT](COPYRIGHT).
+
 ## Licence
 
 Method's code is distributed under the **GNU GPL version 3 or later** — see

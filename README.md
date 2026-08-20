@@ -105,6 +105,10 @@ flowchart TD
 [sing-box](https://github.com/SagerNet/sing-box) — оно **не входит** в этот
 репозиторий и загружается отдельно (см. раздел о лицензии).
 
+## Авторские права
+
+Copyright (C) 2026 Ковалев Георгий (Kovalyov Georgiy) — см. [COPYRIGHT](COPYRIGHT).
+
 ## Лицензия
 
 Код Method распространяется на условиях **GNU GPL версии 3 или более поздней** —

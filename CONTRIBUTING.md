@@ -25,6 +25,24 @@
    правил, где часть трафика не подпадает ни под одно правило, обязан
    отвергаться при компиляции, а не молча уходить в поведение по умолчанию.
 
+## Шапка в новых файлах
+
+Каждый новый файл с исходным кодом начинается с уведомления — этого требует
+сама GPL, и проставлять его задним числом по всему дереву неприятно:
+
+```
+Copyright (C) 2026  Kovalyov Georgiy
+This file is part of Method.
+
+Method is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. See LICENSE for details.
+```
+
+Присылая изменения, вы соглашаетесь, что ваш вклад распространяется на тех
+же условиях. Авторские права на свой вклад вы сохраняете за собой.
+
 ## Замеры
 
 Утверждения о производительности принимаются только с замерами, и в описании
