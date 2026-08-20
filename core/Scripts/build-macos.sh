@@ -50,6 +50,22 @@ fi
 #
 # Флаг test-panic НЕ включаем: mc_test_panic — тестовая функция, в продукте
 # её быть не должно.
+# Пути сборки НЕ должны уезжать к людям. Rust вшивает их в сообщения о
+# панике внутри зависимостей, и в готовом приложении оказывались строки вида
+# «/Users/имя/.cargo/registry/…» — секретов там нет, но имя пользователя
+# машины сборки видно всем, кто откроет бинарь. Проверено на выпуске 1.0.0:
+# восемь таких строк. Оптимизацию это не трогает, только имена файлов в
+# отладочных сообщениях.
+# Флаги передаём КОДИРОВАННЫМИ: обычный RUSTFLAGS режется по пробелам, а путь
+# проекта у нас с пробелом («Method VPN»), и половина флага улетала отдельным
+# аргументом — сборка падала с «--remap-path-prefix must contain '=' between
+# FROM and TO». В CARGO_ENCODED_RUSTFLAGS разделитель \x1f, пробелы внутри
+# значений безопасны.
+sep=$(printf '\037')
+encoded="--remap-path-prefix=$HOME=~"
+[ -n "${root:-}" ] && encoded="$encoded$sep--remap-path-prefix=$root=."
+export CARGO_ENCODED_RUSTFLAGS="$encoded"
+
 echo "── сборка $ARM ──"
 cargo build -p method-core-ffi --release --target "$ARM"
 arm_lib="$root/target/$ARM/release/$LIB"
