@@ -54,3 +54,11 @@ Cargo.lock.orig
 node_modules/
 *.log
 .env
+
+# Генерируется XcodeGen — в репозитории не хранится
+macos/*.xcodeproj/
+# Ядро sing-box качается bootstrap.sh, бинарь не коммитим
+macos/Resources/sing-box
+# Сборочные артефакты Rust и Xcode
+core/target/
+core/build/

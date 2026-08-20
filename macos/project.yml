@@ -1,0 +1,152 @@
+name: Method
+options:
+  bundleIdPrefix: network.method
+  deploymentTarget:
+    macOS: 13.0
+
+targets:
+  Method:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Method
+      - path: Shared
+        excludes:
+          - "**/Fixtures/**"
+      - path: MethodVPN/Theme.swift
+      # Theme ссылается на WindowMaterial — без него таргет не собирается.
+      - path: MethodVPN/WindowMaterial.swift
+      # Нужен kill switch: правило пакетного фильтра пишется на КОНКРЕТНЫЙ
+      # физический интерфейс, и определить его надо до подъёма туннеля.
+      - path: MethodVPN/NetworkRouteInspector.swift
+      # Обёртка над C-границей ядра оркестратора. Лежит рядом с самим ядром,
+      # а не копией здесь: копия разъехалась бы с библиотекой при первой же
+      # правке границы.
+      - path: ../core/swift/MethodEngine.swift
+      - path: MethodVPN/ClashAPIClient.swift
+      - path: MethodVPN/PingService.swift
+      - path: MethodVPN/ReconnectManager.swift
+      - path: Method/Assets.xcassets
+    resources:
+      - path: Resources/sing-box
+    settings:
+      # Ядро оркестратора линкуется статикой в процесс приложения: решения
+      # принимает оно, значит библиотека нужна тому, кто решает.
+      #
+      # Списком, а не строкой: строку XcodeGen заворачивает в кавычки целиком
+      # вместе с $(inherited), и Xcode получает один бессмысленный путь.
+      # Списком он расставляет кавычки сам — это важно, потому что в пути
+      # проекта есть пробел («Method VPN»).
+      #
+      # Модулем, а не мостовым заголовком: заголовок макросы C через себя
+      # не пропускает, и все 60 констант границы оказываются невидимы.
+      SWIFT_INCLUDE_PATHS:
+        - $(inherited)
+        - $(SRCROOT)/../core/swift/CMethodCore
+      LIBRARY_SEARCH_PATHS:
+        - $(inherited)
+        - $(SRCROOT)/../core/build
+      OTHER_LDFLAGS:
+        - $(inherited)
+        - -lmethod_core_ffi
+      PRODUCT_NAME: Method
+      PRODUCT_BUNDLE_IDENTIFIER: network.method.client
+      GENERATE_INFOPLIST_FILE: YES
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      INFOPLIST_KEY_CFBundleDisplayName: Method
+      INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+      INFOPLIST_KEY_NSHighResolutionCapable: YES
+      CODE_SIGN_ENTITLEMENTS: Method/Method.entitlements
+      ENABLE_HARDENED_RUNTIME: YES
+      CODE_SIGN_IDENTITY: "-"
+      CODE_SIGN_STYLE: Manual
+      # Первый публичный выпуск. Три компонента вместо «0.1»: Apple ждёт в
+      # CFBundleShortVersionString x.y.z, а «0.1» читается как прототип.
+      # Номер сборки — отдельное монотонное целое; пустой CFBundleVersion
+      # означает для macOS «версии нет», и две разные сборки одного 1.0.0
+      # неразличимы ни для launchd, ни для будущего апдейтера.
+      MARKETING_VERSION: "1.0.0"
+      CURRENT_PROJECT_VERSION: "7"
+      # Только arm64. Встроенное ядро sing-box собрано под darwin-arm64, и
+      # универсальный бандл на Intel-маке дал бы худший из исходов: приложение
+      # запускается, а туннель молча не поднимается. Пусть лучше macOS честно
+      # скажет «программа не поддерживается на этом компьютере».
+      ARCHS: arm64
+    dependencies:
+      - target: network.method.client.helper
+        embed: false
+    preBuildScripts:
+      - name: Build orchestrator core
+        script: |
+          CORE="${SRCROOT}/../Core"
+          if command -v cargo >/dev/null 2>&1; then
+            # cd обязателен: cargo ищет Cargo.toml от текущего каталога, а
+            # скрипты сборки Xcode запускаются из SRCROOT.
+            cd "${CORE}" || exit 1
+            sh "${CORE}/Scripts/build-macos.sh" >/dev/null || {
+              echo "warning: ядро оркестратора не собралось" >&2
+              exit 1
+            }
+          elif [ -f "${CORE}/build/libmethod_core_ffi.a" ]; then
+            echo "warning: cargo не найден, используется ранее собранная библиотека" >&2
+          else
+            echo "error: нет ни cargo, ни собранной библиотеки ядра" >&2
+            exit 1
+          fi
+        basedOnDependencyAnalysis: false
+    postBuildScripts:
+      - name: Bundle Method helper + sing-box
+        script: |
+          APP="${TARGET_BUILD_DIR}/${WRAPPER_NAME}"
+          DAEMON_DIR="${APP}/Contents/Library/LaunchDaemons"
+          RES_DIR="${APP}/Contents/Resources"
+          mkdir -p "${DAEMON_DIR}" "${RES_DIR}"
+          cp "${SRCROOT}/MethodHelper/network.method.client.helper.plist" "${DAEMON_DIR}/"
+          cp "${TARGET_BUILD_DIR}/network.method.client.helper" "${APP}/Contents/MacOS/network.method.client.helper"
+          chmod +x "${APP}/Contents/MacOS/network.method.client.helper"
+          cp "${SRCROOT}/Resources/sing-box" "${RES_DIR}/"
+          chmod +x "${RES_DIR}/sing-box"
+          # Снимаем расширенные атрибуты со всего бандла. Копируемый sing-box
+          # несёт com.apple.provenance (следствие загрузки в bootstrap.sh), и
+          # codesign с hardened runtime отказывается подписывать такой бандл:
+          # «resource fork, Finder information, or similar detritus not allowed».
+          # Без этого Release не собирается вовсе, а Debug собирается — то есть
+          # поломка всплывает ровно при выпуске.
+          xattr -cr "${APP}"
+          echo "Bundled Method helper + sing-box into ${APP}"
+
+  network.method.client.helper:
+    type: tool
+    platform: macOS
+    sources:
+      - path: MethodHelper
+        excludes:
+          - "*.plist"
+      - path: Shared
+        excludes:
+          - "**/Fixtures/**"
+    settings:
+      PRODUCT_NAME: network.method.client.helper
+      PRODUCT_BUNDLE_IDENTIFIER: network.method.client.helper
+      GENERATE_INFOPLIST_FILE: YES
+      CODE_SIGN_IDENTITY: "-"
+      CODE_SIGN_STYLE: Manual
+      # Демон едет внутри Method.app — версия должна совпадать с версией
+      # приложения, иначе в комплекте окажется безымянный по версии бинарь.
+      MARKETING_VERSION: "1.0.0"
+      CURRENT_PROJECT_VERSION: "7"
+
+schemes:
+  Method:
+    build:
+      targets:
+        Method: all
+    run:
+      config: Debug
+  network.method.client.helper:
+    build:
+      targets:
+        network.method.client.helper: all
+    run:
+      config: Debug

@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "defaultServerID": "0e81fd16-1cba-5393-bd9e-f2ba3ce8e60e",
+  "servers": [
+    {
+      "id": "0e81fd16-1cba-5393-bd9e-f2ba3ce8e60e",
+      "name": "Method US · Hysteria2",
+      "flag": "🇺🇸",
+      "city": "Atlanta",
+      "protocol": "hysteria2",
+      "host": "us.example.com",
+      "port": 443,
+      "parameters": {
+        "kind": "hysteria2",
+        "hysteria2": {
+          "password": "ЗАМЕНИ_МЕНЯ_пароль_hysteria",
+          "sni": "example.com",
+          "allowInsecure": true,
+          "obfsPassword": "ЗАМЕНИ_МЕНЯ_пароль_obfs",
+          "alpn": [
+            "h3"
+          ]
+        }
+      }
+    },
+    {
+      "id": "c6c4bdf4-91d0-518c-b31c-f2092c70dda8",
+      "name": "Method US",
+      "flag": "🇺🇸",
+      "city": "Atlanta",
+      "protocol": "vless-reality",
+      "host": "us.example.com",
+      "port": 2087,
+      "parameters": {
+        "kind": "vless-reality",
+        "vlessReality": {
+          "uuid": "00000000-0000-0000-0000-000000000000",
+          "flow": "xtls-rprx-vision",
+          "sni": "example.com",
+          "publicKey": "ЗАМЕНИ_МЕНЯ_публичный_ключ_reality",
+          "shortID": "00000000",
+          "fingerprint": "chrome",
+          "grpcServiceName": null
+        }
+      }
+    },
+    {
+      "id": "ce614cd1-d394-5bc0-851e-af70e0fa85fe",
+      "name": "Method LT · Hysteria2",
+      "flag": "🇱🇹",
+      "city": "Šiauliai",
+      "protocol": "hysteria2",
+      "host": "lt.example.com",
+      "port": 443,
+      "parameters": {
+        "kind": "hysteria2",
+        "hysteria2": {
+          "password": "ЗАМЕНИ_МЕНЯ_пароль_hysteria",
+          "sni": "example.com",
+          "allowInsecure": true,
+          "obfsPassword": "ЗАМЕНИ_МЕНЯ_пароль_obfs",
+          "alpn": [
+            "h3"
+          ]
+        }
+      }
+    },
+    {
+      "id": "2ecbc81d-77c0-5359-8c23-cdd622a97ceb",
+      "name": "Method LT",
+      "flag": "🇱🇹",
+      "city": "Šiauliai",
+      "protocol": "vless-reality",
+      "host": "lt.example.com",
+      "port": 2087,
+      "parameters": {
+        "kind": "vless-reality",
+        "vlessReality": {
+          "uuid": "00000000-0000-0000-0000-000000000000",
+          "flow": "xtls-rprx-vision",
+          "sni": "example.com",
+          "publicKey": "ЗАМЕНИ_МЕНЯ_публичный_ключ_reality",
+          "shortID": "00000000",
+          "fingerprint": "chrome",
+          "grpcServiceName": null
+        }
+      }
+    },
+    {
+      "id": "5f6693df-eb31-5ad9-8c98-29ccd6a17843",
+      "name": "Method FI · Hysteria2",
+      "flag": "🇫🇮",
+      "city": "Helsinki",
+      "protocol": "hysteria2",
+      "host": "fi.example.com",
+      "port": 443,
+      "parameters": {
+        "kind": "hysteria2",
+        "hysteria2": {
+          "password": "ЗАМЕНИ_МЕНЯ_пароль_hysteria",
+          "sni": "example.com",
+          "allowInsecure": true,
+          "obfsPassword": "ЗАМЕНИ_МЕНЯ_пароль_obfs",
+          "alpn": [
+            "h3"
+          ]
+        }
+      }
+    },
+    {
+      "id": "61429bd7-9270-57a8-b63e-5df32bf8ef19",
+      "name": "Method FI",
+      "flag": "🇫🇮",
+      "city": "Helsinki",
+      "protocol": "vless-reality",
+      "host": "fi.example.com",
+      "port": 2087,
+      "parameters": {
+        "kind": "vless-reality",
+        "vlessReality": {
+          "uuid": "00000000-0000-0000-0000-000000000000",
+          "flow": "xtls-rprx-vision",
+          "sni": "example.com",
+          "publicKey": "ЗАМЕНИ_МЕНЯ_публичный_ключ_reality",
+          "shortID": "00000000",
+          "fingerprint": "chrome",
+          "grpcServiceName": null
+        }
+      }
+    },
+    {
+      "id": "f2b8a31b-d0e8-5409-8031-395a01b60c09",
+      "name": "Method US · gRPC",
+      "flag": "🇺🇸",
+      "city": "Atlanta",
+      "protocol": "vless-reality",
+      "host": "us.example.com",
+      "port": 2083,
+      "parameters": {
+        "kind": "vless-reality",
+        "vlessReality": {
+          "uuid": "00000000-0000-0000-0000-000000000000",
+          "flow": null,
+          "sni": "example.com",
+          "publicKey": "ЗАМЕНИ_МЕНЯ_публичный_ключ_reality",
+          "shortID": "00000000",
+          "fingerprint": "chrome",
+          "grpcServiceName": "ЗАМЕНИ_МЕНЯ_имя_gRPC_сервиса"
+        }
+      }
+    },
+    {
+      "id": "75724905-a825-5b24-8b31-59467439f89f",
+      "name": "Method LT · gRPC",
+      "flag": "🇱🇹",
+      "city": "Šiauliai",
+      "protocol": "vless-reality",
+      "host": "lt.example.com",
+      "port": 2083,
+      "parameters": {
+        "kind": "vless-reality",
+        "vlessReality": {
+          "uuid": "00000000-0000-0000-0000-000000000000",
+          "flow": null,
+          "sni": "example.com",
+          "publicKey": "ЗАМЕНИ_МЕНЯ_публичный_ключ_reality",
+          "shortID": "00000000",
+          "fingerprint": "chrome",
+          "grpcServiceName": "ЗАМЕНИ_МЕНЯ_имя_gRPC_сервиса"
+        }
+      }
+    },
+    {
+      "id": "92621bb0-84f2-59c2-a985-a6aa6c4fa06b",
+      "name": "Method FI · gRPC",
+      "flag": "🇫🇮",
+      "city": "Helsinki",
+      "protocol": "vless-reality",
+      "host": "fi.example.com",
+      "port": 2083,
+      "parameters": {
+        "kind": "vless-reality",
+        "vlessReality": {
+          "uuid": "00000000-0000-0000-0000-000000000000",
+          "flow": null,
+          "sni": "example.com",
+          "publicKey": "ЗАМЕНИ_МЕНЯ_публичный_ключ_reality",
+          "shortID": "00000000",
+          "fingerprint": "chrome",
+          "grpcServiceName": "ЗАМЕНИ_МЕНЯ_имя_gRPC_сервиса"
+        }
+      }
+    },
+    {
+      "id": "dd297d67-049c-5d89-9e44-2079bd693484",
+      "name": "Method LT · Trojan",
+      "flag": "🇱🇹",
+      "city": "Siauliai",
+      "protocol": "trojan",
+      "host": "lt.example.com",
+      "port": 8443,
+      "parameters": {
+        "kind": "trojan",
+        "trojan": {
+          "password": "ЗАМЕНИ_МЕНЯ_пароль_trojan",
+          "sni": "lt.example.com",
+          "allowInsecure": false,
+          "fingerprint": "chrome",
+          "grpcServiceName": null,
+          "wsPath": null,
+          "wsHost": null
+        }
+      }
+    },
+    {
+      "id": "016fd11b-da03-5474-936c-1612279e5b92",
+      "name": "Method US · Trojan",
+      "flag": "🇺🇸",
+      "city": "Atlanta",
+      "protocol": "trojan",
+      "host": "us.example.com",
+      "port": 2096,
+      "parameters": {
+        "kind": "trojan",
+        "trojan": {
+          "password": "ЗАМЕНИ_МЕНЯ_пароль_trojan",
+          "sni": "us.example.com",
+          "allowInsecure": false,
+          "fingerprint": "chrome",
+          "grpcServiceName": null,
+          "wsPath": null,
+          "wsHost": null
+        }
+      }
+    },
+    {
+      "id": "fe67ee2f-146d-5e8f-9534-b2c79080d91e",
+      "name": "Method LT · Shadowsocks",
+      "flag": "🇱🇹",
+      "city": "Siauliai",
+      "protocol": "shadowsocks",
+      "host": "lt.example.com",
+      "port": 2095,
+      "parameters": {
+        "kind": "shadowsocks",
+        "shadowsocks": {
+          "method": "2022-blake3-aes-128-gcm",
+          "password": "ЗАМЕНИ_МЕНЯ_base64_ключ_16_байт"
+        }
+      }
+    }
+  ],
+  "_note": "Шаблон каталога узлов. Форма описана в Schema/catalog.schema.json, проверка — python3 Scripts/validate_catalogs.py. Боевой servers.json в git не хранится: сгенерируй его скриптом MacOS/Scripts/fetch_server_profiles.py или заполни поля вручную. Здесь по одной записи на каждый маршрут, включая все четыре протокола и gRPC-транспорт. serverPorts/hopInterval намеренно не заданы: прыжки по портам за NAT рвут связь (замер 2026-07-30), и из боевых каталогов они убраны — не возвращай их, не перечитав грабли в CLAUDE.md."
+}

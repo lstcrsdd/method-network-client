@@ -1,0 +1,29 @@
+[package]
+name = "method-core-ffi"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Граница C поверх движка Method: дескрипторы, коды ошибок, ловля паник"
+
+[lib]
+name = "method_core_ffi"
+# staticlib — приложение линкуется статикой: один бинарь, нечего подписывать
+# отдельно и нечего искать в @rpath внутри бандла. cdylib потребовал бы своей
+# подписи, своей записи в Frameworks и своего пути загрузки — три способа
+# сломать сборку там, где статика не ломается никак.
+# rlib — чтобы этот же код собирался в тесты (`cargo test`) и в примеры.
+crate-type = ["staticlib", "rlib"]
+
+[features]
+# Экспортирует `mc_test_panic` — им проверяется, что паника не пересекает
+# границу В РЕАЛЬНОЙ СБОРКЕ. Профиль тестов Rust всегда разворачивает панику и
+# потому не доказывает ничего про release: там `panic = "abort"` сделал бы
+# `catch_unwind` бесполезным, и узнать об этом можно было бы только на живом
+# приложении. По умолчанию флаг выключен, в продукт функция не попадает.
+test-panic = []
+
+[dependencies]
+method-core = { path = "../method-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

@@ -1,0 +1,54 @@
+{
+  "log": { "level": "info", "timestamp": true },
+  "dns": {
+    "servers": [
+      { "tag": "remote", "type": "tls", "server": "1.1.1.1", "detour": "proxy" },
+      { "tag": "local", "type": "udp", "server": "223.5.5.5" }
+    ],
+    "rules": [
+      { "clash_mode": "Direct", "server": "local" },
+      { "clash_mode": "Global", "server": "remote" }
+    ],
+    "final": "remote",
+    "strategy": "ipv4_only"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": ["198.18.2.1/30"],
+      "mtu": 1400,
+      "auto_route": true,
+      "strict_route": true,
+      "stack": "system"
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "hysteria2",
+      "tag": "proxy",
+      "server": "example.com",
+      "server_port": 443,
+      "up_mbps": 50,
+      "down_mbps": 200,
+      "password": "secret-pw",
+      "obfs": { "type": "salamander", "password": "obfs-pw" },
+      "tls": { "enabled": true, "server_name": "example.com", "insecure": false, "alpn": ["h3"] }
+    },
+    { "type": "direct", "tag": "direct" }
+  ],
+  "route": {
+    "default_domain_resolver": { "server": "local" },
+    "rules": [
+      { "action": "sniff" },
+      { "protocol": "dns", "action": "hijack-dns" },
+      { "domain": ["example.com"], "outbound": "direct" },
+      { "ip_is_private": true, "outbound": "direct" }
+    ],
+    "final": "proxy",
+    "auto_detect_interface": true
+  },
+  "experimental": {
+    "clash_api": { "external_controller": "127.0.0.1:9090", "secret": "method-secret" }
+  }
+}
