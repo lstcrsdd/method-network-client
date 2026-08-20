@@ -1,0 +1,64 @@
+name: Ошибка
+description: Что-то работает не так
+labels: ["ошибка"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Большая часть сетевых проблем диагностируется по контексту, а не по
+        описанию симптома. Пожалуйста, заполните поля ниже — это экономит
+        несколько кругов переписки.
+  - type: textarea
+    id: what
+    attributes:
+      label: Что происходит
+      description: И что вы ожидали вместо этого.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Версия Method и платформа
+      placeholder: например, 0.1.0, macOS 15.2
+    validations:
+      required: true
+  - type: dropdown
+    id: network
+    attributes:
+      label: Какая сеть
+      description: Мобильные сети ведут себя иначе из-за меньшего MTU и NAT.
+      options:
+        - Домашний Wi-Fi
+        - Проводная сеть
+        - Мобильный интернет
+        - Рабочая или гостевая сеть
+        - Другое
+    validations:
+      required: true
+  - type: dropdown
+    id: protocol
+    attributes:
+      label: На каком протоколе
+      options:
+        - Hysteria2
+        - VLESS + Reality (Vision)
+        - VLESS + Reality (gRPC)
+        - Trojan
+        - Shadowsocks-2022
+        - На нескольких сразу
+        - Не знаю
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Проверки
+      options:
+        - label: Другой VPN-клиент на этом устройстве выключен
+          required: true
+        - label: В описании нет моих ключей, паролей и адресов серверов
+          required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи
+      description: Уберите из них адреса серверов и ключи.
+      render: text

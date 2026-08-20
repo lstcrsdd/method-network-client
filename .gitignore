@@ -1,0 +1,56 @@
+# ВНИМАНИЕ: комментарий в конце строки с шаблоном ломает шаблон.
+# Пиши комментарии только отдельными строками.
+
+# ── Секреты. Ничего из этого не должно попасть в публичный репозиторий ──
+*.local.md
+*.local.json
+*.local.yaml
+credentials*
+secrets*
+servers.json
+!servers.example.json
+config.json
+!config.example.json
+*.pem
+*.key
+*.p12
+*.mobileprovision
+*.keystore
+*.jks
+*.pcap
+*.pcapng
+
+# ── Ядро sing-box: не распространяем в составе репозитория ──
+sing-box
+sing-box.exe
+Resources/sing-box
+
+# ── macOS / Xcode ──
+.DS_Store
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+.tools/
+build/
+
+# ── Android / Gradle ──
+.gradle/
+local.properties
+*.apk
+*.aab
+app/build/
+
+# ── .NET ──
+bin/
+obj/
+*.user
+
+# ── Rust ──
+target/
+Cargo.lock.orig
+
+# ── Прочее ──
+node_modules/
+*.log
+.env
