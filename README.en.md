@@ -27,24 +27,42 @@ a server — it **maintains a state of the network**.
 
 ## Why not just another client
 
-Every existing client picks a server by latency. That is wrong, and here is a
-measurement from our own nodes — one round, 20 requests through each tunnel:
+Every existing client asks you to pick a **server** and ranks servers by
+latency. Both are wrong. Here is a measurement from our own nodes — eight
+rounds of 20 requests through each tunnel, zero failures:
 
-| Route | Median | p95 | Spread |
-|---|---:|---:|---:|
-| Finland · gRPC | **76 ms** | 579 ms | ×7.6 |
-| USA · gRPC | 138 ms | 141 ms | ×1.02 |
+| Node | Transport | Median | p95 | Jitter |
+|---|---|---:|---:|---:|
+| Finland | Reality gRPC | **65 ms** | 135 ms | 19 ms |
+| Finland | Reality Vision | **209 ms** | 652 ms | 125 ms |
+| USA | Hysteria2 | 143 ms | 150 ms | 3 ms |
+| USA | Reality gRPC | 143 ms | 150 ms | **1 ms** |
+| USA | Reality Vision | 415 ms | 906 ms | 61 ms |
+| USA | Trojan | 417 ms | 944 ms | 32 ms |
 
-Latency-based selection picks Finland: twice as fast. But its tail is 579 ms
-against 141. For a game, a call or a video meeting that is a distinctly worse
-route despite the twice-better median. A client that looks at a single number
-systematically picks the wrong one.
+Look at the first two rows. That is **the same server**: same machine, same
+uplink, same minute. Only the transport differs — and it costs three times the
+latency, five times the tail and six times the jitter.
+
+So "connect to Finland" says almost nothing. The unit of choice is not a node
+but a **route**: a node together with a transport. A client that lets you pick
+a country and then picks a protocol arbitrarily is picking blind.
+
+One number is not enough either. Two of the US routes have medians identical to
+the millisecond — 143 and 143 — and are indistinguishable by latency. Telling a
+good route from a mediocre one needs jitter, the tail of the distribution and
+handshake time: Trojan's handshake is nearly twice as long as the others, and
+for a browser opening dozens of short connections that matters more than
+steady-state latency.
 
 Method measures **seven metrics** — latency, jitter, loss, handshake time,
 availability, throughput and stability over time — and weighs them **by
 workload**. Games care about jitter and loss, downloads about throughput,
 browsing about a fast handshake. These are different answers, and a single
 "best server" does not exist.
+
+> Measured from a datacentre uplink. On home Wi-Fi and mobile networks the
+> absolute numbers will be worse and the spread between routes wider.
 
 ## Routes are not interchangeable
 
