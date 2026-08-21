@@ -22,12 +22,6 @@
     -->
     <DataTemplate x:Key="ServerRow" x:DataType="vm:ServerItem">
       <Border Classes="row" Margin="0,0,0,6" Padding="14,11">
-        <Border.Styles>
-          <Style Selector="Border.row:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
-          </Style>
-        </Border.Styles>
-
         <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
 
           <c:CountryFlag Grid.Column="0" Code="{Binding CountryCode}" Width="26" Height="18"
@@ -39,9 +33,7 @@
               <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
                          Foreground="{DynamicResource TextPrimaryBrush}"
                          TextTrimming="CharacterEllipsis" />
-              <Border Background="{DynamicResource SurfaceRaisedBrush}" CornerRadius="4"
-                      Padding="6,1" VerticalAlignment="Center"
-                      IsVisible="{Binding IsFeatured}">
+              <Border Classes="tag" IsVisible="{Binding IsFeatured}">
                 <TextBlock Text="{Binding FeaturedLabel}" FontSize="9"
                            Foreground="{DynamicResource AccentBrush}" />
               </Border>
@@ -50,7 +42,7 @@
               <TextBlock Text="{Binding Subtitle}" FontSize="11.5"
                          Foreground="{DynamicResource TextMutedBrush}"
                          VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-              <Border Background="{DynamicResource ChipBrush}" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
+              <Border Classes="chip">
                 <TextBlock Text="{Binding Transport}" FontSize="9"
                            Foreground="{DynamicResource TextSecondaryBrush}" />
               </Border>
@@ -61,32 +53,57 @@
           <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="7"
                       VerticalAlignment="Center" Margin="12,0,14,0"
                       IsVisible="{Binding HasPing}">
-            <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="{Binding PingBrush}" />
-            <TextBlock Text="{Binding PingText}" FontSize="12"
-                       Foreground="{Binding PingBrush}" VerticalAlignment="Center" />
+            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                     Classes="toneMuted"
+                     Classes.toneOk="{Binding IsPingGood}"
+                     Classes.toneWarn="{Binding IsPingFair}"
+                     Classes.toneBad="{Binding IsPingPoor}" />
+            <TextBlock Text="{Binding PingText}" FontSize="12" VerticalAlignment="Center"
+                       Classes="toneMuted"
+                       Classes.toneOk="{Binding IsPingGood}"
+                       Classes.toneWarn="{Binding IsPingFair}"
+                       Classes.toneBad="{Binding IsPingPoor}" />
           </StackPanel>
 
-          <Border Grid.Column="3" Width="22" Height="22" CornerRadius="11"
-                  Background="{DynamicResource ConnectedBrush}" VerticalAlignment="Center"
-                  Margin="0,0,10,0" IsVisible="{Binding IsSelected}">
-            <Path Data="{DynamicResource IconCheck}" Stretch="Uniform" Width="12" Height="12"
-                  StrokeThickness="2.4" StrokeLineCap="Round" StrokeJoin="Round"
-                  Stroke="#0A0A0A" HorizontalAlignment="Center" VerticalAlignment="Center" />
-          </Border>
+          <!--
+            Выбор узла — кружок, а не кнопка со словом. Слово «Выбрать» занимало
+            место на каждой строке и исчезало у выбранной, отчего строки прыгали
+            по ширине. Кружок стоит всегда на одном месте и сам показывает,
+            выбран ли узел.
+          -->
+          <Button Grid.Column="3" Classes="pick" Classes.selected="{Binding IsSelected}"
+                  VerticalAlignment="Center" Margin="0,0,6,0"
+                  ToolTip.Tip="Подключаться через этот узел"
+                  Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SelectCommand}"
+                  CommandParameter="{Binding}">
+            <!--
+              Отметки лежат здесь всегда, а не появляются по условию. Показывать
+              их видимостью значило бы включать их мгновенно — а весь смысл в
+              том, что кружок сжимается к центру и оттуда разворачивается
+              отметка. Появляться и исчезать нечему, меняется только размер.
+            -->
+            <Panel Width="22" Height="22">
+              <Ellipse Classes="pickRing" Width="22" Height="22"
+                       RenderTransformOrigin="50%,50%" />
+              <Path Classes="mark markCheck" Data="{DynamicResource IconCheck}" Stretch="Uniform"
+                    Width="13" Height="13" StrokeThickness="2.4"
+                    StrokeLineCap="Round" StrokeJoin="Round"
+                    RenderTransformOrigin="50%,50%"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <Path Classes="mark markStar" Data="{DynamicResource IconStar}" Stretch="Uniform"
+                    Width="19" Height="19"
+                    RenderTransformOrigin="50%,50%"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Panel>
+          </Button>
 
-          <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-            <Button Classes="quiet" Content="Выбрать" VerticalAlignment="Center"
-                    Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SelectCommand}"
-                    CommandParameter="{Binding}"
-                    IsVisible="{Binding !IsSelected}" />
-            <Button Classes="quiet" ToolTip.Tip="Удалить" VerticalAlignment="Center"
-                    Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RemoveCommand}"
-                    CommandParameter="{Binding}">
-              <Path Data="{DynamicResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
-                    StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
-                    Stroke="{DynamicResource ErrorBrush}" />
-            </Button>
-          </StackPanel>
+          <Button Grid.Column="4" Classes="quiet" ToolTip.Tip="Удалить" VerticalAlignment="Center"
+                  Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RemoveCommand}"
+                  CommandParameter="{Binding}">
+            <Path Data="{DynamicResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
+                  StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                  Stroke="{DynamicResource ErrorBrush}" />
+          </Button>
         </Grid>
       </Border>
     </DataTemplate>
@@ -162,7 +179,8 @@
 
                   <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
                     <Ellipse Grid.Column="0" Width="8" Height="8" VerticalAlignment="Center"
-                             Margin="2,0,10,0" Fill="{Binding StatusBrush}" />
+                             Margin="2,0,10,0"
+                             Classes="toneMuted" Classes.toneBad="{Binding HasError}" />
                     <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="14" FontWeight="Bold"
                                Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="2" Text="{Binding ServerCountText}" FontSize="11.5"
@@ -187,8 +205,8 @@
                   </Grid>
 
                   <StackPanel Spacing="3" Margin="20,-4,0,0">
-                    <TextBlock Text="{Binding StatusLine}" FontSize="11.5"
-                               Foreground="{Binding StatusBrush}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding StatusLine}" FontSize="11.5" TextWrapping="Wrap"
+                               Classes="toneMuted" Classes.toneBad="{Binding HasError}" />
                     <TextBlock Text="{Binding Announce}" FontSize="11.5" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                IsVisible="{Binding HasAnnounce}" />
@@ -205,7 +223,9 @@
                     </Grid>
                     <ProgressBar Height="4" CornerRadius="2" Minimum="0" Maximum="1"
                                  Value="{Binding TrafficFraction}"
-                                 Foreground="{Binding TrafficBrush}"
+                                 Classes="toneAccent"
+                                 Classes.toneWarn="{Binding IsTrafficWarning}"
+                                 Classes.toneBad="{Binding IsTrafficCritical}"
                                  Background="{DynamicResource SurfaceRaisedBrush}" />
                   </StackPanel>
 

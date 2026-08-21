@@ -145,8 +145,8 @@ public sealed partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(StatusText))]
     [NotifyPropertyChangedFor(nameof(IsConnected))]
     [NotifyPropertyChangedFor(nameof(IsBusy))]
+    [NotifyPropertyChangedFor(nameof(IsFailed))]
     [NotifyPropertyChangedFor(nameof(ActionText))]
-    [NotifyPropertyChangedFor(nameof(StatusBrush))]
     private ConnectionState _state = ConnectionState.Disconnected;
 
     /// <summary>Пояснение под кнопкой: ошибка, предупреждение или подсказка.</summary>
@@ -164,6 +164,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool IsBusy => State == ConnectionState.Connecting;
 
+    /// <summary>Настоящий отказ, а не просто «не подключено».</summary>
+    public bool IsFailed => State == ConnectionState.Failed;
+
     public string StatusText => State switch
     {
         ConnectionState.Disconnected => "Не подключено",
@@ -180,22 +183,11 @@ public sealed partial class MainViewModel : ObservableObject
         _ => "ПОДКЛЮЧИТЬ",
     };
 
-    /// <summary>
-    /// Цвет точки состояния. Красный только при настоящем отказе: серым «не
-    /// подключено» человек не тревожится, а красным — тревожится, и повод должен быть.
-    /// </summary>
-    public IBrush StatusBrush => State switch
-    {
-        ConnectionState.Connected => ConnectedBrush,
-        ConnectionState.Connecting => WarningBrush,
-        ConnectionState.Failed => ErrorBrush,
-        _ => MutedBrush,
-    };
-
-    private static readonly IBrush ConnectedBrush = new SolidColorBrush(Color.Parse("#29C940"));
-    private static readonly IBrush WarningBrush = new SolidColorBrush(Color.Parse("#FFBD2E"));
-    private static readonly IBrush ErrorBrush = new SolidColorBrush(Color.Parse("#FF5E57"));
-    private static readonly IBrush MutedBrush = new SolidColorBrush(Color.Parse("#FFFFFF"), 0.28);
+    // Цвета состояния здесь не хранятся намеренно: оформлений два, и кисть,
+    // созданная в коде, знает только про одно из них. Модель отдаёт состояние
+    // (подключено, идёт, отказ), цвет ему назначает стиль по ключу из набора —
+    // и подмена набора перекрашивает точку сама. Правило общее для всего
+    // приложения: цвет живёт в стилях, состояние — здесь.
 
     // MARK: Настройки
 

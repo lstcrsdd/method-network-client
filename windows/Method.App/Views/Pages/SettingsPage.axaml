@@ -33,8 +33,14 @@
         <Button Classes="skin" Classes.selected="{Binding IsBaseSkin}" Margin="0,0,7,0"
                 Command="{Binding SetSkinCommand}" CommandParameter="Base">
           <StackPanel Spacing="10">
+            <!--
+              Образец чужого набора. Цвета здесь намеренно записаны числом, а не
+              ключом: кнопка показывает то оформление, которое сейчас НЕ включено,
+              и ключ отдал бы цвет текущего. Первый образец — акцент набора, и он
+              обязан совпадать со значением в Theme.axaml; за этим следит тест.
+            -->
             <StackPanel Orientation="Horizontal" Spacing="6">
-              <Border Width="26" Height="26" CornerRadius="13" Background="#29C940" />
+              <Border Width="26" Height="26" CornerRadius="13" Background="#2ECC4D" />
               <Border Width="26" Height="26" CornerRadius="13" Background="#1A1A1A" />
               <Border Width="26" Height="26" CornerRadius="13" Background="#FFFFFF" Opacity="0.85" />
             </StackPanel>
@@ -50,10 +56,11 @@
         <Button Grid.Column="1" Classes="skin" Classes.selected="{Binding IsPosterSkin}" Margin="7,0,0,0"
                 Command="{Binding SetSkinCommand}" CommandParameter="Poster">
           <StackPanel Spacing="10">
+            <!-- То же и здесь: акцент плакатного набора, сверяется тестом. -->
             <StackPanel Orientation="Horizontal" Spacing="6">
-              <Border Width="26" Height="26" Background="#D42B1F" />
-              <Border Width="26" Height="26" Background="#14110F" />
-              <Border Width="26" Height="26" Background="#F2EADA" />
+              <Border Width="26" Height="26" Background="#BE5347" />
+              <Border Width="26" Height="26" Background="#1A1613" />
+              <Border Width="26" Height="26" Background="#EDE4D4" />
             </StackPanel>
             <StackPanel Spacing="3">
               <TextBlock Text="Плакатное" FontSize="13.5" FontWeight="SemiBold"

@@ -7,44 +7,57 @@
   Foundation, either version 3 of the License, or (at your option) any later
   version. See LICENSE for details.
 
-  Плакатное оформление: красное, чёрное и бумажно-кремовое — палитра
-  конструктивистского плаката. Ключи те же, что в основном наборе, поэтому
-  разметке всё равно, какой из двух подставлен: меняется вид, а не устройство.
+  Плакатное оформление: красное, чёрное и бумажно-кремовое. Ключи те же, что в
+  основном наборе, поэтому разметке всё равно, какой из двух подставлен:
+  меняется вид, а не устройство.
 
-  Государственных символов здесь нет и не будет — это язык типографики и
-  геометрии, а не чья-то символика.
+  Красный приглушённый, а не открытый. Чистый насыщенный красный на тёмном фоне
+  физически тяжёл: глаз наводится на красный и синий по-разному, и на большой
+  площади граница начинает «дрожать». Плакатной краске это свойственно и на
+  бумаге — она пигментная, не светящаяся. Поэтому здесь кирпичный тон с убранной
+  насыщенностью: цвет остаётся тем же, а смотреть на него можно часами.
 -->
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
   <!-- Фон: почти чёрный с тёплым уходом, как типографская краска на бумаге. -->
-  <Color x:Key="BackgroundTopColor">#14110F</Color>
-  <Color x:Key="BackgroundBottomColor">#0B0908</Color>
-  <SolidColorBrush x:Key="BackgroundBrush" Color="#100E0C" />
+  <Color x:Key="BackgroundTopColor">#15120F</Color>
+  <Color x:Key="BackgroundBottomColor">#0C0A08</Color>
+  <SolidColorBrush x:Key="BackgroundBrush" Color="#110F0C" />
 
-  <SolidColorBrush x:Key="SidebarBrush" Color="#1A1512" />
-  <SolidColorBrush x:Key="ChipBrush" Color="#EDE3D0" Opacity="0.10" />
+  <SolidColorBrush x:Key="SidebarBrush" Color="#1A1613" />
+  <SolidColorBrush x:Key="ChipBrush" Color="#E8DCC6" Opacity="0.09" />
 
-  <!-- Поверхности: теплее и плотнее, чем в основном наборе. -->
-  <SolidColorBrush x:Key="SurfaceBrush" Color="#EDE3D0" Opacity="0.05" />
-  <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#EDE3D0" Opacity="0.09" />
-  <SolidColorBrush x:Key="GlassStrokeBrush" Color="#EDE3D0" Opacity="0.14" />
-  <SolidColorBrush x:Key="HoverBrush" Color="#D42B1F" Opacity="0.16" />
+  <!-- Поверхности теплее и плотнее, чем в основном наборе. -->
+  <SolidColorBrush x:Key="SurfaceBrush" Color="#E8DCC6" Opacity="0.05" />
+  <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#E8DCC6" Opacity="0.09" />
+  <SolidColorBrush x:Key="GlassStrokeBrush" Color="#E8DCC6" Opacity="0.13" />
+  <SolidColorBrush x:Key="HoverBrush" Color="#BE5347" Opacity="0.15" />
 
-  <!-- Текст кремовый, а не белый: чистый белый на красном режет глаз. -->
-  <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F2EADA" />
-  <SolidColorBrush x:Key="TextSecondaryBrush" Color="#F2EADA" Opacity="0.52" />
-  <SolidColorBrush x:Key="TextMutedBrush" Color="#F2EADA" Opacity="0.34" />
+  <!-- Текст кремовый, а не белый: чистый белый рядом с красным режет глаз. -->
+  <SolidColorBrush x:Key="TextPrimaryBrush" Color="#EDE4D4" />
+  <SolidColorBrush x:Key="TextSecondaryBrush" Color="#EDE4D4" Opacity="0.52" />
+  <SolidColorBrush x:Key="TextMutedBrush" Color="#EDE4D4" Opacity="0.34" />
 
   <!--
     Красный здесь — не тревога, а действие: им отмечено рабочее и включённое.
-    Поэтому под отказ отведён отдельный, заметно другой цвет, иначе «идёт как
-    надо» и «сломалось» слились бы в один сигнал.
+    Поэтому под отказ отведён отдельный цвет, заметно светлее и розовее, иначе
+    «идёт как надо» и «сломалось» слились бы в один сигнал.
   -->
-  <Color x:Key="AccentColor">#D42B1F</Color>
-  <SolidColorBrush x:Key="AccentBrush" Color="#D42B1F" />
-  <SolidColorBrush x:Key="ConnectedBrush" Color="#D42B1F" />
-  <SolidColorBrush x:Key="WarningBrush" Color="#E0A526" />
-  <SolidColorBrush x:Key="ErrorBrush" Color="#FF7A4D" />
+  <Color x:Key="AccentColor">#BE5347</Color>
+  <SolidColorBrush x:Key="AccentBrush" Color="#BE5347" />
+  <SolidColorBrush x:Key="ConnectedBrush" Color="#BE5347" />
+  <SolidColorBrush x:Key="WarningBrush" Color="#C2A24E" />
+  <SolidColorBrush x:Key="ErrorBrush" Color="#DC8B7E" />
+
+  <!--
+    Поверх акцентной заливки здесь пишем кремовым: акцент тёмный, и тёмный текст
+    на нём нечитаем. В основном наборе тот же ключ держит противоположное
+    значение — на то он и ключ.
+  -->
+  <SolidColorBrush x:Key="OnAccentBrush" Color="#EDE4D4" />
+
+  <!-- Латунь для эмблемы: приглушённая, а не сусальное золото. -->
+  <SolidColorBrush x:Key="EmblemBrush" Color="#D2B778" />
 
 </ResourceDictionary>

@@ -6,7 +6,6 @@
 // Foundation, either version 3 of the License, or (at your option) any later
 // version. See LICENSE for details.
 
-using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Method.Core.Models;
 using Method.Core.Storage;
@@ -67,7 +66,9 @@ public sealed partial class ServerItem(StoredProfile stored) : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PingText))]
-    [NotifyPropertyChangedFor(nameof(PingBrush))]
+    [NotifyPropertyChangedFor(nameof(IsPingGood))]
+    [NotifyPropertyChangedFor(nameof(IsPingFair))]
+    [NotifyPropertyChangedFor(nameof(IsPingPoor))]
     [NotifyPropertyChangedFor(nameof(HasPing))]
     private int? _ping;
 
@@ -91,21 +92,21 @@ public sealed partial class ServerItem(StoredProfile stored) : ObservableObject
     }
 
     /// <summary>
-    /// Цвет задержки. Пороги те же, что на других платформах: до восьмидесяти —
+    /// Разряд задержки. Пороги те же, что на других платформах: до восьмидесяти —
     /// хорошо, до ста шестидесяти — терпимо, дальше — плохо.
+    ///
+    /// <para>Отдаётся разрядом, а не готовой кистью: оформлений два, и кисть,
+    /// созданная здесь, знала бы только про одно из них. Цвет назначает стиль,
+    /// и подмена набора перекрашивает список сама.</para>
     /// </summary>
-    public IBrush PingBrush => Ping switch
-    {
-        null => MutedBrush,
-        < 80 => GoodBrush,
-        < 160 => FairBrush,
-        _ => PoorBrush,
-    };
+    public bool IsPingGood => Ping is { } ms && ms < GoodBelowMs;
 
-    private static readonly IBrush GoodBrush = new SolidColorBrush(Color.Parse("#29C940"));
-    private static readonly IBrush FairBrush = new SolidColorBrush(Color.Parse("#FFBD2E"));
-    private static readonly IBrush PoorBrush = new SolidColorBrush(Color.Parse("#FF5E57"));
-    private static readonly IBrush MutedBrush = new SolidColorBrush(Color.Parse("#FFFFFF"), 0.28);
+    public bool IsPingFair => Ping is { } ms && ms >= GoodBelowMs && ms < FairBelowMs;
+
+    public bool IsPingPoor => Ping is { } ms && ms >= FairBelowMs;
+
+    private const int GoodBelowMs = 80;
+    private const int FairBelowMs = 160;
 
     /// <summary>Отметить, что замер был. До первого замера пустое поле честнее прочерка.</summary>
     public void MarkMeasured()

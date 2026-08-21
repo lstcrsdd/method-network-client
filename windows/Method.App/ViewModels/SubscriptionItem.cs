@@ -7,7 +7,6 @@
 // version. See LICENSE for details.
 
 using System.Collections.ObjectModel;
-using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Method.Core.Storage;
 
@@ -24,11 +23,12 @@ public sealed partial class SubscriptionItem : ObservableObject
     [NotifyPropertyChangedFor(nameof(Announce))]
     [NotifyPropertyChangedFor(nameof(HasAnnounce))]
     [NotifyPropertyChangedFor(nameof(StatusLine))]
-    [NotifyPropertyChangedFor(nameof(StatusBrush))]
+    [NotifyPropertyChangedFor(nameof(HasError))]
     [NotifyPropertyChangedFor(nameof(HasTraffic))]
     [NotifyPropertyChangedFor(nameof(TrafficText))]
     [NotifyPropertyChangedFor(nameof(TrafficFraction))]
-    [NotifyPropertyChangedFor(nameof(TrafficBrush))]
+    [NotifyPropertyChangedFor(nameof(IsTrafficCritical))]
+    [NotifyPropertyChangedFor(nameof(IsTrafficWarning))]
     [NotifyPropertyChangedFor(nameof(HasExpiry))]
     [NotifyPropertyChangedFor(nameof(ExpiryText))]
     private Subscription _subscription;
@@ -88,11 +88,8 @@ public sealed partial class SubscriptionItem : ObservableObject
         }
     }
 
-    public IBrush StatusBrush =>
-        Subscription.LastError is { Length: > 0 } ? ErrorBrush : MutedBrush;
-
-    private static readonly IBrush ErrorBrush = new SolidColorBrush(Color.Parse("#FF5E57"));
-    private static readonly IBrush MutedBrush = new SolidColorBrush(Color.Parse("#FFFFFF"), 0.28);
+    /// <summary>Последнее обновление кончилось отказом. Цвет назначит стиль.</summary>
+    public bool HasError => Subscription.LastError is { Length: > 0 };
 
     // MARK: Трафик и срок
 
@@ -114,12 +111,13 @@ public sealed partial class SubscriptionItem : ObservableObject
     /// Полоска краснеет к концу, а не сразу: до девяти десятых расхода тревожить
     /// человека нечем, а вот последняя десятая — уже повод.
     /// </summary>
-    public IBrush TrafficBrush => TrafficFraction switch
-    {
-        >= 0.9 => ErrorBrush,
-        >= 0.75 => WarningBrush,
-        _ => AccentBrush,
-    };
+    public bool IsTrafficCritical => TrafficFraction >= CriticalFraction;
+
+    public bool IsTrafficWarning =>
+        TrafficFraction >= WarningFraction && TrafficFraction < CriticalFraction;
+
+    private const double WarningFraction = 0.75;
+    private const double CriticalFraction = 0.9;
 
     public bool HasExpiry => Subscription.ExpiresAt is not null;
 
@@ -137,9 +135,6 @@ public sealed partial class SubscriptionItem : ObservableObject
                 : $"до {expires:dd.MM.yyyy}";
         }
     }
-
-    private static readonly IBrush AccentBrush = new SolidColorBrush(Color.Parse("#2ECC4D"));
-    private static readonly IBrush WarningBrush = new SolidColorBrush(Color.Parse("#FFBD2E"));
 
     private static string Gigabytes(long bytes) =>
         (bytes / 1_073_741_824.0).ToString("F1", System.Globalization.CultureInfo.CurrentCulture);

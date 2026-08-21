@@ -14,60 +14,6 @@
              x:Class="Method.App.Views.Pages.OverviewPage"
              x:DataType="vm:MainViewModel">
 
-  <UserControl.Styles>
-    <!-- Кнопка подключения -->
-    <Style Selector="Button.connect">
-      <Setter Property="Width" Value="152" />
-      <Setter Property="Height" Value="152" />
-      <Setter Property="CornerRadius" Value="76" />
-      <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-      <Setter Property="HorizontalContentAlignment" Value="Center" />
-      <Setter Property="VerticalContentAlignment" Value="Center" />
-      <Setter Property="Transitions">
-        <Transitions>
-          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
-        </Transitions>
-      </Setter>
-    </Style>
-    <Style Selector="Button.connect:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-    </Style>
-    <!-- Лёгкое сжатие при нажатии: движение подтверждает, что кнопка сработала. -->
-    <Style Selector="Button.connect:pressed">
-      <Setter Property="RenderTransform" Value="scale(0.97)" />
-    </Style>
-
-    <!--
-      Дышащее гало, когда туннель поднят. Дышит прозрачностью, а не размером:
-      покадровая анимация RenderTransform требует своего аниматора и без него
-      роняет окно на старте — проверено.
-    -->
-    <Style Selector="Ellipse.glow">
-      <Style.Animations>
-        <Animation Duration="0:0:2.6" IterationCount="INFINITE"
-                   PlaybackDirection="Alternate" Easing="SineEaseInOut">
-          <KeyFrame Cue="0%">
-            <Setter Property="Opacity" Value="0.10" />
-          </KeyFrame>
-          <KeyFrame Cue="100%">
-            <Setter Property="Opacity" Value="0.30" />
-          </KeyFrame>
-        </Animation>
-      </Style.Animations>
-    </Style>
-
-    <Style Selector="Border.stat">
-      <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-      <Setter Property="CornerRadius" Value="14" />
-      <Setter Property="Padding" Value="22,14" />
-      <Setter Property="MinWidth" Value="150" />
-    </Style>
-  </UserControl.Styles>
-
   <Grid RowDefinitions="*,Auto,Auto,Auto,Auto,*" Margin="40,10,40,24">
 
     <!-- Циферблат и кнопка -->
@@ -81,28 +27,60 @@
         Кольцо-циферблат. Штрихи нарисованы пунктиром по окружности, а не шестью
         десятками отдельных чёрточек: та же картинка, но одна фигура вместо шести
         десятков и никакой возни с углами.
-      -->
-      <Ellipse Width="292" Height="292" StrokeThickness="9"
-               Stroke="{DynamicResource GlassStrokeBrush}"
-               StrokeDashArray="0.10,0.60" StrokeLineCap="Round" />
 
-      <Ellipse Width="292" Height="292" StrokeThickness="9"
-               Stroke="{DynamicResource ConnectedBrush}"
-               StrokeDashArray="0.10,0.60" StrokeLineCap="Round"
-               Opacity="0.75" IsVisible="{Binding IsConnected}" />
+        В плакатном оформлении кольцо скрыто: там его работу выполняет сам знак,
+        а два кольца вокруг одной кнопки — это уже не мишень, а стрельбище.
+      -->
+      <Panel Classes="dialRound">
+        <Ellipse Width="292" Height="292" StrokeThickness="9"
+                 Stroke="{DynamicResource GlassStrokeBrush}"
+                 StrokeDashArray="0.10,0.60" StrokeLineCap="Round" />
+
+        <Ellipse Width="292" Height="292" StrokeThickness="9"
+                 Stroke="{DynamicResource ConnectedBrush}"
+                 StrokeDashArray="0.10,0.60" StrokeLineCap="Round"
+                 Opacity="0.75" IsVisible="{Binding IsConnected}" />
+      </Panel>
 
       <Button Classes="connect" Command="{Binding ToggleCommand}"
               HorizontalAlignment="Center" VerticalAlignment="Center">
-        <StackPanel Spacing="9">
-          <Path Data="{DynamicResource IconPower}" Stretch="Uniform" Width="30" Height="30"
-                StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"
-                Stroke="{Binding $parent[Button].Foreground}"
-                HorizontalAlignment="Center" />
-          <TextBlock Text="{Binding ActionText}" FontSize="10.5" LetterSpacing="1.4"
-                     FontWeight="SemiBold" HorizontalAlignment="Center" />
-        </StackPanel>
+        <Panel>
+          <!--
+            Две личины одной кнопки. В основном оформлении — значок питания с
+            подписью, как на других платформах. В плакатном — знак во всю
+            кнопку: шестерня сама себе оправа, и вторая рамка вокруг неё была бы
+            лишней, поэтому там кнопка теряет фон и рамку, а подпись уходит вниз
+            под знак. Видимостью распоряжается оформление, а не разметка.
+          -->
+          <c:Emblem Classes="emblem"
+                    IsJammed="{Binding IsBusy}" IsRunning="{Binding IsConnected}"
+                    FrameBrush="{DynamicResource AccentBrush}"
+                    FlagBrush="{DynamicResource AccentBrush}"
+                    ToolBrush="{DynamicResource EmblemBrush}"
+                    LetterBrush="{DynamicResource EmblemBrush}"
+                    FieldBrush="{DynamicResource SurfaceBrush}"
+                    CutBrush="{DynamicResource BackgroundBrush}" />
+
+          <StackPanel Classes="powerFace" Spacing="9">
+            <Path Data="{DynamicResource IconPower}" Stretch="Uniform"
+                  Width="30" Height="30"
+                  StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"
+                  Stroke="{Binding $parent[Button].Foreground}"
+                  HorizontalAlignment="Center" />
+
+            <TextBlock Text="{Binding ActionText}" FontSize="10.5" LetterSpacing="1.4"
+                       FontWeight="SemiBold" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Panel>
       </Button>
     </Panel>
+
+    <!-- Подпись действия для плакатного оформления: там она не помещается
+         внутри кнопки, потому что кнопку целиком занимает знак. -->
+    <TextBlock Grid.Row="1" Classes="posterAction" Text="{Binding ActionText}"
+               FontSize="11.5" LetterSpacing="2.2" FontWeight="Bold"
+               HorizontalAlignment="Center" VerticalAlignment="Bottom"
+               Margin="0,0,0,4" />
 
     <!-- Что сейчас выбрано и куда добавлять -->
     <StackPanel Grid.Row="2" Spacing="4" Margin="0,16,0,0" HorizontalAlignment="Center">

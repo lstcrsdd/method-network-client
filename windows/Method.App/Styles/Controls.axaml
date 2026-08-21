@@ -15,7 +15,8 @@
   системе, и там, где его нет, вместо значка появляется пустой квадрат.
 -->
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="using:Method.App.Controls">
 
   <Styles.Resources>
     <StreamGeometry x:Key="IconHome">M3.5,11.2 L12,4.2 L20.5,11.2 M6.2,9.8 L6.2,20 L17.8,20 L17.8,9.8</StreamGeometry>
@@ -32,6 +33,10 @@
     <StreamGeometry x:Key="IconWave">M3,13 C5,7.5 7,7.5 9,13 C11,18.5 13,18.5 15,13 C17,7.5 19,7.5 21,13</StreamGeometry>
     <StreamGeometry x:Key="IconChevron">M6,9 L12,15 L18,9</StreamGeometry>
     <StreamGeometry x:Key="IconCheck">M6,12.5 L10,16.5 L18,8</StreamGeometry>
+
+    <!-- Пятиконечная звезда. Читается на любом размере, в отличие от всего,
+         что внутри неё, — потому в мелких отметках стоит она одна. -->
+    <StreamGeometry x:Key="IconStar">M12,2.2 L14.6,9.1 L21.9,9.5 L16.2,14.1 L18.1,21.2 L12,17.2 L5.9,21.2 L7.8,14.1 L2.1,9.5 L9.4,9.1 Z</StreamGeometry>
   </Styles.Resources>
 
   <!-- Значок: линия одинаковой толщины, скруглённые концы. -->
@@ -228,6 +233,95 @@
     <Setter Property="Background" Value="#77FFFFFF" />
   </Style>
 
+  <!--
+    Кружок выбора узла. Не переключатель и не флажок: выбранный узел ровно
+    один, а стандартный переключатель тянет за собой подпись и отступы, которых
+    в плотной строке нет.
+  -->
+  <Style Selector="Button.pick">
+    <Setter Property="Width" Value="30" />
+    <Setter Property="Height" Value="30" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="15" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.pick:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+  </Style>
+
+  <!--
+    Кольцо сжимается к центру при выборе, отметка оттуда же разворачивается.
+    Сделано переходами, а не покадровой анимацией: покадровая анимация
+    превращения требует своего аниматора и без него роняет окно при разборе
+    стилей — проверено. Переход поверх превращения работает и, в отличие от
+    покадровой, отыгрывает обратно сам, когда выбор уходит на другой узел.
+  -->
+  <Style Selector="Ellipse.pickRing">
+    <Setter Property="Stroke" Value="{DynamicResource TextMutedBrush}" />
+    <Setter Property="StrokeThickness" Value="1.5" />
+    <Setter Property="Fill" Value="Transparent" />
+    <Setter Property="RenderTransform" Value="scale(1)" />
+    <Setter Property="Opacity" Value="1" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform"
+                                       Duration="0:0:0.18" Easing="CubicEaseIn" />
+        <DoubleTransition Property="Opacity" Duration="0:0:0.14" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.pick.selected Ellipse.pickRing">
+    <Setter Property="RenderTransform" Value="scale(0)" />
+    <Setter Property="Opacity" Value="0" />
+  </Style>
+
+  <!--
+    Отметка ждёт свёрнутой в точку и с поворотом: разворачиваясь, она
+    доворачивается на место. Задержка — время, за которое кольцо успевает
+    сойтись; без неё они делают своё движение одновременно и получается не
+    превращение, а наложение.
+  -->
+  <Style Selector="Path.mark">
+    <Setter Property="RenderTransform" Value="scale(0) rotate(-140deg)" />
+    <Setter Property="Opacity" Value="0" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform"
+                                       Duration="0:0:0.34" Delay="0:0:0.12"
+                                       Easing="BackEaseOut" />
+        <DoubleTransition Property="Opacity" Duration="0:0:0.16" Delay="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.pick.selected Path.mark">
+    <Setter Property="RenderTransform" Value="scale(1) rotate(0deg)" />
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
+  <!-- Чем именно отмечен выбор: в основном оформлении галочкой. -->
+  <Style Selector="Path.markCheck">
+    <Setter Property="Stroke" Value="{DynamicResource ConnectedBrush}" />
+  </Style>
+  <!--
+    Звезда с окантовкой. Обводка на той же фигуре, а не вторая звезда сверху:
+    два наложенных пути пришлось бы держать в одном размере и в одной анимации
+    вручную, и на повороте они разъезжались бы по полпикселя. Обводка ложится
+    по контуру сама и растёт вместе с ним.
+
+    Стык скруглён: у звезды внутренние углы острые, и на тонкой линии
+    остроугольный стык даёт длинные шипы наружу.
+  -->
+  <Style Selector="Path.markStar">
+    <Setter Property="IsVisible" Value="False" />
+    <Setter Property="Fill" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Stroke" Value="{DynamicResource EmblemBrush}" />
+    <Setter Property="StrokeThickness" Value="1.7" />
+    <Setter Property="StrokeJoin" Value="Round" />
+  </Style>
+
   <!-- Выбор оформления -->
   <Style Selector="Button.skin">
     <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -254,6 +348,196 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="10" />
     <Setter Property="Padding" Value="10" />
+  </Style>
+
+  <!-- Поле для ссылок: моноширинное, чтобы длинная строка читалась посимвольно. -->
+  <Style Selector="TextBox.mono">
+    <Setter Property="FontFamily" Value="Consolas,monospace" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+
+  <!--
+    Разряды состояния.
+
+    Цвет состояния назначается здесь, а не в модели: оформлений два, и кисть,
+    созданная в коде, знает только про одно из них. Модель отдаёт разряд
+    («подключено», «идёт», «отказ»), разметка вешает класс, а ссылка на ключ
+    здесь динамическая — подмена набора перекрашивает всё сама.
+
+    Порядок объявления — часть договора: базовый разряд идёт первым, условные
+    следом, и при равной силе побеждает объявленный позже.
+  -->
+  <Style Selector="Ellipse.toneMuted">
+    <Setter Property="Fill" Value="{DynamicResource TextMutedBrush}" />
+  </Style>
+  <Style Selector="Ellipse.toneOk">
+    <Setter Property="Fill" Value="{DynamicResource ConnectedBrush}" />
+  </Style>
+  <Style Selector="Ellipse.toneWarn">
+    <Setter Property="Fill" Value="{DynamicResource WarningBrush}" />
+  </Style>
+  <Style Selector="Ellipse.toneBad">
+    <Setter Property="Fill" Value="{DynamicResource ErrorBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.toneMuted">
+    <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+  </Style>
+  <Style Selector="TextBlock.toneOk">
+    <Setter Property="Foreground" Value="{DynamicResource ConnectedBrush}" />
+  </Style>
+  <Style Selector="TextBlock.toneWarn">
+    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+  </Style>
+  <Style Selector="TextBlock.toneBad">
+    <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+  </Style>
+
+  <!-- Полоска расхода: пока не подошло к концу — акцентная, а не тревожная. -->
+  <Style Selector="ProgressBar.toneAccent">
+    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+  </Style>
+  <Style Selector="ProgressBar.toneWarn">
+    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+  </Style>
+  <Style Selector="ProgressBar.toneBad">
+    <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+  </Style>
+
+  <!--
+    Пилюли-метки в строке узла: чем узел выделен провайдером и каким способом
+    ходит трафик. Радиус здесь, а не в разметке, — иначе плакатное оформление до
+    него не дотянется и скруглит то, что должно быть прямым.
+  -->
+  <Style Selector="Border.tag">
+    <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="6,1" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.chip">
+    <Setter Property="Background" Value="{DynamicResource ChipBrush}" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="6,1" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!--
+    Дальше — то, что раньше объявлялось прямо в страницах.
+
+    Стиль, объявленный внутри страницы, сильнее набора приложения и молча
+    перебивает его. Плакатное оформление — это как раз набор приложения, и
+    половина его приёмов до экрана не долетала: кнопка подключения оставалась
+    круглой, хотя плакат просил печать. Поэтому правило простое: страницы стилей
+    не объявляют, всё живёт здесь, а оформление перекрывает это на равных.
+  -->
+
+  <!-- Кнопка подключения -->
+  <Style Selector="Button.connect">
+    <Setter Property="Width" Value="152" />
+    <Setter Property="Height" Value="152" />
+    <Setter Property="CornerRadius" Value="76" />
+    <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.connect:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+  <!-- Лёгкое сжатие при нажатии: движение подтверждает, что кнопка сработала. -->
+  <Style Selector="Button.connect:pressed">
+    <Setter Property="RenderTransform" Value="scale(0.97)" />
+  </Style>
+
+  <!--
+    Дышащее гало, когда туннель поднят. Дышит прозрачностью, а не размером:
+    покадровая анимация RenderTransform требует своего аниматора и без него
+    роняет окно на старте — проверено.
+  -->
+  <Style Selector="Ellipse.glow">
+    <Style.Animations>
+      <Animation Duration="0:0:2.6" IterationCount="INFINITE"
+                 PlaybackDirection="Alternate" Easing="SineEaseInOut">
+        <KeyFrame Cue="0%">
+          <Setter Property="Opacity" Value="0.10" />
+        </KeyFrame>
+        <KeyFrame Cue="100%">
+          <Setter Property="Opacity" Value="0.30" />
+        </KeyFrame>
+      </Animation>
+    </Style.Animations>
+  </Style>
+
+  <!--
+    Знак на кнопке подключения ждёт плакатного оформления: в основном на кнопке
+    остаётся значок питания с подписью — так же, как на других платформах.
+    Прятать приходится здесь, потому что видимость самой кнопки в разметке уже
+    занята другим, а заданное в разметке сильнее стиля.
+  -->
+  <Style Selector="c|Emblem.emblem">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <Style Selector="TextBlock.posterAction">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <!-- Показатель на обзоре: время, адрес, протокол. -->
+  <Style Selector="Border.stat">
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Padding" Value="22,14" />
+    <Setter Property="MinWidth" Value="150" />
+  </Style>
+
+  <!-- Строка узла отзывается на курсор: список длинный, попасть нужно точно. -->
+  <Style Selector="Border.row:pointerover">
+    <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+  </Style>
+
+  <!-- Выбор пути в сценариях: выглядит как список, но пока не раскрывается. -->
+  <Style Selector="Border.lane">
+    <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="10,5" />
+  </Style>
+
+  <Style Selector="Border.soon">
+    <Setter Property="Background" Value="{DynamicResource ChipBrush}" />
+    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="Padding" Value="7,2" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- Кнопки окна импорта: подтверждающая и отменяющая. -->
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="9" />
+    <Setter Property="Padding" Value="18,8" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Button.secondary">
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="9" />
+    <Setter Property="Padding" Value="18,8" />
   </Style>
 
 </Styles>

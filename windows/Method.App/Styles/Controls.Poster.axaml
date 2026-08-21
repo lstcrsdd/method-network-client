@@ -16,7 +16,8 @@
   чем любая замена цвета.
 -->
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="using:Method.App.Controls">
 
   <!-- Карточки и строки: прямые углы, заметная рамка. -->
   <Style Selector="Border.card">
@@ -57,23 +58,24 @@
 
   <Style Selector="Button.nav.active /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-    <Setter Property="TextBlock.Foreground" Value="#F2EADA" />
+    <Setter Property="TextBlock.Foreground" Value="{DynamicResource OnAccentBrush}" />
   </Style>
 
   <Style Selector="Button.nav.active">
-    <Setter Property="Foreground" Value="#F2EADA" />
+    <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
   </Style>
 
   <!-- Главное действие: красный прямоугольник, кремовый текст. -->
   <Style Selector="Button.pill">
     <Setter Property="CornerRadius" Value="0" />
     <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-    <Setter Property="Foreground" Value="#F2EADA" />
+    <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
     <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="Padding" Value="30,11" />
   </Style>
+  <!-- Под курсором краска ложится плотнее: тот же тон, но темнее на треть. -->
   <Style Selector="Button.pill:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="#B72318" />
+    <Setter Property="Background" Value="#A34438" />
   </Style>
 
   <Style Selector="Button.round">
@@ -84,15 +86,48 @@
     <Setter Property="CornerRadius" Value="0" />
   </Style>
 
-  <!-- Кнопка подключения: не круг, а печать. -->
+  <!--
+    Кнопка подключения здесь — сам знак. Ни фона, ни рамки: шестерня уже
+    служит оправой, а обод вокруг обода читался бы небрежностью, а не приёмом.
+    По той же причине скрыто кольцо-циферблат.
+  -->
   <Style Selector="Button.connect">
-    <Setter Property="CornerRadius" Value="4" />
-    <Setter Property="BorderThickness" Value="2" />
-    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Width" Value="204" />
+    <Setter Property="Height" Value="204" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
   </Style>
-  <Style Selector="Button.connect:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+  <Style Selector="Button.connect /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="Panel.dialRound">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <!-- Знак вместо значка питания; подпись действия уходит под кнопку. -->
+  <Style Selector="c|Emblem.emblem">
+    <Setter Property="IsVisible" Value="True" />
+    <Setter Property="Width" Value="204" />
+    <Setter Property="Height" Value="204" />
+  </Style>
+  <Style Selector="StackPanel.powerFace">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+  <Style Selector="TextBlock.posterAction">
+    <Setter Property="IsVisible" Value="True" />
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+  </Style>
+
+  <!--
+    Отклик на курсор. Без него знак остаётся картинкой: рука понимает, что
+    элемент живой, именно по тому, что он отвечает на наведение.
+  -->
+  <Style Selector="Button.connect:pointerover c|Emblem.emblem">
+    <Setter Property="FieldBrush" Value="{DynamicResource SurfaceRaisedBrush}" />
   </Style>
 
   <Style Selector="Border.lane">
@@ -104,11 +139,52 @@
     <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
   </Style>
   <Style Selector="Border.soon > TextBlock">
-    <Setter Property="Foreground" Value="#F2EADA" />
+    <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+  </Style>
+
+  <!--
+    Показатели на обзоре и пилюли-метки. Раньше их скругление стояло в разметке
+    страницы, куда оформление не дотягивалось, и на плакате они оставались
+    мягкими среди прямых углов.
+  -->
+  <Style Selector="Border.stat">
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="Border.tag">
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <Style Selector="Border.chip">
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <!-- Кнопки окна импорта. -->
+  <Style Selector="Button.primary">
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+
+  <Style Selector="Button.secondary">
+    <Setter Property="CornerRadius" Value="0" />
   </Style>
 
   <Style Selector="Button.skin">
     <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <!--
+    В кружке выбора вместо галочки звезда. Только звезда: серп и молот на
+    четырнадцати пикселях превращаются в пятно, и узнаётся там ровно контур.
+    Полная эмблема живёт на кнопке подключения, где ей хватает размера.
+  -->
+  <Style Selector="Path.markCheck">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+  <Style Selector="Path.markStar">
+    <Setter Property="IsVisible" Value="True" />
   </Style>
 
   <Style Selector="TextBox">
