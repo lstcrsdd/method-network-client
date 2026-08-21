@@ -29,8 +29,8 @@
   <Border CornerRadius="12" ClipToBounds="True">
     <Border.Background>
       <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
-        <GradientStop Color="{StaticResource BackgroundTopColor}" Offset="0" />
-        <GradientStop Color="{StaticResource BackgroundBottomColor}" Offset="1" />
+        <GradientStop Color="{DynamicResource BackgroundTopColor}" Offset="0" />
+        <GradientStop Color="{DynamicResource BackgroundBottomColor}" Offset="1" />
       </LinearGradientBrush>
     </Border.Background>
 
@@ -39,7 +39,7 @@
       <!-- Полоса заголовка: тонкая, перетаскиваемая, имя по центру. -->
       <Grid Grid.Row="0" Name="TitleBar" Background="Transparent" PointerPressed="OnTitleBarPressed">
         <TextBlock Text="Method" FontSize="13" FontWeight="SemiBold"
-                   Foreground="{StaticResource TextSecondaryBrush}"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
                    HorizontalAlignment="Center" VerticalAlignment="Center" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
           <Button Classes="chrome" Content="&#xE921;" FontFamily="Segoe MDL2 Assets"
@@ -55,26 +55,26 @@
 
         <!-- Боковая панель -->
         <Border Grid.Column="0" BorderThickness="0,0,1,0"
-                BorderBrush="{StaticResource GlassStrokeBrush}"
-                Background="#08FFFFFF">
+                BorderBrush="{DynamicResource GlassStrokeBrush}"
+                Background="{DynamicResource SidebarBrush}">
           <Grid RowDefinitions="Auto,*,Auto" Margin="14,4,14,14">
 
             <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="6,4,0,18">
               <Border Width="34" Height="34" CornerRadius="9"
-                      Background="{StaticResource SurfaceRaisedBrush}">
-                <Path Classes="icon" Data="{StaticResource IconBrand}"
-                      Stroke="{StaticResource TextPrimaryBrush}"
+                      Background="{DynamicResource SurfaceRaisedBrush}">
+                <Path Classes="icon" Data="{DynamicResource IconBrand}"
+                      Stroke="{DynamicResource TextPrimaryBrush}"
                       HorizontalAlignment="Center" VerticalAlignment="Center" />
               </Border>
               <TextBlock Text="Method" FontSize="17" FontWeight="Bold"
-                         Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                         Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
             </StackPanel>
 
             <StackPanel Grid.Row="1" Spacing="4">
               <Button Classes="nav" Classes.active="{Binding IsOverview}"
                       Command="{Binding GoToCommand}" CommandParameter="Overview">
                 <StackPanel Orientation="Horizontal" Spacing="11">
-                  <Path Classes="icon" Data="{StaticResource IconHome}" Stroke="{Binding $parent[Button].Foreground}" />
+                  <Path Classes="icon" Data="{DynamicResource IconHome}" Stroke="{Binding $parent[Button].Foreground}" />
                   <TextBlock Text="Обзор" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
@@ -82,7 +82,7 @@
               <Button Classes="nav" Classes.active="{Binding IsServers}"
                       Command="{Binding GoToCommand}" CommandParameter="Servers">
                 <StackPanel Orientation="Horizontal" Spacing="11">
-                  <Path Classes="icon" Data="{StaticResource IconServers}" Stroke="{Binding $parent[Button].Foreground}" />
+                  <Path Classes="icon" Data="{DynamicResource IconServers}" Stroke="{Binding $parent[Button].Foreground}" />
                   <TextBlock Text="Серверы" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
@@ -90,7 +90,7 @@
               <Button Classes="nav" Classes.active="{Binding IsScenarios}"
                       Command="{Binding GoToCommand}" CommandParameter="Scenarios">
                 <StackPanel Orientation="Horizontal" Spacing="11">
-                  <Path Classes="icon" Data="{StaticResource IconScenarios}" Stroke="{Binding $parent[Button].Foreground}" />
+                  <Path Classes="icon" Data="{DynamicResource IconScenarios}" Stroke="{Binding $parent[Button].Foreground}" />
                   <TextBlock Text="Сценарии" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
@@ -98,7 +98,7 @@
               <Button Classes="nav" Classes.active="{Binding IsSettings}"
                       Command="{Binding GoToCommand}" CommandParameter="Settings">
                 <StackPanel Orientation="Horizontal" Spacing="11">
-                  <Path Classes="icon" Data="{StaticResource IconSettings}" Stroke="{Binding $parent[Button].Foreground}" />
+                  <Path Classes="icon" Data="{DynamicResource IconSettings}" Stroke="{Binding $parent[Button].Foreground}" />
                   <TextBlock Text="Настройки" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
@@ -111,7 +111,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="8">
                   <Ellipse Width="8" Height="8" VerticalAlignment="Center" Fill="{Binding StatusBrush}" />
                   <TextBlock Text="{Binding StatusText}" FontSize="13"
-                             Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                             Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                 </StackPanel>
               </StackPanel>
             </Border>

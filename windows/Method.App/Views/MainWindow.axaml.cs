@@ -16,10 +16,15 @@ namespace Method.App.Views;
 
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    // Нужен сборщику превью Avalonia; в работе окно создаётся с готовой моделью.
+    public MainWindow() : this(new MainViewModel())
+    {
+    }
+
+    public MainWindow(MainViewModel model)
     {
         AvaloniaXamlLoader.Load(this);
-        DataContext = new MainViewModel();
+        DataContext = model;
     }
 
     /// <summary>

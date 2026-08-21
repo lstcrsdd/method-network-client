@@ -23,6 +23,49 @@
 
       <TextBlock Classes="pageTitle" Text="Настройки" Margin="0,0,0,22" />
 
+      <TextBlock Classes="sectionLabel" Text="ОФОРМЛЕНИЕ" Margin="4,0,0,10" />
+
+      <!--
+        Два оформления одного клиента. Различаются только видом: логика, туннель
+        и настройки у них общие, переключение мгновенное и ничего не перезапускает.
+      -->
+      <Grid ColumnDefinitions="*,*" Margin="0,0,0,4">
+        <Button Classes="skin" Classes.selected="{Binding IsBaseSkin}" Margin="0,0,7,0"
+                Command="{Binding SetSkinCommand}" CommandParameter="Base">
+          <StackPanel Spacing="10">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <Border Width="26" Height="26" CornerRadius="13" Background="#29C940" />
+              <Border Width="26" Height="26" CornerRadius="13" Background="#1A1A1A" />
+              <Border Width="26" Height="26" CornerRadius="13" Background="#FFFFFF" Opacity="0.85" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <TextBlock Text="Основное" FontSize="13.5" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
+              <TextBlock Text="Тёмное, зелёный акцент — как на других платформах" FontSize="11.5"
+                         TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" />
+            </StackPanel>
+          </StackPanel>
+        </Button>
+
+        <Button Grid.Column="1" Classes="skin" Classes.selected="{Binding IsPosterSkin}" Margin="7,0,0,0"
+                Command="{Binding SetSkinCommand}" CommandParameter="Poster">
+          <StackPanel Spacing="10">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <Border Width="26" Height="26" Background="#D42B1F" />
+              <Border Width="26" Height="26" Background="#14110F" />
+              <Border Width="26" Height="26" Background="#F2EADA" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <TextBlock Text="Плакатное" FontSize="13.5" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
+              <TextBlock Text="Красное, прямые углы, типографика конструктивистского плаката"
+                         FontSize="11.5" TextWrapping="Wrap"
+                         Foreground="{DynamicResource TextSecondaryBrush}" />
+            </StackPanel>
+          </StackPanel>
+        </Button>
+      </Grid>
+
       <!-- Привилегированная часть идёт первой: без неё туннель не поднимется вовсе. -->
       <TextBlock Classes="sectionLabel" Text="ПРИВИЛЕГИРОВАННАЯ ЧАСТЬ" Margin="4,0,0,10" />
 
@@ -30,9 +73,9 @@
         <Grid ColumnDefinitions="*,Auto">
           <StackPanel Spacing="4">
             <TextBlock Text="{Binding HostStatusText}" FontSize="13.5"
-                       Foreground="{StaticResource TextPrimaryBrush}" />
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
             <TextBlock TextWrapping="Wrap" MaxWidth="520" FontSize="12" HorizontalAlignment="Left"
-                       Foreground="{StaticResource TextSecondaryBrush}"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
                        Text="Создаёт адаптер туннеля и правит маршруты — на это нужны права. Ставится один раз, дальше клиент работает под обычным пользователем." />
           </StackPanel>
 
@@ -56,51 +99,51 @@
           <Grid ColumnDefinitions="*,Auto" Margin="18,16">
             <StackPanel Spacing="4">
               <TextBlock Text="Блокировать трафик мимо туннеля" FontSize="13.5"
-                         Foreground="{StaticResource TextPrimaryBrush}" />
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
               <TextBlock TextWrapping="Wrap" MaxWidth="520" FontSize="12" HorizontalAlignment="Left"
-                         Foreground="{StaticResource TextSecondaryBrush}"
+                         Foreground="{DynamicResource TextSecondaryBrush}"
                          Text="Если туннель упадёт, интернет отключится, а не пойдёт открытым" />
             </StackPanel>
             <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
                           IsChecked="{Binding KillSwitchEnabled}" />
           </Grid>
 
-          <Border Height="1" Background="{StaticResource GlassStrokeBrush}" Margin="18,0" />
+          <Border Height="1" Background="{DynamicResource GlassStrokeBrush}" Margin="18,0" />
 
           <Grid ColumnDefinitions="*,Auto" Margin="18,16">
             <StackPanel Spacing="4">
               <TextBlock Text="Запретить DNS в локальную сеть" FontSize="13.5"
-                         Foreground="{StaticResource TextPrimaryBrush}" />
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
               <TextBlock TextWrapping="Wrap" MaxWidth="520" FontSize="12" HorizontalAlignment="Left"
-                         Foreground="{StaticResource TextSecondaryBrush}"
+                         Foreground="{DynamicResource TextSecondaryBrush}"
                          Text="Закрывает утечку имён на роутер. Вместе с ней перестанут открываться внутренние имена локальной сети" />
             </StackPanel>
             <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
                           IsChecked="{Binding BlockLanDns}" />
           </Grid>
 
-          <Border Height="1" Background="{StaticResource GlassStrokeBrush}" Margin="18,0" />
+          <Border Height="1" Background="{DynamicResource GlassStrokeBrush}" Margin="18,0" />
 
           <Grid ColumnDefinitions="*,Auto" Margin="18,16">
             <StackPanel Spacing="4">
               <TextBlock Text="Автопереподключение" FontSize="13.5"
-                         Foreground="{StaticResource TextPrimaryBrush}" />
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
               <TextBlock TextWrapping="Wrap" MaxWidth="520" FontSize="12" HorizontalAlignment="Left"
-                         Foreground="{StaticResource TextSecondaryBrush}"
+                         Foreground="{DynamicResource TextSecondaryBrush}"
                          Text="После сна и при смене сети туннель поднимается сам" />
             </StackPanel>
             <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
                           IsChecked="{Binding AutoReconnect}" />
           </Grid>
 
-          <Border Height="1" Background="{StaticResource GlassStrokeBrush}" Margin="18,0" />
+          <Border Height="1" Background="{DynamicResource GlassStrokeBrush}" Margin="18,0" />
 
           <Grid ColumnDefinitions="*,Auto" Margin="18,16">
             <StackPanel Spacing="4">
               <TextBlock Text="Запускать при входе в систему" FontSize="13.5"
-                         Foreground="{StaticResource TextPrimaryBrush}" />
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
               <TextBlock TextWrapping="Wrap" MaxWidth="520" FontSize="12" HorizontalAlignment="Left"
-                         Foreground="{StaticResource TextSecondaryBrush}"
+                         Foreground="{DynamicResource TextSecondaryBrush}"
                          Text="Окно открывается само. Туннель от этой настройки не зависит" />
             </StackPanel>
             <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
@@ -121,7 +164,7 @@
           </Grid>
 
           <TextBlock Name="SubscriptionStatus" FontSize="12" TextWrapping="Wrap"
-                     Foreground="{StaticResource TextSecondaryBrush}" IsVisible="False" />
+                     Foreground="{DynamicResource TextSecondaryBrush}" IsVisible="False" />
 
           <ItemsControl ItemsSource="{Binding Subscriptions}">
             <ItemsControl.ItemTemplate>
@@ -130,27 +173,27 @@
                   <Grid ColumnDefinitions="*,Auto,Auto">
                     <StackPanel Spacing="3">
                       <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
-                                 Foreground="{StaticResource TextPrimaryBrush}"
+                                 Foreground="{DynamicResource TextPrimaryBrush}"
                                  TextTrimming="CharacterEllipsis" />
                       <TextBlock Text="{Binding Url}" FontSize="11"
-                                 Foreground="{StaticResource TextMutedBrush}"
+                                 Foreground="{DynamicResource TextMutedBrush}"
                                  TextTrimming="CharacterEllipsis" />
                     </StackPanel>
 
                     <Button Grid.Column="1" Classes="quiet" ToolTip.Tip="Обновить" VerticalAlignment="Center"
                             Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RefreshSubscriptionCommand}"
                             CommandParameter="{Binding}">
-                      <Path Data="{StaticResource IconRefresh}" Stretch="Uniform" Width="15" Height="15"
+                      <Path Data="{DynamicResource IconRefresh}" Stretch="Uniform" Width="15" Height="15"
                             StrokeThickness="1.8" StrokeLineCap="Round"
-                            Stroke="{StaticResource TextSecondaryBrush}" />
+                            Stroke="{DynamicResource TextSecondaryBrush}" />
                     </Button>
 
                     <Button Grid.Column="2" Classes="quiet" ToolTip.Tip="Удалить" VerticalAlignment="Center"
                             Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RemoveSubscriptionCommand}"
                             CommandParameter="{Binding}">
-                      <Path Data="{StaticResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
+                      <Path Data="{DynamicResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
                             StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
-                            Stroke="{StaticResource ErrorBrush}" />
+                            Stroke="{DynamicResource ErrorBrush}" />
                     </Button>
                   </Grid>
                 </Border>
@@ -167,15 +210,15 @@
           <Grid ColumnDefinitions="*,Auto">
             <StackPanel Spacing="3">
               <TextBlock Text="Идентификатор" FontSize="13.5"
-                         Foreground="{StaticResource TextPrimaryBrush}" />
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
               <TextBlock Name="HwidText" FontSize="11.5" FontFamily="Consolas,monospace"
-                         Foreground="{StaticResource TextMutedBrush}" />
+                         Foreground="{DynamicResource TextMutedBrush}" />
             </StackPanel>
             <Button Grid.Column="1" Classes="quiet" Content="Скопировать" VerticalAlignment="Center"
                     Click="OnCopyHwid" />
           </Grid>
           <TextBlock TextWrapping="Wrap" FontSize="12"
-                     Foreground="{StaticResource TextMutedBrush}"
+                     Foreground="{DynamicResource TextMutedBrush}"
                      Text="Отправляется в панель при загрузке подписки — по нему панель считает устройства." />
         </StackPanel>
       </Border>
@@ -186,12 +229,12 @@
         <StackPanel Spacing="8">
           <Grid ColumnDefinitions="*,Auto">
             <TextBlock Text="Method" FontSize="13.5" FontWeight="SemiBold"
-                       Foreground="{StaticResource TextPrimaryBrush}" />
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
             <TextBlock Grid.Column="1" Name="VersionText" FontSize="12.5"
-                       Foreground="{StaticResource TextSecondaryBrush}" />
+                       Foreground="{DynamicResource TextSecondaryBrush}" />
           </Grid>
           <TextBlock TextWrapping="Wrap" FontSize="12"
-                     Foreground="{StaticResource TextMutedBrush}"
+                     Foreground="{DynamicResource TextMutedBrush}"
                      Text="Свободная программа под GNU GPL версии 3 или более поздней. Ядро sing-box запускается отдельным процессом и распространяется на своих условиях." />
         </StackPanel>
       </Border>

@@ -7,10 +7,11 @@
   Foundation, either version 3 of the License, or (at your option) any later
   version. See LICENSE for details.
 
-  Раздел показывает то, что клиент делает на самом деле, а не то, что он будет
-  уметь. Правила здесь пока неизменяемые — ровно три, и ровно они и попадают в
-  конфигурацию движка. Редактируемый список появится вместе с движком выбора
-  маршрута; рисовать его раньше значило бы обещать поведение, которого нет.
+  Раздел показывает то, что клиент делает на самом деле: три правила, и ровно
+  они попадают в конфигурацию движка. Управление нарисовано, но не подключено —
+  и об этом сказано прямо, значком «скоро» и выключенными кнопками. Показать
+  рабочие на вид элементы, которые ничего не делают, нельзя: человек нажмёт,
+  ничего не произойдёт, и решит, что сломан клиент.
 -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -19,74 +20,154 @@
              x:Class="Method.App.Views.Pages.ScenariosPage"
              x:DataType="vm:MainViewModel">
 
+  <UserControl.Styles>
+    <!-- Выбор пути: выглядит как список, но пока не раскрывается. -->
+    <Style Selector="Border.lane">
+      <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="10,5" />
+    </Style>
+
+    <Style Selector="Border.soon">
+      <Setter Property="Background" Value="{DynamicResource ChipBrush}" />
+      <Setter Property="CornerRadius" Value="5" />
+      <Setter Property="Padding" Value="7,2" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+  </UserControl.Styles>
+
   <ScrollViewer VerticalScrollBarVisibility="Auto" c:SmoothScroll.Enabled="True">
-  <Grid Margin="40,10,40,32" RowDefinitions="Auto,Auto,Auto">
+    <StackPanel Margin="40,10,40,32">
 
-    <TextBlock Grid.Row="0" Classes="pageTitle" Text="Сценарии" />
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,0,0,8">
+        <TextBlock Classes="pageTitle" Text="Сценарии" VerticalAlignment="Center" />
+        <Border Grid.Column="1" Classes="soon" Margin="12,6,0,0">
+          <TextBlock Text="СКОРО" FontSize="9.5" LetterSpacing="0.8"
+                     Foreground="{DynamicResource TextSecondaryBrush}" />
+        </Border>
+        <Button Grid.Column="3" Classes="round" IsEnabled="False" VerticalAlignment="Center"
+                ToolTip.Tip="Свои сценарии появятся вместе с выбором маршрута по качеству">
+          <Path Classes="icon" Data="{DynamicResource IconPlus}"
+                Stroke="{DynamicResource TextMutedBrush}" StrokeThickness="1.8" />
+        </Button>
+      </Grid>
 
-    <TextBlock Grid.Row="1" Classes="subtitle" Margin="0,8,0,22" TextWrapping="Wrap" MaxWidth="640"
-               HorizontalAlignment="Left"
-               Text="Правило называет путь, а не сервер. Какой маршрут ему сегодня соответствует — решает клиент." />
+      <TextBlock Classes="subtitle" Margin="0,0,0,22" TextWrapping="Wrap" MaxWidth="640"
+                 HorizontalAlignment="Left"
+                 Text="Правило называет путь, а не сервер. Какой маршрут ему сегодня соответствует — решает клиент." />
 
-    <StackPanel Grid.Row="2" Spacing="8">
+      <StackPanel Spacing="8">
 
-      <Border Classes="row" Padding="16,14">
-        <Grid ColumnDefinitions="Auto,*,Auto">
-          <Path Grid.Column="0" Data="{StaticResource IconLock}" Stretch="Uniform"
-                Width="18" Height="18" StrokeThickness="1.6" StrokeLineCap="Round"
-                StrokeJoin="Round" Stroke="{StaticResource ConnectedBrush}"
-                VerticalAlignment="Center" Margin="0,0,12,0" />
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-            <TextBlock Text="Весь трафик" FontSize="13.5" FontWeight="SemiBold"
-                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
-            <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="5" Padding="7,2"
-                    VerticalAlignment="Center">
-              <TextBlock Text="всё остальное" FontSize="9.5"
-                         Foreground="{StaticResource TextSecondaryBrush}" />
+        <Border Classes="row" Padding="16,13">
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+            <Path Grid.Column="0" Data="{DynamicResource IconLock}" Stretch="Uniform"
+                  Width="18" Height="18" StrokeThickness="1.6" StrokeLineCap="Round"
+                  StrokeJoin="Round" Stroke="{DynamicResource ConnectedBrush}"
+                  VerticalAlignment="Center" Margin="0,0,12,0" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+              <TextBlock Text="Весь трафик" FontSize="13.5" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+              <Border Background="{DynamicResource SurfaceRaisedBrush}" CornerRadius="5" Padding="7,2"
+                      VerticalAlignment="Center">
+                <TextBlock Text="всё остальное" FontSize="9.5"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+              </Border>
+            </StackPanel>
+
+            <Border Grid.Column="2" Classes="lane" VerticalAlignment="Center" Margin="0,0,8,0">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="через туннель" FontSize="12"
+                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                <Path Data="{DynamicResource IconChevron}" Stretch="Uniform" Width="9" Height="9"
+                      StrokeThickness="2" StrokeLineCap="Round" StrokeJoin="Round"
+                      Stroke="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
+              </StackPanel>
             </Border>
-          </StackPanel>
-          <TextBlock Grid.Column="2" Text="через туннель" FontSize="12"
-                     Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
-        </Grid>
-      </Border>
 
-      <Border Classes="row" Padding="16,14">
-        <Grid ColumnDefinitions="Auto,*,Auto">
-          <Path Grid.Column="0" Data="{StaticResource IconArrowOut}" Stretch="Uniform"
-                Width="18" Height="18" StrokeThickness="1.6" StrokeLineCap="Round"
-                StrokeJoin="Round" Stroke="{StaticResource WarningBrush}"
-                VerticalAlignment="Center" Margin="0,0,12,0" />
-          <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
-            <TextBlock Text="Локальная сеть" FontSize="13.5" FontWeight="SemiBold"
-                       Foreground="{StaticResource TextPrimaryBrush}" />
-            <TextBlock Text="Принтеры, хранилища и шлюз в домашней сети" FontSize="11.5"
-                       Foreground="{StaticResource TextMutedBrush}" />
-          </StackPanel>
-          <TextBlock Grid.Column="2" Text="мимо туннеля" FontSize="12"
-                     Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
-        </Grid>
-      </Border>
+            <Button Grid.Column="3" Classes="quiet" IsEnabled="False" VerticalAlignment="Center">
+              <Path Data="{DynamicResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
+                    StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                    Stroke="{DynamicResource TextMutedBrush}" />
+            </Button>
+          </Grid>
+        </Border>
 
-      <Border Classes="row" Padding="16,14">
-        <Grid ColumnDefinitions="Auto,*,Auto">
-          <Path Grid.Column="0" Data="{StaticResource IconArrowOut}" Stretch="Uniform"
-                Width="18" Height="18" StrokeThickness="1.6" StrokeLineCap="Round"
-                StrokeJoin="Round" Stroke="{StaticResource WarningBrush}"
-                VerticalAlignment="Center" Margin="0,0,12,0" />
-          <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
-            <TextBlock Text="Адрес самого сервера" FontSize="13.5" FontWeight="SemiBold"
-                       Foreground="{StaticResource TextPrimaryBrush}" />
-            <TextBlock Text="Иначе пакеты к нему ушли бы в туннель, который они же и поднимают"
-                       FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" />
-          </StackPanel>
-          <TextBlock Grid.Column="2" Text="мимо туннеля" FontSize="12"
-                     Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
-        </Grid>
-      </Border>
+        <Border Classes="row" Padding="16,13">
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+            <Path Grid.Column="0" Data="{DynamicResource IconArrowOut}" Stretch="Uniform"
+                  Width="18" Height="18" StrokeThickness="1.6" StrokeLineCap="Round"
+                  StrokeJoin="Round" Stroke="{DynamicResource WarningBrush}"
+                  VerticalAlignment="Center" Margin="0,0,12,0" />
 
-      <TextBlock Classes="subtitle" Margin="4,14,0,0" TextWrapping="Wrap" MaxWidth="640"
-                 Text="Пока правила неизменяемые — это ровно то, что уходит в конфигурацию движка. Свои сценарии появятся вместе с выбором маршрута по качеству." />
+            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+              <TextBlock Text="Локальная сеть" FontSize="13.5" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
+              <TextBlock Text="Принтеры, хранилища и шлюз в домашней сети" FontSize="11.5"
+                         Foreground="{DynamicResource TextMutedBrush}" />
+            </StackPanel>
+
+            <Border Grid.Column="2" Classes="lane" VerticalAlignment="Center" Margin="0,0,8,0">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="мимо туннеля" FontSize="12"
+                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                <Path Data="{DynamicResource IconChevron}" Stretch="Uniform" Width="9" Height="9"
+                      StrokeThickness="2" StrokeLineCap="Round" StrokeJoin="Round"
+                      Stroke="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+
+            <Button Grid.Column="3" Classes="quiet" IsEnabled="False" VerticalAlignment="Center">
+              <Path Data="{DynamicResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
+                    StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                    Stroke="{DynamicResource TextMutedBrush}" />
+            </Button>
+          </Grid>
+        </Border>
+
+        <Border Classes="row" Padding="16,13">
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+            <Path Grid.Column="0" Data="{DynamicResource IconArrowOut}" Stretch="Uniform"
+                  Width="18" Height="18" StrokeThickness="1.6" StrokeLineCap="Round"
+                  StrokeJoin="Round" Stroke="{DynamicResource WarningBrush}"
+                  VerticalAlignment="Center" Margin="0,0,12,0" />
+
+            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+              <TextBlock Text="Адрес самого сервера" FontSize="13.5" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
+              <TextBlock Text="Иначе пакеты к нему ушли бы в туннель, который они же и поднимают"
+                         FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}" />
+            </StackPanel>
+
+            <Border Grid.Column="2" Classes="lane" VerticalAlignment="Center" Margin="0,0,8,0">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="мимо туннеля" FontSize="12"
+                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                <Path Data="{DynamicResource IconChevron}" Stretch="Uniform" Width="9" Height="9"
+                      StrokeThickness="2" StrokeLineCap="Round" StrokeJoin="Round"
+                      Stroke="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+
+            <Button Grid.Column="3" Classes="quiet" IsEnabled="False" VerticalAlignment="Center">
+              <Path Data="{DynamicResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
+                    StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                    Stroke="{DynamicResource TextMutedBrush}" />
+            </Button>
+          </Grid>
+        </Border>
+      </StackPanel>
+
+      <Border Classes="card" Padding="16,14" Margin="0,20,0,0">
+        <StackPanel Spacing="6">
+          <TextBlock Text="Пока правила неизменяемые" FontSize="13"
+                     Foreground="{DynamicResource TextPrimaryBrush}" />
+          <TextBlock Classes="subtitle" TextWrapping="Wrap" MaxWidth="640" HorizontalAlignment="Left"
+                     Text="Это ровно то, что уходит в конфигурацию движка сейчас. Свои сценарии заработают вместе с выбором маршрута по качеству: правило будет называть путь, а какой узел ему сегодня соответствует — решать клиенту." />
+        </StackPanel>
+      </Border>
     </StackPanel>
-  </Grid>
   </ScrollViewer>
 </UserControl>

@@ -30,6 +30,9 @@ public sealed partial class MainViewModel
     /// <summary>Узлы, добавленные ссылкой вручную. Обновлением они не трогаются.</summary>
     public ObservableCollection<ServerItem> LooseServers { get; } = [];
 
+    /// <summary>Они же, разложенные по странам.</summary>
+    public ObservableCollection<CountryGroup> LooseCountries { get; } = [];
+
     public bool HasSubscriptions => Subscriptions.Count > 0;
 
     public bool HasLooseServers => LooseServers.Count > 0;
@@ -206,7 +209,7 @@ public sealed partial class MainViewModel
                          ?? Servers.FirstOrDefault();
     }
 
-    /// <summary>Разложить общий список узлов по группам.</summary>
+    /// <summary>Разложить общий список узлов по подпискам, а внутри — по странам.</summary>
     private void RebuildGroups()
     {
         foreach (var group in Subscriptions)
@@ -214,12 +217,39 @@ public sealed partial class MainViewModel
             group.Servers.Clear();
             foreach (var server in Servers.Where(s => s.Stored.SubscriptionId == group.Id))
                 group.Servers.Add(server);
+
+            Regroup(group.Countries, group.Servers);
             group.NotifyServersChanged();
         }
 
         LooseServers.Clear();
         foreach (var server in Servers.Where(s => s.Stored.SubscriptionId is null))
             LooseServers.Add(server);
+
+        Regroup(LooseCountries, LooseServers);
+    }
+
+    /// <summary>
+    /// Собрать узлы по странам. Внутри страны порядок по имени, а не по тому, в
+    /// каком его прислал провайдер: у него он по протоколам, и два соседних узла
+    /// одного места оказывались в разных концах списка.
+    /// </summary>
+    private static void Regroup(ObservableCollection<CountryGroup> target, IEnumerable<ServerItem> servers)
+    {
+        var groups = servers
+            .GroupBy(s => s.CountryCode)
+            .Select(g =>
+            {
+                var group = new CountryGroup(g.Key, g.First().CountryName);
+                foreach (var server in g.OrderBy(s => s.Name, StringComparer.CurrentCulture))
+                    group.Servers.Add(server);
+                return group;
+            })
+            .OrderBy(g => g.SortKey, StringComparer.CurrentCulture)
+            .ToList();
+
+        target.Clear();
+        foreach (var group in groups) target.Add(group);
     }
 
     private void NotifyGroupsChanged()

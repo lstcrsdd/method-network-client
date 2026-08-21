@@ -10,6 +10,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Method.App.ViewModels"
+             xmlns:c="using:Method.App.Controls"
              x:Class="Method.App.Views.Pages.OverviewPage"
              x:DataType="vm:MainViewModel">
 
@@ -19,10 +20,10 @@
       <Setter Property="Width" Value="152" />
       <Setter Property="Height" Value="152" />
       <Setter Property="CornerRadius" Value="76" />
-      <Setter Property="Background" Value="{StaticResource SurfaceRaisedBrush}" />
-      <Setter Property="BorderBrush" Value="{StaticResource GlassStrokeBrush}" />
+      <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
       <Setter Property="HorizontalContentAlignment" Value="Center" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="Transitions">
@@ -32,8 +33,8 @@
       </Setter>
     </Style>
     <Style Selector="Button.connect:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="{StaticResource SurfaceRaisedBrush}" />
-      <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+      <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
     </Style>
     <!-- Лёгкое сжатие при нажатии: движение подтверждает, что кнопка сработала. -->
     <Style Selector="Button.connect:pressed">
@@ -60,20 +61,20 @@
     </Style>
 
     <Style Selector="Border.stat">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+      <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
       <Setter Property="CornerRadius" Value="14" />
       <Setter Property="Padding" Value="22,14" />
       <Setter Property="MinWidth" Value="150" />
     </Style>
   </UserControl.Styles>
 
-  <Grid RowDefinitions="*,Auto,Auto,Auto,*" Margin="40,10,40,32">
+  <Grid RowDefinitions="*,Auto,Auto,Auto,Auto,*" Margin="40,10,40,24">
 
     <!-- Циферблат и кнопка -->
     <Panel Grid.Row="1" Height="300">
       <!-- Гало под кнопкой -->
       <Ellipse Classes="glow" Width="230" Height="230"
-               Fill="{StaticResource ConnectedBrush}"
+               Fill="{DynamicResource ConnectedBrush}"
                IsVisible="{Binding IsConnected}" />
 
       <!--
@@ -82,18 +83,18 @@
         десятков и никакой возни с углами.
       -->
       <Ellipse Width="292" Height="292" StrokeThickness="9"
-               Stroke="{StaticResource GlassStrokeBrush}"
+               Stroke="{DynamicResource GlassStrokeBrush}"
                StrokeDashArray="0.10,0.60" StrokeLineCap="Round" />
 
       <Ellipse Width="292" Height="292" StrokeThickness="9"
-               Stroke="{StaticResource ConnectedBrush}"
+               Stroke="{DynamicResource ConnectedBrush}"
                StrokeDashArray="0.10,0.60" StrokeLineCap="Round"
                Opacity="0.75" IsVisible="{Binding IsConnected}" />
 
       <Button Classes="connect" Command="{Binding ToggleCommand}"
               HorizontalAlignment="Center" VerticalAlignment="Center">
         <StackPanel Spacing="9">
-          <Path Data="{StaticResource IconPower}" Stretch="Uniform" Width="30" Height="30"
+          <Path Data="{DynamicResource IconPower}" Stretch="Uniform" Width="30" Height="30"
                 StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"
                 Stroke="{Binding $parent[Button].Foreground}"
                 HorizontalAlignment="Center" />
@@ -106,12 +107,12 @@
     <!-- Что сейчас выбрано и куда добавлять -->
     <StackPanel Grid.Row="2" Spacing="4" Margin="0,16,0,0" HorizontalAlignment="Center">
       <TextBlock Text="{Binding SelectedName}" FontSize="13.5" HorizontalAlignment="Center"
-                 Foreground="{StaticResource TextPrimaryBrush}"
+                 Foreground="{DynamicResource TextPrimaryBrush}"
                  IsVisible="{Binding HasServers}" />
       <Button Classes="quiet" Command="{Binding GoToCommand}" CommandParameter="Servers"
               HorizontalAlignment="Center">
         <StackPanel Orientation="Horizontal" Spacing="7">
-          <Path Data="{StaticResource IconPlus}" Stretch="Uniform" Width="15" Height="15"
+          <Path Data="{DynamicResource IconPlus}" Stretch="Uniform" Width="15" Height="15"
                 StrokeThickness="2" StrokeLineCap="Round"
                 Stroke="{Binding $parent[Button].Foreground}" VerticalAlignment="Center" />
           <TextBlock Text="Добавить конфигурацию" VerticalAlignment="Center" />
@@ -127,7 +128,7 @@
           <TextBlock Classes="sectionLabel" Text="ВРЕМЯ" HorizontalAlignment="Center" />
           <TextBlock Text="{Binding Elapsed}" FontSize="19" FontWeight="SemiBold"
                      HorizontalAlignment="Center"
-                     Foreground="{StaticResource TextPrimaryBrush}" />
+                     Foreground="{DynamicResource TextPrimaryBrush}" />
         </StackPanel>
       </Border>
       <Border Classes="stat">
@@ -135,7 +136,7 @@
           <TextBlock Classes="sectionLabel" Text="IP-АДРЕС" HorizontalAlignment="Center" />
           <TextBlock Text="{Binding ExternalIp}" FontSize="19" FontWeight="SemiBold"
                      HorizontalAlignment="Center"
-                     Foreground="{StaticResource TextPrimaryBrush}" />
+                     Foreground="{DynamicResource TextPrimaryBrush}" />
         </StackPanel>
       </Border>
       <Border Classes="stat">
@@ -143,16 +144,50 @@
           <TextBlock Classes="sectionLabel" Text="ПРОТОКОЛ" HorizontalAlignment="Center" />
           <TextBlock Text="{Binding ProtocolName}" FontSize="19" FontWeight="SemiBold"
                      HorizontalAlignment="Center"
-                     Foreground="{StaticResource TextPrimaryBrush}" />
+                     Foreground="{DynamicResource TextPrimaryBrush}" />
         </StackPanel>
       </Border>
     </StackPanel>
 
+    <!--
+      Трафик. Показывается, только когда есть чем мерить: туннель, поднятый до
+      открытия окна, мы подхватываем, но секрета к его статистике у нас нет, и
+      нули на этом месте читались бы как «трафика нет».
+    -->
+    <Border Grid.Row="4" Classes="card" Padding="20,16" Margin="0,20,0,0"
+            MaxWidth="480" HorizontalAlignment="Center" VerticalAlignment="Top"
+            IsVisible="{Binding TrafficAvailable}">
+      <StackPanel Spacing="12">
+        <Grid ColumnDefinitions="*,*,*">
+          <StackPanel Spacing="4">
+            <TextBlock Classes="sectionLabel" Text="ПРИЁМ" />
+            <TextBlock Text="{Binding DownSpeed}" FontSize="15" FontWeight="SemiBold"
+                       Foreground="{DynamicResource ConnectedBrush}" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Spacing="4">
+            <TextBlock Classes="sectionLabel" Text="ОТДАЧА" />
+            <TextBlock Text="{Binding UpSpeed}" FontSize="15" FontWeight="SemiBold"
+                       Foreground="{DynamicResource AccentBrush}" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Spacing="4">
+            <TextBlock Classes="sectionLabel" Text="ЗА СЕССИЮ" />
+            <TextBlock Text="{Binding SessionVolume}" FontSize="15" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+          </StackPanel>
+        </Grid>
+
+        <Panel Height="46">
+          <c:Sparkline Values="{Binding DownHistoryView}" Stroke="{DynamicResource ConnectedBrush}" />
+          <c:Sparkline Values="{Binding UpHistoryView}" Stroke="{DynamicResource AccentBrush}" />
+        </Panel>
+      </StackPanel>
+    </Border>
+
     <!-- Ошибка или предупреждение. Молчать здесь нельзя. -->
-    <TextBlock Grid.Row="4" Text="{Binding Detail}" Margin="0,22,0,0"
+    <TextBlock Grid.Row="5" Text="{Binding Detail}" Margin="0,22,0,0"
                FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="520"
                HorizontalAlignment="Center" VerticalAlignment="Top"
-               Foreground="{StaticResource TextSecondaryBrush}"
+               Foreground="{DynamicResource TextSecondaryBrush}"
                IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
   </Grid>
 </UserControl>

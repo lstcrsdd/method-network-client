@@ -1,0 +1,50 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Плакатное оформление: красное, чёрное и бумажно-кремовое — палитра
+  конструктивистского плаката. Ключи те же, что в основном наборе, поэтому
+  разметке всё равно, какой из двух подставлен: меняется вид, а не устройство.
+
+  Государственных символов здесь нет и не будет — это язык типографики и
+  геометрии, а не чья-то символика.
+-->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Фон: почти чёрный с тёплым уходом, как типографская краска на бумаге. -->
+  <Color x:Key="BackgroundTopColor">#14110F</Color>
+  <Color x:Key="BackgroundBottomColor">#0B0908</Color>
+  <SolidColorBrush x:Key="BackgroundBrush" Color="#100E0C" />
+
+  <SolidColorBrush x:Key="SidebarBrush" Color="#1A1512" />
+  <SolidColorBrush x:Key="ChipBrush" Color="#EDE3D0" Opacity="0.10" />
+
+  <!-- Поверхности: теплее и плотнее, чем в основном наборе. -->
+  <SolidColorBrush x:Key="SurfaceBrush" Color="#EDE3D0" Opacity="0.05" />
+  <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#EDE3D0" Opacity="0.09" />
+  <SolidColorBrush x:Key="GlassStrokeBrush" Color="#EDE3D0" Opacity="0.14" />
+  <SolidColorBrush x:Key="HoverBrush" Color="#D42B1F" Opacity="0.16" />
+
+  <!-- Текст кремовый, а не белый: чистый белый на красном режет глаз. -->
+  <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F2EADA" />
+  <SolidColorBrush x:Key="TextSecondaryBrush" Color="#F2EADA" Opacity="0.52" />
+  <SolidColorBrush x:Key="TextMutedBrush" Color="#F2EADA" Opacity="0.34" />
+
+  <!--
+    Красный здесь — не тревога, а действие: им отмечено рабочее и включённое.
+    Поэтому под отказ отведён отдельный, заметно другой цвет, иначе «идёт как
+    надо» и «сломалось» слились бы в один сигнал.
+  -->
+  <Color x:Key="AccentColor">#D42B1F</Color>
+  <SolidColorBrush x:Key="AccentBrush" Color="#D42B1F" />
+  <SolidColorBrush x:Key="ConnectedBrush" Color="#D42B1F" />
+  <SolidColorBrush x:Key="WarningBrush" Color="#E0A526" />
+  <SolidColorBrush x:Key="ErrorBrush" Color="#FF7A4D" />
+
+</ResourceDictionary>

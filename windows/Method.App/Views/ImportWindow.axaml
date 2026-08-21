@@ -24,7 +24,7 @@
 
   <Window.Styles>
     <Style Selector="Button.primary">
-      <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+      <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
       <Setter Property="Foreground" Value="#0A0A0A" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="CornerRadius" Value="9" />
@@ -32,17 +32,17 @@
       <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
     <Style Selector="Button.secondary">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-      <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-      <Setter Property="BorderBrush" Value="{StaticResource GlassStrokeBrush}" />
+      <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="CornerRadius" Value="9" />
       <Setter Property="Padding" Value="18,8" />
     </Style>
     <Style Selector="TextBox">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-      <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-      <Setter Property="BorderBrush" Value="{StaticResource GlassStrokeBrush}" />
+      <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="CornerRadius" Value="10" />
       <Setter Property="Padding" Value="10" />
@@ -54,8 +54,8 @@
   <Border CornerRadius="12" ClipToBounds="True">
     <Border.Background>
       <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
-        <GradientStop Color="{StaticResource BackgroundTopColor}" Offset="0" />
-        <GradientStop Color="{StaticResource BackgroundBottomColor}" Offset="1" />
+        <GradientStop Color="{DynamicResource BackgroundTopColor}" Offset="0" />
+        <GradientStop Color="{DynamicResource BackgroundBottomColor}" Offset="1" />
       </LinearGradientBrush>
     </Border.Background>
 
@@ -64,11 +64,11 @@
       <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Name="TitleBar" Background="Transparent"
             PointerPressed="OnTitleBarPressed" Height="30">
         <TextBlock Text="Добавить серверы" FontSize="15" FontWeight="Bold"
-                   Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
       </Grid>
 
       <TextBlock Grid.Row="1" Margin="0,4,0,10" FontSize="12" TextWrapping="Wrap"
-                 Foreground="{StaticResource TextSecondaryBrush}"
+                 Foreground="{DynamicResource TextSecondaryBrush}"
                  Text="Вставьте ссылки hysteria2://, vless://, trojan:// или ss:// — можно несколько, по одной в строке." />
 
       <TextBox Grid.Row="2" Name="LinksBox" AcceptsReturn="True" TextWrapping="NoWrap"
@@ -76,7 +76,7 @@
                Watermark="hysteria2://…&#10;vless://…&#10;ss://…" />
 
       <TextBlock Grid.Row="3" Name="Summary" Margin="0,12,0,0" FontSize="12" TextWrapping="Wrap"
-                 Foreground="{StaticResource TextSecondaryBrush}" IsVisible="False" />
+                 Foreground="{DynamicResource TextSecondaryBrush}" IsVisible="False" />
 
       <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right"
                   Margin="0,14,0,0" Spacing="10">

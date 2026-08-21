@@ -25,9 +25,18 @@ public sealed partial class SubscriptionItem : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasAnnounce))]
     [NotifyPropertyChangedFor(nameof(StatusLine))]
     [NotifyPropertyChangedFor(nameof(StatusBrush))]
+    [NotifyPropertyChangedFor(nameof(HasTraffic))]
+    [NotifyPropertyChangedFor(nameof(TrafficText))]
+    [NotifyPropertyChangedFor(nameof(TrafficFraction))]
+    [NotifyPropertyChangedFor(nameof(TrafficBrush))]
+    [NotifyPropertyChangedFor(nameof(HasExpiry))]
+    [NotifyPropertyChangedFor(nameof(ExpiryText))]
     private Subscription _subscription;
 
-    /// <summary>Узлы этой подписки. Те же объекты, что и в общем списке.</summary>
+    /// <summary>Узлы этой подписки, разложенные по странам.</summary>
+    public ObservableCollection<CountryGroup> Countries { get; } = [];
+
+    /// <summary>Они же общим списком. Те же объекты, что и в общем перечне.</summary>
     public ObservableCollection<ServerItem> Servers { get; } = [];
 
     public Guid Id => Subscription.Id;
@@ -84,6 +93,56 @@ public sealed partial class SubscriptionItem : ObservableObject
 
     private static readonly IBrush ErrorBrush = new SolidColorBrush(Color.Parse("#FF5E57"));
     private static readonly IBrush MutedBrush = new SolidColorBrush(Color.Parse("#FFFFFF"), 0.28);
+
+    // MARK: Трафик и срок
+
+    /// <summary>Провайдер прислал остаток трафика.</summary>
+    public bool HasTraffic => Subscription.TrafficTotal is > 0;
+
+    public string TrafficText =>
+        Subscription.TrafficTotal is { } total and > 0
+            ? $"{Gigabytes(Subscription.TrafficUsed ?? 0)} из {Gigabytes(total)} ГБ"
+            : "";
+
+    /// <summary>Доля израсходованного — для полоски.</summary>
+    public double TrafficFraction =>
+        Subscription.TrafficTotal is { } total and > 0
+            ? Math.Clamp((Subscription.TrafficUsed ?? 0) / (double)total, 0, 1)
+            : 0;
+
+    /// <summary>
+    /// Полоска краснеет к концу, а не сразу: до девяти десятых расхода тревожить
+    /// человека нечем, а вот последняя десятая — уже повод.
+    /// </summary>
+    public IBrush TrafficBrush => TrafficFraction switch
+    {
+        >= 0.9 => ErrorBrush,
+        >= 0.75 => WarningBrush,
+        _ => AccentBrush,
+    };
+
+    public bool HasExpiry => Subscription.ExpiresAt is not null;
+
+    public string ExpiryText
+    {
+        get
+        {
+            if (Subscription.ExpiresAt is not { } expires) return "";
+
+            var left = expires - DateTimeOffset.Now;
+            if (left <= TimeSpan.Zero) return "срок истёк";
+
+            return left.TotalDays < 30
+                ? $"осталось {(int)left.TotalDays} дн"
+                : $"до {expires:dd.MM.yyyy}";
+        }
+    }
+
+    private static readonly IBrush AccentBrush = new SolidColorBrush(Color.Parse("#2ECC4D"));
+    private static readonly IBrush WarningBrush = new SolidColorBrush(Color.Parse("#FFBD2E"));
+
+    private static string Gigabytes(long bytes) =>
+        (bytes / 1_073_741_824.0).ToString("F1", System.Globalization.CultureInfo.CurrentCulture);
 
     public void NotifyServersChanged() => OnPropertyChanged(nameof(ServerCountText));
 

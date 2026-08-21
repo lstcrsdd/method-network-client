@@ -20,10 +20,26 @@ public sealed partial class ServerItem(StoredProfile stored) : ObservableObject
 
     public ServerProfile Profile => Stored.Profile;
 
-    public string Name => Profile.Name;
+    /// <summary>
+    /// Страна и имя без флага. Разбор делается здесь, а не в модели профиля:
+    /// в файле имя должно остаться таким, каким его прислал провайдер, — его
+    /// читают ещё и macOS с Android, и там флаг показывается прямо в строке.
+    /// </summary>
+    private CountryMatch Country => _country ??= CountryDetector.Detect(Profile.Name);
+
+    private CountryMatch? _country;
+
+    /// <summary>Имя без флага: рисовать его мы теперь умеем сами, и дважды не нужно.</summary>
+    public string Name => Country.CleanName.Length > 0 ? Country.CleanName : Profile.Name;
+
+    public string? CountryCode => Country.Code;
+
+    public string? CountryName => Country.Name;
 
     /// <summary>Адрес и протокол — по ним человек отличает два узла с одинаковым именем.</summary>
-    public string Subtitle => $"{Profile.Host} · {Profile.Protocol.DisplayName()}";
+    public string Subtitle => Country.Name is { } country
+        ? $"{country} · {Profile.Host} · {Profile.Protocol.DisplayName()}"
+        : $"{Profile.Host} · {Profile.Protocol.DisplayName()}";
 
     /// <summary>Способ пройти. Именно он, а не страна, определяет, встанет ли соединение.</summary>
     public string Transport => Profile.Parameters.Kind switch

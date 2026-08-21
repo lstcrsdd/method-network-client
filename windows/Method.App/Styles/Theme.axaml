@@ -18,6 +18,9 @@
   <Color x:Key="BackgroundBottomColor">#060606</Color>
   <SolidColorBrush x:Key="BackgroundBrush" Color="#0A0A0A" />
 
+  <SolidColorBrush x:Key="SidebarBrush" Color="White" Opacity="0.03" />
+  <SolidColorBrush x:Key="ChipBrush" Color="White" Opacity="0.08" />
+
   <!-- Стекло -->
   <SolidColorBrush x:Key="SurfaceBrush" Color="White" Opacity="0.04" />
   <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="White" Opacity="0.06" />

@@ -1,0 +1,129 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Надстройка над общими стилями: формы и типографика плаката. Подключается
+  поверх Controls.axaml, поэтому меняет только то, что перечислено здесь, —
+  разметка страниц одна на оба оформления, и расходиться им негде.
+
+  Главный приём — отказ от скруглений. Мягкий угол читается как «приложение»,
+  прямой — как «плакат»; это одно изменение отличает два оформления сильнее,
+  чем любая замена цвета.
+-->
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Карточки и строки: прямые углы, заметная рамка. -->
+  <Style Selector="Border.card">
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="Border.row">
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="BorderThickness" Value="3,0,0,0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
+  </Style>
+
+  <Style Selector="Border.row:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <!--
+    Заголовок раздела: крупнее и в разрядку. Плакатная типографика держится на
+    величине и воздухе между буквами, а не на начертании — своего шрифта у нас
+    нет, и тащить его в поставку ради оформления не стоит.
+  -->
+  <Style Selector="TextBlock.pageTitle">
+    <Setter Property="FontSize" Value="34" />
+    <Setter Property="LetterSpacing" Value="1.5" />
+  </Style>
+
+  <!-- Подписи разделов красные: ими размечена вся страница. -->
+  <Style Selector="TextBlock.sectionLabel">
+    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="LetterSpacing" Value="2" />
+  </Style>
+
+  <!-- Пункт боковой панели: активный отмечен красной планкой слева. -->
+  <Style Selector="Button.nav">
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <Style Selector="Button.nav.active /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="TextBlock.Foreground" Value="#F2EADA" />
+  </Style>
+
+  <Style Selector="Button.nav.active">
+    <Setter Property="Foreground" Value="#F2EADA" />
+  </Style>
+
+  <!-- Главное действие: красный прямоугольник, кремовый текст. -->
+  <Style Selector="Button.pill">
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Foreground" Value="#F2EADA" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Padding" Value="30,11" />
+  </Style>
+  <Style Selector="Button.pill:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#B72318" />
+  </Style>
+
+  <Style Selector="Button.round">
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <Style Selector="Button.quiet">
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <!-- Кнопка подключения: не круг, а печать. -->
+  <Style Selector="Button.connect">
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style Selector="Button.connect:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+  </Style>
+
+  <Style Selector="Border.lane">
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <Style Selector="Border.soon">
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+  </Style>
+  <Style Selector="Border.soon > TextBlock">
+    <Setter Property="Foreground" Value="#F2EADA" />
+  </Style>
+
+  <Style Selector="Button.skin">
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <Style Selector="TextBox">
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <Style Selector="ScrollBar:vertical /template/ Thumb">
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Margin" Value="3,0" />
+  </Style>
+
+  <!-- Тумблер во включённом виде красный, как и всё работающее. -->
+  <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+</Styles>

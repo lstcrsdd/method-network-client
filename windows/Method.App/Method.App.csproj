@@ -43,6 +43,10 @@
     <ProjectReference Include="..\Method.Core\Method.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AvaloniaResource Include="Assets/*.ico" />
+  </ItemGroup>
+
   <!-- Движок вшивается в exe и извлекается при установке. Файлов нет в
        репозитории — их приносит Scripts/bootstrap.ps1. -->
   <ItemGroup>

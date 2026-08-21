@@ -63,8 +63,13 @@ public sealed partial class MainViewModel : ObservableObject
         foreach (var subscription in _store.LoadSubscriptions())
             Subscriptions.Add(new SubscriptionItem(subscription));
 
+        var settings = LoadSettings();
         RebuildGroups();
-        SelectedServer = Servers.FirstOrDefault();
+
+        // Возвращаем тот узел, что был выбран в прошлый раз: клиент, каждый раз
+        // сбрасывающий выбор на первый попавшийся, заставляет выбирать заново.
+        SelectedServer = Servers.FirstOrDefault(s => s.Profile.Id == settings.SelectedServer)
+                         ?? Servers.FirstOrDefault();
         StartAutoUpdate();
         StartWatchdog();
 
@@ -131,6 +136,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (oldValue is not null) oldValue.IsSelected = false;
         if (newValue is not null) newValue.IsSelected = true;
+        SaveSettings();
     }
 
     // MARK: Состояние подключения
@@ -233,6 +239,10 @@ public sealed partial class MainViewModel : ObservableObject
         MarkTunnelAction();
         Detail = null;
 
+        // Секрет нужен и движку в конфигурации, и нам — чтобы потом спрашивать у
+        // него статистику. Поэтому он рождается здесь и живёт до отключения.
+        var secret = NewSecret();
+
         string config;
         try
         {
@@ -241,7 +251,7 @@ public sealed partial class MainViewModel : ObservableObject
                 // Секрет свой на каждое подключение: зашитый в исходник секрет —
                 // это отсутствие секрета, а управлять движком по этому адресу может
                 // любой процесс на машине.
-                ClashSecret = NewSecret(),
+                ClashSecret = secret,
             });
         }
         catch (Exception e)
@@ -266,6 +276,7 @@ public sealed partial class MainViewModel : ObservableObject
         _connectedAt = DateTimeOffset.Now;
         UpdateElapsed();
         _sessionTimer.Start();
+        StartTraffic(secret);
 
         // Предупреждение показываем именно как предупреждение: туннель поднят, но
         // часть защиты не применилась. Промолчать здесь — значит нарисовать защиту,
@@ -282,6 +293,7 @@ public sealed partial class MainViewModel : ObservableObject
         _sessionTimer.Stop();
         MarkTunnelAction();
         Elapsed = "00:00";
+        StopTraffic();
         ExternalIp = "—";
 
         var (ok, error, warning) = await TunnelClient.StopAsync().ConfigureAwait(true);
