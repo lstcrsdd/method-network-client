@@ -1,0 +1,172 @@
+// Copyright (C) 2026  Kovalyov Georgiy
+// This file is part of Method.
+//
+// Method is free software: you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the Free Software
+// Foundation, either version 3 of the License, or (at your option) any later
+// version. See LICENSE for details.
+
+using System.Runtime.InteropServices;
+using System.Text;
+using Avalonia;
+using Method.App.Services;
+
+namespace Method.App;
+
+/// <summary>
+/// Точка входа. Один файл Method.exe работает в нескольких режимах, и режим
+/// выбирается аргументом: так на машине человека нет второго исполняемого файла,
+/// который можно потерять при копировании или подменить по отдельности.
+/// </summary>
+internal static class Program
+{
+    [STAThread]
+    public static int Main(string[] args)
+    {
+        var mode = args.FirstOrDefault(a => a.StartsWith("--", StringComparison.Ordinal));
+
+        return mode switch
+        {
+            null => RunGui(args),
+            "--service" => RunHost(),
+            "--firewall-reset" => ResetFirewall(),
+            "--install" => RunInstaller(install: true),
+            "--uninstall" => RunInstaller(install: false),
+            _ => UnknownMode(mode),
+        };
+    }
+
+    private static int RunGui(string[] args)
+    {
+        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        return 0;
+    }
+
+    /// <summary>
+    /// Привилегированный режим. Консоль подключается до запуска: если журнал
+    /// окажется недоступен, объяснение уйдёт хотя бы туда, откуда режим запустили.
+    /// Обычно его запускает запланированная задача, и консоли нет — тогда вызов
+    /// просто ничего не делает.
+    /// </summary>
+    private static int RunHost()
+    {
+        AttachToParentConsole();
+        return TunnelHost.RunAsync().GetAwaiter().GetResult();
+    }
+
+    /// <summary>Установка и удаление привилегированной части. Требуют прав администратора.</summary>
+    private static int RunInstaller(bool install)
+    {
+        AttachToParentConsole();
+
+        var outcome = install ? Installer.Install() : Installer.Uninstall();
+
+        Console.Error.WriteLine(outcome.Ok
+            ? "Method: готово."
+            : $"Method: не вышло — {outcome.Reason}");
+
+        return outcome.Ok ? 0 : 1;
+    }
+
+    // Вызывается сборщиком превью Avalonia, поэтому public и с этим именно именем.
+    public static AppBuilder BuildAvaloniaApp()
+        => AppBuilder.Configure<App>()
+            .UsePlatformDetect()
+            .WithInterFont()
+            .LogToTrace();
+
+    /// <summary>
+    /// Аварийный выход: снять блокировку исходящего трафика, если она пережила
+    /// падение и машина осталась без сети. Именно этот режим называют сообщения об
+    /// ошибках, поэтому он обязан работать сам по себе — без интерфейса и без
+    /// привилегированной части.
+    /// </summary>
+    private static int ResetFirewall()
+    {
+        if (!Elevation.IsElevated())
+        {
+            WriteLine("Method: сброс правил брандмауэра требует прав администратора. " +
+                      "Запустите командную строку от имени администратора и повторите.");
+            return 77;
+        }
+
+        var ok = KillSwitch.Disable(force: true);
+        KillSwitch.UnblockIpv6();
+        KillSwitch.UnblockLanDns();
+
+        if (ok)
+        {
+            WriteLine("Method: блокировка снята, исходящий трафик разрешён.");
+            return 0;
+        }
+
+        WriteLine($"Method: снять блокировку не удалось ({KillSwitch.LastError ?? "причина неизвестна"}).");
+        return 1;
+    }
+
+    /// <summary>
+    /// Режим объявлен, но не написан. Возвращаем ненулевой код и говорим прямо:
+    /// установщик, который «отработал» и ничего не сделал, обнаруживается уже на
+    /// машине человека.
+    /// </summary>
+    private static int NotImplemented(string what)
+    {
+        WriteLine($"Method: {what} ещё не реализована в этой сборке.");
+        return 2;
+    }
+
+    private static int UnknownMode(string mode)
+    {
+        WriteLine($"Method: неизвестный режим «{mode}». Доступны: --service, --install, --uninstall, --firewall-reset.");
+        return 64;
+    }
+
+    /// <summary>
+    /// Сборка помечена как WinExe и своей консоли не имеет. Без подключения к
+    /// консоли вызывающего сообщения об ошибках уходили бы в никуда — а невидимая
+    /// ошибка ничем не отличается от молчаливого успеха.
+    /// </summary>
+    private static void WriteLine(string message)
+    {
+        AttachToParentConsole();
+        Console.Error.WriteLine(message);
+    }
+
+    /// <summary>
+    /// Подключиться к консоли вызывающего и писать в той кодировке, которую эта
+    /// консоль понимает.
+    ///
+    /// <para>Кодировку приходится задавать руками: среда выполнения решает, есть ли
+    /// консоль, ещё при запуске — то есть до подключения, — и остаётся на UTF-8.
+    /// В консоли с другой кодовой страницей русский текст превращается в мусор, а
+    /// нечитаемое сообщение об ошибке немногим лучше отсутствующего.</para>
+    /// </summary>
+    private static void AttachToParentConsole()
+    {
+        if (_consoleAttached) return;
+        _consoleAttached = true;
+
+        if (!AttachConsole(AttachParentProcess)) return;
+
+        try
+        {
+            var codePage = (int)GetConsoleOutputCP();
+            if (codePage > 0) Console.OutputEncoding = Encoding.GetEncoding(codePage);
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException or IOException)
+        {
+            // Кодировку задать не вышло — пишем как есть. Текст может оказаться
+            // нечитаемым, но молчать хуже.
+        }
+    }
+
+    private static bool _consoleAttached;
+
+    private const int AttachParentProcess = -1;
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool AttachConsole(int processId);
+
+    [DllImport("kernel32.dll")]
+    private static extern uint GetConsoleOutputCP();
+}

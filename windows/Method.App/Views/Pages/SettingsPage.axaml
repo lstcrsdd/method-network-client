@@ -1,0 +1,200 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Здесь только те переключатели, за которыми стоит настоящее действие.
+  Переключатель, который ничего не делает, хуже отсутствующего: защита,
+  включённая на вид и выключенная на деле, — это ложное спокойствие.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Method.App.ViewModels"
+             xmlns:c="using:Method.App.Controls"
+             x:Class="Method.App.Views.Pages.SettingsPage"
+             x:DataType="vm:MainViewModel">
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto" c:SmoothScroll.Enabled="True">
+    <StackPanel Margin="40,10,40,32">
+
+      <TextBlock Classes="pageTitle" Text="Настройки" Margin="0,0,0,22" />
+
+      <!-- Привилегированная часть идёт первой: без неё туннель не поднимется вовсе. -->
+      <TextBlock Classes="sectionLabel" Text="ПРИВИЛЕГИРОВАННАЯ ЧАСТЬ" Margin="4,0,0,10" />
+
+      <Border Classes="card" Padding="18,16">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding HostStatusText}" FontSize="13.5"
+                       Foreground="{StaticResource TextPrimaryBrush}" />
+            <TextBlock TextWrapping="Wrap" MaxWidth="520" FontSize="12" HorizontalAlignment="Left"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       Text="Создаёт адаптер туннеля и правит маршруты — на это нужны права. Ставится один раз, дальше клиент работает под обычным пользователем." />
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <Button Classes="quiet" Content="Проверить" Command="{Binding CheckHostCommand}"
+                    IsEnabled="{Binding !IsHostBusy}" />
+            <Button Classes="pill" Content="Установить" Padding="20,9"
+                    Command="{Binding InstallHostCommand}"
+                    IsVisible="{Binding CanInstallHost}" IsEnabled="{Binding !IsHostBusy}" />
+            <Button Classes="quiet" Content="Удалить" Command="{Binding RemoveHostCommand}"
+                    IsVisible="{Binding CanRemoveHost}" IsEnabled="{Binding !IsHostBusy}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <TextBlock Classes="sectionLabel" Text="ЗАЩИТА" Margin="4,26,0,10" />
+
+      <Border Classes="card" Padding="0">
+        <StackPanel>
+
+          <Grid ColumnDefinitions="*,Auto" Margin="18,16">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Блокировать трафик мимо туннеля" FontSize="13.5"
+                         Foreground="{StaticResource TextPrimaryBrush}" />
+              <TextBlock TextWrapping="Wrap" MaxWidth="520" FontSize="12" HorizontalAlignment="Left"
+                         Foreground="{StaticResource TextSecondaryBrush}"
+                         Text="Если туннель упадёт, интернет отключится, а не пойдёт открытым" />
+            </StackPanel>
+            <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
+                          IsChecked="{Binding KillSwitchEnabled}" />
+          </Grid>
+
+          <Border Height="1" Background="{StaticResource GlassStrokeBrush}" Margin="18,0" />
+
+          <Grid ColumnDefinitions="*,Auto" Margin="18,16">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Запретить DNS в локальную сеть" FontSize="13.5"
+                         Foreground="{StaticResource TextPrimaryBrush}" />
+              <TextBlock TextWrapping="Wrap" MaxWidth="520" FontSize="12" HorizontalAlignment="Left"
+                         Foreground="{StaticResource TextSecondaryBrush}"
+                         Text="Закрывает утечку имён на роутер. Вместе с ней перестанут открываться внутренние имена локальной сети" />
+            </StackPanel>
+            <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
+                          IsChecked="{Binding BlockLanDns}" />
+          </Grid>
+
+          <Border Height="1" Background="{StaticResource GlassStrokeBrush}" Margin="18,0" />
+
+          <Grid ColumnDefinitions="*,Auto" Margin="18,16">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Автопереподключение" FontSize="13.5"
+                         Foreground="{StaticResource TextPrimaryBrush}" />
+              <TextBlock TextWrapping="Wrap" MaxWidth="520" FontSize="12" HorizontalAlignment="Left"
+                         Foreground="{StaticResource TextSecondaryBrush}"
+                         Text="После сна и при смене сети туннель поднимается сам" />
+            </StackPanel>
+            <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
+                          IsChecked="{Binding AutoReconnect}" />
+          </Grid>
+
+          <Border Height="1" Background="{StaticResource GlassStrokeBrush}" Margin="18,0" />
+
+          <Grid ColumnDefinitions="*,Auto" Margin="18,16">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Запускать при входе в систему" FontSize="13.5"
+                         Foreground="{StaticResource TextPrimaryBrush}" />
+              <TextBlock TextWrapping="Wrap" MaxWidth="520" FontSize="12" HorizontalAlignment="Left"
+                         Foreground="{StaticResource TextSecondaryBrush}"
+                         Text="Окно открывается само. Туннель от этой настройки не зависит" />
+            </StackPanel>
+            <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
+                          IsChecked="{Binding LaunchAtLogin}" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Classes="sectionLabel" Text="ПОДПИСКИ" Margin="4,26,0,10" />
+
+      <Border Classes="card" Padding="18,16">
+        <StackPanel Spacing="14">
+
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBox Name="SubscriptionUrl" Watermark="https://example.com/sub/…" Margin="0,0,10,0" />
+            <Button Grid.Column="1" Classes="pill" Content="Добавить" Padding="20,9"
+                    Click="OnAddSubscription" VerticalAlignment="Stretch" />
+          </Grid>
+
+          <TextBlock Name="SubscriptionStatus" FontSize="12" TextWrapping="Wrap"
+                     Foreground="{StaticResource TextSecondaryBrush}" IsVisible="False" />
+
+          <ItemsControl ItemsSource="{Binding Subscriptions}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:SubscriptionItem">
+                <Border Classes="row" Padding="14,11" Margin="0,0,0,6">
+                  <Grid ColumnDefinitions="*,Auto,Auto">
+                    <StackPanel Spacing="3">
+                      <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
+                                 Foreground="{StaticResource TextPrimaryBrush}"
+                                 TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding Url}" FontSize="11"
+                                 Foreground="{StaticResource TextMutedBrush}"
+                                 TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <Button Grid.Column="1" Classes="quiet" ToolTip.Tip="Обновить" VerticalAlignment="Center"
+                            Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RefreshSubscriptionCommand}"
+                            CommandParameter="{Binding}">
+                      <Path Data="{StaticResource IconRefresh}" Stretch="Uniform" Width="15" Height="15"
+                            StrokeThickness="1.8" StrokeLineCap="Round"
+                            Stroke="{StaticResource TextSecondaryBrush}" />
+                    </Button>
+
+                    <Button Grid.Column="2" Classes="quiet" ToolTip.Tip="Удалить" VerticalAlignment="Center"
+                            Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RemoveSubscriptionCommand}"
+                            CommandParameter="{Binding}">
+                      <Path Data="{StaticResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
+                            StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                            Stroke="{StaticResource ErrorBrush}" />
+                    </Button>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Classes="sectionLabel" Text="УСТРОЙСТВО" Margin="4,26,0,10" />
+
+      <Border Classes="card" Padding="18,16">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="3">
+              <TextBlock Text="Идентификатор" FontSize="13.5"
+                         Foreground="{StaticResource TextPrimaryBrush}" />
+              <TextBlock Name="HwidText" FontSize="11.5" FontFamily="Consolas,monospace"
+                         Foreground="{StaticResource TextMutedBrush}" />
+            </StackPanel>
+            <Button Grid.Column="1" Classes="quiet" Content="Скопировать" VerticalAlignment="Center"
+                    Click="OnCopyHwid" />
+          </Grid>
+          <TextBlock TextWrapping="Wrap" FontSize="12"
+                     Foreground="{StaticResource TextMutedBrush}"
+                     Text="Отправляется в панель при загрузке подписки — по нему панель считает устройства." />
+        </StackPanel>
+      </Border>
+
+      <TextBlock Classes="sectionLabel" Text="О ПРОГРАММЕ" Margin="4,26,0,10" />
+
+      <Border Classes="card" Padding="18,16">
+        <StackPanel Spacing="8">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Text="Method" FontSize="13.5" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextPrimaryBrush}" />
+            <TextBlock Grid.Column="1" Name="VersionText" FontSize="12.5"
+                       Foreground="{StaticResource TextSecondaryBrush}" />
+          </Grid>
+          <TextBlock TextWrapping="Wrap" FontSize="12"
+                     Foreground="{StaticResource TextMutedBrush}"
+                     Text="Свободная программа под GNU GPL версии 3 или более поздней. Ядро sing-box запускается отдельным процессом и распространяется на своих условиях." />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

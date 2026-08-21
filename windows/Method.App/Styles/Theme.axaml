@@ -1,0 +1,39 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Значения взяты из клиента macOS: цвет у Method один на все платформы, и
+  подбирать его заново на каждой означало бы получить три разных продукта.
+-->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Фон -->
+  <Color x:Key="BackgroundTopColor">#0D0D0D</Color>
+  <Color x:Key="BackgroundBottomColor">#060606</Color>
+  <SolidColorBrush x:Key="BackgroundBrush" Color="#0A0A0A" />
+
+  <!-- Стекло -->
+  <SolidColorBrush x:Key="SurfaceBrush" Color="White" Opacity="0.04" />
+  <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="White" Opacity="0.06" />
+  <SolidColorBrush x:Key="GlassStrokeBrush" Color="White" Opacity="0.08" />
+  <SolidColorBrush x:Key="HoverBrush" Color="White" Opacity="0.06" />
+
+  <!-- Текст -->
+  <SolidColorBrush x:Key="TextPrimaryBrush" Color="White" />
+  <SolidColorBrush x:Key="TextSecondaryBrush" Color="White" Opacity="0.42" />
+  <SolidColorBrush x:Key="TextMutedBrush" Color="White" Opacity="0.28" />
+
+  <!-- Акцент. Зелёный, а не синий: это фирменный цвет Method. -->
+  <Color x:Key="AccentColor">#2ECC4D</Color>
+  <SolidColorBrush x:Key="AccentBrush" Color="#2ECC4D" />
+  <SolidColorBrush x:Key="ConnectedBrush" Color="#29C940" />
+  <SolidColorBrush x:Key="WarningBrush" Color="#FFBD2E" />
+  <SolidColorBrush x:Key="ErrorBrush" Color="#FF5E57" />
+
+</ResourceDictionary>

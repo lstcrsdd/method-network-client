@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Интерфейс и всё, что знает про Windows: привилегированный режим, установка,
+       именованный канал, Wintun. Собирается в один самодостаточный Method.exe. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <AssemblyName>Method</AssemblyName>
+    <RootNamespace>Method.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- Параметры применяются при publish -r win-x64. Один файл — потому что
+         клиент раздаётся как «скопировал и запустил»: россыпь библиотек рядом с
+         exe переживает копирование на флешку ровно до первого забытого файла. -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <DebugType>embedded</DebugType>
+    <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <!-- Права доступа на именованный канал: без них канал, созданный SYSTEM,
+         недоступен обычному пользователю, то есть нашему же интерфейсу. -->
+    <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" />
+    <!-- Шифрование хранилища ключом текущего пользователя. В базовую поставку
+         .NET не входит даже для Windows-целей. -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <!-- События сна и пробуждения: без них туннель после закрытия крышки
+         выглядит рабочим и не работает. -->
+    <PackageReference Include="Microsoft.Win32.SystemEvents" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Method.Core\Method.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Движок вшивается в exe и извлекается при установке. Файлов нет в
+       репозитории — их приносит Scripts/bootstrap.ps1. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\Resources\sing-box.exe" Condition="Exists('..\Resources\sing-box.exe')">
+      <LogicalName>sing-box.exe</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Resources\wintun.dll" Condition="Exists('..\Resources\wintun.dll')">
+      <LogicalName>wintun.dll</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <!-- Собрать клиент без движка технически можно — он просто не поднимет туннель.
+       Молча выпускать такую сборку нельзя, поэтому publish без движка падает, а
+       обычная отладочная сборка предупреждает и продолжает. -->
+  <Target Name="ПроверитьДвижок" BeforeTargets="Build">
+    <Warning Condition="!Exists('..\Resources\sing-box.exe') Or !Exists('..\Resources\wintun.dll')"
+             Text="Движка нет в Resources — туннель не поднимется. Запусти Scripts\bootstrap.ps1." />
+  </Target>
+
+  <Target Name="ПроверитьДвижокПередПубликацией" BeforeTargets="PrepareForPublish">
+    <Error Condition="!Exists('..\Resources\sing-box.exe') Or !Exists('..\Resources\wintun.dll')"
+           Text="Публиковать клиент без движка нельзя: sing-box.exe или wintun.dll отсутствуют. Запусти Scripts\bootstrap.ps1." />
+  </Target>
+
+</Project>

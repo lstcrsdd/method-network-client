@@ -1,0 +1,19 @@
+<Project>
+
+  <!-- Общие свойства всех проектов Windows-клиента. Лежат здесь, а не в каждом
+       .csproj, чтобы версия и уведомление об авторских правах не разъезжались
+       между сборками: расхождение видно только в свойствах готового файла, и
+       ищут его потом долго. -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <Version>0.1.0</Version>
+    <Product>Method</Product>
+    <Authors>Kovalyov Georgiy</Authors>
+    <Copyright>Copyright (C) 2026 Kovalyov Georgiy. GNU GPL v3 or later.</Copyright>
+    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+  </PropertyGroup>
+
+</Project>

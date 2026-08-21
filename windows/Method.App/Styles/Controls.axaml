@@ -1,0 +1,240 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Общий язык интерфейса: боковая панель, карточки, заголовки разделов. Один и
+  тот же продукт на разных платформах должен выглядеть одинаково, поэтому формы
+  и отступы взяты с клиента macOS, а не придуманы заново.
+
+  Значки нарисованы линиями, а не шрифтом значков: шрифт есть не на всякой
+  системе, и там, где его нет, вместо значка появляется пустой квадрат.
+-->
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Styles.Resources>
+    <StreamGeometry x:Key="IconHome">M3.5,11.2 L12,4.2 L20.5,11.2 M6.2,9.8 L6.2,20 L17.8,20 L17.8,9.8</StreamGeometry>
+    <StreamGeometry x:Key="IconServers">M4.5,5.5 H19.5 V10 H4.5 Z M4.5,14 H19.5 V18.5 H4.5 Z</StreamGeometry>
+    <StreamGeometry x:Key="IconScenarios">M12,20 V13 M12,13 L6,6 M12,13 L18,6</StreamGeometry>
+    <StreamGeometry x:Key="IconSettings">M12,8.6 A3.4,3.4 0 1 0 12,15.4 A3.4,3.4 0 1 0 12,8.6 M12,3.2 V5.6 M12,18.4 V20.8 M3.2,12 H5.6 M18.4,12 H20.8 M5.8,5.8 L7.5,7.5 M16.5,16.5 L18.2,18.2 M18.2,5.8 L16.5,7.5 M7.5,16.5 L5.8,18.2</StreamGeometry>
+    <StreamGeometry x:Key="IconPower">M12,4 V11.5 M7.8,6.9 A6.7,6.7 0 1 0 16.2,6.9</StreamGeometry>
+    <StreamGeometry x:Key="IconPlus">M12,5.5 V18.5 M5.5,12 H18.5</StreamGeometry>
+    <StreamGeometry x:Key="IconRefresh">M20,12 A8,8 0 1 1 17,6.2 M17.6,2.8 V6.8 H13.6</StreamGeometry>
+    <StreamGeometry x:Key="IconLock">M7.5,10.5 V8 A4.5,4.5 0 0 1 16.5,8 V10.5 M5.8,10.5 H18.2 V20 H5.8 Z</StreamGeometry>
+    <StreamGeometry x:Key="IconArrowOut">M8,16 L16.5,7.5 M10.5,7.5 H16.5 V13.5</StreamGeometry>
+    <StreamGeometry x:Key="IconTrash">M5,7 H19 M9.5,7 V4.8 H14.5 V7 M7,7 L8,20 H16 L17,7</StreamGeometry>
+    <StreamGeometry x:Key="IconBrand">M9.5,14.5 L14.5,9.5 M8.4,11.6 L6.4,13.6 A2.8,2.8 0 0 0 10.4,17.6 L12.4,15.6 M11.6,8.4 L13.6,6.4 A2.8,2.8 0 0 1 17.6,10.4 L15.6,12.4</StreamGeometry>
+    <StreamGeometry x:Key="IconWave">M3,13 C5,7.5 7,7.5 9,13 C11,18.5 13,18.5 15,13 C17,7.5 19,7.5 21,13</StreamGeometry>
+    <StreamGeometry x:Key="IconCheck">M6,12.5 L10,16.5 L18,8</StreamGeometry>
+  </Styles.Resources>
+
+  <!-- Значок: линия одинаковой толщины, скруглённые концы. -->
+  <Style Selector="Path.icon">
+    <Setter Property="StrokeThickness" Value="1.6" />
+    <Setter Property="StrokeLineCap" Value="Round" />
+    <Setter Property="StrokeJoin" Value="Round" />
+    <Setter Property="Width" Value="24" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Stretch" Value="None" />
+  </Style>
+
+  <!-- Пункт боковой панели -->
+  <Style Selector="Button.nav">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    <Setter Property="FontSize" Value="13.5" />
+  </Style>
+  <Style Selector="Button.nav:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+  </Style>
+  <Style Selector="Button.nav.active /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource SurfaceRaisedBrush}" />
+  </Style>
+  <Style Selector="Button.nav.active">
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- Карточка -->
+  <Style Selector="Border.card">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlassStrokeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="14" />
+  </Style>
+
+  <Style Selector="Border.row">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+    <Setter Property="CornerRadius" Value="12" />
+  </Style>
+
+  <!-- Заголовки -->
+  <Style Selector="TextBlock.pageTitle">
+    <Setter Property="FontSize" Value="30" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.sectionLabel">
+    <Setter Property="FontSize" Value="10.5" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="LetterSpacing" Value="1.3" />
+    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.subtitle">
+    <Setter Property="FontSize" Value="12.5" />
+    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+  </Style>
+
+  <!-- Круглая кнопка действия -->
+  <Style Selector="Button.round">
+    <Setter Property="Width" Value="38" />
+    <Setter Property="Height" Value="38" />
+    <Setter Property="CornerRadius" Value="19" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="{StaticResource SurfaceRaisedBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.round:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+  </Style>
+
+  <!-- Кнопка-пилюля, белая: главное действие на пустом экране -->
+  <Style Selector="Button.pill">
+    <Setter Property="Background" Value="White" />
+    <Setter Property="Foreground" Value="#0A0A0A" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="21" />
+    <Setter Property="Padding" Value="28,10" />
+    <Setter Property="FontSize" Value="13.5" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="Button.pill:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#E8E8E8" />
+  </Style>
+
+  <!-- Незаметная кнопка-ссылка -->
+  <Style Selector="Button.quiet">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="8,5" />
+    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    <Setter Property="FontSize" Value="12.5" />
+  </Style>
+  <Style Selector="Button.quiet:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+    <Setter Property="TextBlock.Foreground" Value="{StaticResource TextPrimaryBrush}" />
+  </Style>
+
+  <!-- Кнопка окна -->
+  <Style Selector="Button.chrome">
+    <Setter Property="Width" Value="44" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+  <Style Selector="Button.chrome:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+    <Setter Property="TextBlock.Foreground" Value="{StaticResource TextPrimaryBrush}" />
+  </Style>
+  <Style Selector="Button.chrome.close:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#C42B1C" />
+    <Setter Property="TextBlock.Foreground" Value="White" />
+  </Style>
+
+  <!-- Тумблер: во включённом виде зелёный, как на других платформах. -->
+  <Style Selector="ToggleSwitch">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinWidth" Value="0" />
+  </Style>
+  <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
+    <Setter Property="Background" Value="{StaticResource ConnectedBrush}" />
+  </Style>
+
+  <!--
+    Полоса прокрутки: не мозолит глаза, но всегда под рукой.
+
+    Прячется прозрачностью, а не сворачиванием ширины: при смене ширины список
+    каждый раз пересчитывает разметку и перерисовывается, а это ровно то дрожание
+    содержимого, от которого мы избавились в плавной прокрутке. Прозрачность
+    разметку не трогает.
+
+    Появляется по наведению на весь список, а не на саму полосу: попасть мышью в
+    восемь пикселей, которых не видно, невозможно.
+  -->
+  <Style Selector="ScrollViewer /template/ ScrollBar">
+    <Setter Property="Opacity" Value="0" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="Opacity" Duration="0:0:0.18" Easing="SineEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="ScrollViewer:pointerover /template/ ScrollBar">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
+  <!-- Курсор на самой полосе или ползунок захвачен — держим видимой. -->
+  <Style Selector="ScrollViewer /template/ ScrollBar:pointerover">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+  <Style Selector="ScrollViewer /template/ ScrollBar:expanded">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
+  <Style Selector="ScrollBar:vertical">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Width" Value="10" />
+  </Style>
+
+  <Style Selector="ScrollBar:vertical /template/ Border#TrackRect">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="ScrollBar:vertical /template/ Thumb">
+    <Setter Property="Background" Value="#33FFFFFF" />
+    <Setter Property="CornerRadius" Value="3" />
+    <Setter Property="Margin" Value="3,0" />
+    <Setter Property="MinHeight" Value="28" />
+  </Style>
+
+  <Style Selector="ScrollBar:vertical /template/ Thumb:pointerover">
+    <Setter Property="Background" Value="#55FFFFFF" />
+  </Style>
+
+  <Style Selector="ScrollBar:vertical /template/ Thumb:pressed">
+    <Setter Property="Background" Value="#77FFFFFF" />
+  </Style>
+
+  <!-- Поле ввода -->
+  <Style Selector="TextBox">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlassStrokeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="10" />
+  </Style>
+
+</Styles>

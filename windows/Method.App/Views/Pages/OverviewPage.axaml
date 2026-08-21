@@ -1,0 +1,158 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Method.App.ViewModels"
+             x:Class="Method.App.Views.Pages.OverviewPage"
+             x:DataType="vm:MainViewModel">
+
+  <UserControl.Styles>
+    <!-- Кнопка подключения -->
+    <Style Selector="Button.connect">
+      <Setter Property="Width" Value="152" />
+      <Setter Property="Height" Value="152" />
+      <Setter Property="CornerRadius" Value="76" />
+      <Setter Property="Background" Value="{StaticResource SurfaceRaisedBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource GlassStrokeBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Transitions">
+        <Transitions>
+          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Button.connect:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource SurfaceRaisedBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+    </Style>
+    <!-- Лёгкое сжатие при нажатии: движение подтверждает, что кнопка сработала. -->
+    <Style Selector="Button.connect:pressed">
+      <Setter Property="RenderTransform" Value="scale(0.97)" />
+    </Style>
+
+    <!--
+      Дышащее гало, когда туннель поднят. Дышит прозрачностью, а не размером:
+      покадровая анимация RenderTransform требует своего аниматора и без него
+      роняет окно на старте — проверено.
+    -->
+    <Style Selector="Ellipse.glow">
+      <Style.Animations>
+        <Animation Duration="0:0:2.6" IterationCount="INFINITE"
+                   PlaybackDirection="Alternate" Easing="SineEaseInOut">
+          <KeyFrame Cue="0%">
+            <Setter Property="Opacity" Value="0.10" />
+          </KeyFrame>
+          <KeyFrame Cue="100%">
+            <Setter Property="Opacity" Value="0.30" />
+          </KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+
+    <Style Selector="Border.stat">
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+      <Setter Property="CornerRadius" Value="14" />
+      <Setter Property="Padding" Value="22,14" />
+      <Setter Property="MinWidth" Value="150" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="*,Auto,Auto,Auto,*" Margin="40,10,40,32">
+
+    <!-- Циферблат и кнопка -->
+    <Panel Grid.Row="1" Height="300">
+      <!-- Гало под кнопкой -->
+      <Ellipse Classes="glow" Width="230" Height="230"
+               Fill="{StaticResource ConnectedBrush}"
+               IsVisible="{Binding IsConnected}" />
+
+      <!--
+        Кольцо-циферблат. Штрихи нарисованы пунктиром по окружности, а не шестью
+        десятками отдельных чёрточек: та же картинка, но одна фигура вместо шести
+        десятков и никакой возни с углами.
+      -->
+      <Ellipse Width="292" Height="292" StrokeThickness="9"
+               Stroke="{StaticResource GlassStrokeBrush}"
+               StrokeDashArray="0.10,0.60" StrokeLineCap="Round" />
+
+      <Ellipse Width="292" Height="292" StrokeThickness="9"
+               Stroke="{StaticResource ConnectedBrush}"
+               StrokeDashArray="0.10,0.60" StrokeLineCap="Round"
+               Opacity="0.75" IsVisible="{Binding IsConnected}" />
+
+      <Button Classes="connect" Command="{Binding ToggleCommand}"
+              HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Spacing="9">
+          <Path Data="{StaticResource IconPower}" Stretch="Uniform" Width="30" Height="30"
+                StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"
+                Stroke="{Binding $parent[Button].Foreground}"
+                HorizontalAlignment="Center" />
+          <TextBlock Text="{Binding ActionText}" FontSize="10.5" LetterSpacing="1.4"
+                     FontWeight="SemiBold" HorizontalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Panel>
+
+    <!-- Что сейчас выбрано и куда добавлять -->
+    <StackPanel Grid.Row="2" Spacing="4" Margin="0,16,0,0" HorizontalAlignment="Center">
+      <TextBlock Text="{Binding SelectedName}" FontSize="13.5" HorizontalAlignment="Center"
+                 Foreground="{StaticResource TextPrimaryBrush}"
+                 IsVisible="{Binding HasServers}" />
+      <Button Classes="quiet" Command="{Binding GoToCommand}" CommandParameter="Servers"
+              HorizontalAlignment="Center">
+        <StackPanel Orientation="Horizontal" Spacing="7">
+          <Path Data="{StaticResource IconPlus}" Stretch="Uniform" Width="15" Height="15"
+                StrokeThickness="2" StrokeLineCap="Round"
+                Stroke="{Binding $parent[Button].Foreground}" VerticalAlignment="Center" />
+          <TextBlock Text="Добавить конфигурацию" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </StackPanel>
+
+    <!-- Три показателя -->
+    <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="14"
+                HorizontalAlignment="Center" Margin="0,26,0,0">
+      <Border Classes="stat">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="sectionLabel" Text="ВРЕМЯ" HorizontalAlignment="Center" />
+          <TextBlock Text="{Binding Elapsed}" FontSize="19" FontWeight="SemiBold"
+                     HorizontalAlignment="Center"
+                     Foreground="{StaticResource TextPrimaryBrush}" />
+        </StackPanel>
+      </Border>
+      <Border Classes="stat">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="sectionLabel" Text="IP-АДРЕС" HorizontalAlignment="Center" />
+          <TextBlock Text="{Binding ExternalIp}" FontSize="19" FontWeight="SemiBold"
+                     HorizontalAlignment="Center"
+                     Foreground="{StaticResource TextPrimaryBrush}" />
+        </StackPanel>
+      </Border>
+      <Border Classes="stat">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="sectionLabel" Text="ПРОТОКОЛ" HorizontalAlignment="Center" />
+          <TextBlock Text="{Binding ProtocolName}" FontSize="19" FontWeight="SemiBold"
+                     HorizontalAlignment="Center"
+                     Foreground="{StaticResource TextPrimaryBrush}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+
+    <!-- Ошибка или предупреждение. Молчать здесь нельзя. -->
+    <TextBlock Grid.Row="4" Text="{Binding Detail}" Margin="0,22,0,0"
+               FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="520"
+               HorizontalAlignment="Center" VerticalAlignment="Top"
+               Foreground="{StaticResource TextSecondaryBrush}"
+               IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </Grid>
+</UserControl>

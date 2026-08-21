@@ -1,0 +1,204 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Method.App.ViewModels"
+             xmlns:c="using:Method.App.Controls"
+             x:Class="Method.App.Views.Pages.ServersPage"
+             x:DataType="vm:MainViewModel">
+
+  <UserControl.Resources>
+    <!--
+      Строка узла одна на все списки: и внутри подписки, и среди добавленных
+      ссылкой. Команды берутся у окна, а не у ближайшего списка — внутри подписки
+      ближайший список принадлежит ей, и путь до модели оттуда другой.
+    -->
+    <DataTemplate x:Key="ServerRow" x:DataType="vm:ServerItem">
+      <Border Classes="row" Margin="0,0,0,6" Padding="14,11">
+        <Border.Styles>
+          <Style Selector="Border.row:pointerover">
+            <Setter Property="Background" Value="{StaticResource SurfaceRaisedBrush}" />
+          </Style>
+        </Border.Styles>
+
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+
+          <Path Grid.Column="0" Data="{StaticResource IconWave}" Stretch="Uniform"
+                Width="20" Height="20" StrokeThickness="1.6" StrokeLineCap="Round"
+                Stroke="{StaticResource TextMutedBrush}"
+                VerticalAlignment="Center" Margin="2,0,14,0" />
+
+          <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Spacing="7">
+              <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
+                         Foreground="{StaticResource TextPrimaryBrush}"
+                         TextTrimming="CharacterEllipsis" />
+              <Border Background="{StaticResource SurfaceRaisedBrush}" CornerRadius="4"
+                      Padding="6,1" VerticalAlignment="Center"
+                      IsVisible="{Binding IsFeatured}">
+                <TextBlock Text="{Binding FeaturedLabel}" FontSize="9"
+                           Foreground="{StaticResource AccentBrush}" />
+              </Border>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="{Binding Subtitle}" FontSize="11.5"
+                         Foreground="{StaticResource TextMutedBrush}"
+                         VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+              <Border Background="#14FFFFFF" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Transport}" FontSize="9"
+                           Foreground="{StaticResource TextSecondaryBrush}" />
+              </Border>
+            </StackPanel>
+          </StackPanel>
+
+          <!-- Задержка. До первого замера пусто: прочерк читался бы как «нет ответа». -->
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="7"
+                      VerticalAlignment="Center" Margin="12,0,14,0"
+                      IsVisible="{Binding HasPing}">
+            <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="{Binding PingBrush}" />
+            <TextBlock Text="{Binding PingText}" FontSize="12"
+                       Foreground="{Binding PingBrush}" VerticalAlignment="Center" />
+          </StackPanel>
+
+          <Border Grid.Column="3" Width="22" Height="22" CornerRadius="11"
+                  Background="{StaticResource ConnectedBrush}" VerticalAlignment="Center"
+                  Margin="0,0,10,0" IsVisible="{Binding IsSelected}">
+            <Path Data="{StaticResource IconCheck}" Stretch="Uniform" Width="12" Height="12"
+                  StrokeThickness="2.4" StrokeLineCap="Round" StrokeJoin="Round"
+                  Stroke="#0A0A0A" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+
+          <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+            <Button Classes="quiet" Content="Выбрать" VerticalAlignment="Center"
+                    Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SelectCommand}"
+                    CommandParameter="{Binding}"
+                    IsVisible="{Binding !IsSelected}" />
+            <Button Classes="quiet" ToolTip.Tip="Удалить" VerticalAlignment="Center"
+                    Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RemoveCommand}"
+                    CommandParameter="{Binding}">
+              <Path Data="{StaticResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
+                    StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                    Stroke="{StaticResource ErrorBrush}" />
+            </Button>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <Grid Margin="40,10,40,32" RowDefinitions="Auto,*">
+
+    <!-- Заголовок и действия -->
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,22">
+      <TextBlock Classes="pageTitle" Text="Серверы" VerticalAlignment="Center" />
+
+      <Button Grid.Column="1" Classes="quiet" Margin="0,0,6,0" VerticalAlignment="Center"
+              Command="{Binding RefreshAllSubscriptionsCommand}"
+              IsVisible="{Binding HasSubscriptions}">
+        <StackPanel Orientation="Horizontal" Spacing="7">
+          <Path Data="{StaticResource IconRefresh}" Stretch="Uniform" Width="15" Height="15"
+                StrokeThickness="1.8" StrokeLineCap="Round"
+                Stroke="{Binding $parent[Button].Foreground}" VerticalAlignment="Center" />
+          <TextBlock Text="Обновить всё" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+
+      <Button Grid.Column="2" Classes="quiet" Margin="0,0,10,0" VerticalAlignment="Center"
+              Content="Замерить задержки"
+              Command="{Binding MeasurePingsCommand}"
+              IsVisible="{Binding HasServers}" />
+
+      <Button Grid.Column="3" Classes="round" Click="OnAdd" ToolTip.Tip="Добавить по ссылке"
+              VerticalAlignment="Center">
+        <Path Classes="icon" Data="{StaticResource IconPlus}"
+              Stroke="{StaticResource TextPrimaryBrush}" StrokeThickness="1.8" />
+      </Button>
+    </Grid>
+
+    <!--
+      Пусто на первом запуске, и это не заглушка: клиент работает с вашими
+      собственными серверами, встроенного каталога у него нет.
+    -->
+    <StackPanel Grid.Row="1" VerticalAlignment="Center" Spacing="16" IsVisible="{Binding IsEmpty}">
+      <Path Data="{StaticResource IconServers}" Stretch="Uniform" Width="44" Height="44"
+            StrokeThickness="1" StrokeLineCap="Round" StrokeJoin="Round"
+            Stroke="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+      <TextBlock Text="Нет конфигураций" FontSize="16" FontWeight="SemiBold"
+                 HorizontalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}" />
+      <TextBlock TextAlignment="Center" TextWrapping="Wrap" MaxWidth="440" FontSize="12.5"
+                 Foreground="{StaticResource TextSecondaryBrush}"
+                 Text="Вставьте ссылку hysteria2://, vless://, trojan:// или ss:// либо адрес подписки (https://…) — можно сразу несколько, по одной в строке." />
+      <Button Classes="pill" Content="Добавить" Click="OnAdd" HorizontalAlignment="Center" />
+    </StackPanel>
+
+    <ScrollViewer Grid.Row="1" IsVisible="{Binding HasServers}" VerticalScrollBarVisibility="Auto"
+                  c:SmoothScroll.Enabled="True">
+      <StackPanel Spacing="14">
+
+        <!-- Группы подписок -->
+        <ItemsControl ItemsSource="{Binding Subscriptions}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:SubscriptionItem">
+              <Border Classes="card" Padding="14,12" Margin="0,0,0,10">
+                <StackPanel Spacing="10">
+
+                  <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                    <Ellipse Grid.Column="0" Width="8" Height="8" VerticalAlignment="Center"
+                             Margin="2,0,10,0" Fill="{Binding StatusBrush}" />
+                    <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="14" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Text="{Binding ServerCountText}" FontSize="11.5"
+                               Margin="10,0,0,0" Foreground="{StaticResource TextMutedBrush}"
+                               VerticalAlignment="Center" />
+
+                    <Button Grid.Column="3" Classes="quiet" ToolTip.Tip="Обновить"
+                            Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RefreshSubscriptionCommand}"
+                            CommandParameter="{Binding}">
+                      <Path Data="{StaticResource IconRefresh}" Stretch="Uniform" Width="15" Height="15"
+                            StrokeThickness="1.8" StrokeLineCap="Round"
+                            Stroke="{StaticResource TextSecondaryBrush}" />
+                    </Button>
+
+                    <Button Grid.Column="4" Classes="quiet" ToolTip.Tip="Удалить подписку"
+                            Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).RemoveSubscriptionCommand}"
+                            CommandParameter="{Binding}">
+                      <Path Data="{StaticResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
+                            StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                            Stroke="{StaticResource ErrorBrush}" />
+                    </Button>
+                  </Grid>
+
+                  <StackPanel Spacing="3" Margin="20,-4,0,0">
+                    <TextBlock Text="{Binding StatusLine}" FontSize="11.5"
+                               Foreground="{Binding StatusBrush}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Announce}" FontSize="11.5" TextWrapping="Wrap"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               IsVisible="{Binding HasAnnounce}" />
+                  </StackPanel>
+
+                  <ItemsControl ItemsSource="{Binding Servers}"
+                                ItemTemplate="{StaticResource ServerRow}" />
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Добавленные ссылкой -->
+        <StackPanel Spacing="10" IsVisible="{Binding HasLooseServers}">
+          <TextBlock Classes="sectionLabel" Text="ДОБАВЛЕНЫ ССЫЛКОЙ" Margin="4,0,0,0"
+                     IsVisible="{Binding HasSubscriptions}" />
+          <ItemsControl ItemsSource="{Binding LooseServers}"
+                        ItemTemplate="{StaticResource ServerRow}" />
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

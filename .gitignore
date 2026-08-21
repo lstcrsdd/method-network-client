@@ -62,3 +62,12 @@ macos/Resources/sing-box
 # Сборочные артефакты Rust и Xcode
 core/target/
 core/build/
+
+# ── Windows: движок и сборочные артефакты ──
+# wintun.dll качает bootstrap.ps1, в репозитории его нет
+wintun.dll
+windows/Resources/sing-box.exe
+windows/Resources/wintun.dll
+publish/
+AppPackages/
+windows/Installer/Output/

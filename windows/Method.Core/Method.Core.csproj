@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Логика клиента без интерфейса и без обращений к Windows: модель профиля,
+       разбор ссылок, подписки, сборка конфигурации sing-box, Clash API, пинг.
+
+       Проект намеренно нацелен на голый net8.0, а не на net8.0-windows. Это не
+       формальность: как только сюда попадёт вызов реестра или планировщика,
+       сборка сломается здесь, а не через полгода на попытке прогнать тесты в
+       CI на Linux. Всё, что знает про Windows, живёт в Method.App. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Method.Core</RootNamespace>
+  </PropertyGroup>
+
+</Project>
