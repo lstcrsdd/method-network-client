@@ -35,6 +35,16 @@ cc -std=c11 -Wall -Wextra -Werror -g -DMC_HAVE_TEST_PANIC \
    -I "$root/include" \
    -o "$out" "$here/abi.c" "$lib"
 
+# Слой конфигурации — своя граница и свой прогон. Отдельным двоичным файлом,
+# чтобы отказ одной части не прятал другую.
+out_cfg="$root/target/$profile/config_abi_test"
+cc -std=c11 -Wall -Wextra -Werror -g \
+   -I "$root/include" \
+   -o "$out_cfg" "$here/config_abi.c" "$lib"
+
+echo "── прогон $out_cfg ──"
+"$out_cfg" || exit 1
+
 echo "── прогон $out ──"
 if [ "${MC_LEAKS:-0}" = "1" ] && command -v leaks >/dev/null 2>&1; then
     MallocStackLogging=1 leaks --atExit -- "$out"

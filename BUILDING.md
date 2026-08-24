@@ -48,3 +48,46 @@ cd macos && ./Scripts/release.sh
 в Терминале, а macOS может попросить подтвердить системную службу вручную.
 Скрипт выпуска готов к нотаризации — она включается одной переменной, когда
 аккаунт появится.
+
+---
+
+# Android
+
+## Что нужно
+
+- Android SDK с build-tools 35 и новее, платформа android-36
+- JDK 17 — подойдёт тот, что идёт с Android Studio
+- Rust с целями `aarch64-linux-android`, `armv7-linux-androideabi`,
+  `x86_64-linux-android` и Android NDK
+- `libbox.aar` из [sing-box](https://github.com/SagerNet/sing-box) — ядро
+  собирается в библиотеку и работает ВНУТРИ процесса приложения, потому что
+  на Android нельзя запустить отдельный привилегированный процесс. Файл в
+  репозиторий не входит: положите его в `android/app/libs/libbox.aar`.
+
+## Шаги
+
+```sh
+# общий слой под три архитектуры
+cd core && ./Scripts/build-android.sh
+
+# сам клиент
+cd ../android && ./build-apk.sh
+```
+
+Готовый пакет — `android/dist/Method-android-debug.apk`.
+
+## Релизная сборка
+
+```sh
+./make-release-key.sh                     # один раз: свой ключ подписи
+METHOD_VERSION_CODE=<N> METHOD_VERSION_NAME=<x.y.z> \
+  METHOD_RELEASE=1 ./build-apk.sh
+```
+
+Пароль спрашивается у терминала и через скрипты не проходит: пароль в
+аргументах виден в списке процессов, в переменных окружения — наследуется
+дочерними процессами. Подробности и правила обращения с ключом —
+в [android/SIGNING.md](android/SIGNING.md).
+
+Отладочный ключ генерируется на месте и годится только для отладки: сборка,
+подписанная им, не встанет поверх выпущенной, и наоборот.

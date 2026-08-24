@@ -1,0 +1,22 @@
+[package]
+name = "method-android"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# Мост в Java. Отдельным крейтом и отдельной динамической библиотекой: в APK
+# едет .so, который грузится System.loadLibrary, а статика для C остаётся как
+# была — ею пользуются macOS и Windows.
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+method-config = { path = "../method-config" }
+# Движок берём через тот же слой, что и macOS: обёртка с дескрипторами уже
+# написана и проверена, второй реализации быть не должно.
+method-core-ffi = { path = "../method-core-ffi" }
+method-core = { path = "../method-core" }
+jni = "0.21"
+serde_json = "1"

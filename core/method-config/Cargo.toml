@@ -1,0 +1,22 @@
+[package]
+name = "method-config"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# Разбор share-ссылок и сборка конфига ядра — одна реализация на все клиенты.
+#
+# До этого модель, парсер и сборщик были написаны ДВАЖДЫ: на Swift для macOS и
+# на C# для Windows, а третью копию пришлось бы писать на Java для Android.
+# Расхождение началось сразу: у Windows нет Trojan и Shadowsocks — не по
+# замыслу, а потому что код не общий.
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+# Разбор URL — библиотекой, а не руками. Ссылки в подписках приходят кривые:
+# незакодированные пароли, IPv6 в скобках, пустые параметры. Свой парсер тут
+# означал бы свои же дыры.
+url = "2"

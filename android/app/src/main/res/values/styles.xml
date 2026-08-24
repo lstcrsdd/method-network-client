@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      Основная тема.
+
+      Системные полосы окрашены в цвет фона приложения, а не в чёрный: полоса
+      чуть другого оттенка на границе экрана читается как щель и выдаёт, что
+      приложение «вставлено» в систему, а не живёт в ней.
+    -->
+    <style name="MethodTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowBackground">#070A09</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:colorAccent">#34E28A</item>
+        <item name="android:colorControlHighlight">#2934E28A</item>
+        <item name="android:textColorPrimary">#EAF2EE</item>
+        <item name="android:textColorSecondary">#9EEAF2EE</item>
+        <item name="android:textColorHint">#5CEAF2EE</item>
+        <item name="android:navigationBarColor">#070A09</item>
+        <item name="android:statusBarColor">#070A09</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:alertDialogTheme">@style/MethodDialog</item>
+        <item name="android:windowAnimationStyle">@style/MethodWindowAnimation</item>
+    </style>
+
+    <!--
+      Диалоги в фирменном виде.
+
+      Системный Material рисует их серой плашкой (#424242) — посреди почти
+      чёрного экрана это чужая деталь, и именно она сильнее всего выдавала, что
+      приложение собрано из умолчаний.
+    -->
+    <style name="MethodDialog" parent="android:style/Theme.Material.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog_background</item>
+        <item name="android:colorAccent">#34E28A</item>
+        <item name="android:colorControlHighlight">#2934E28A</item>
+        <item name="android:textColorPrimary">#EAF2EE</item>
+        <item name="android:textColorSecondary">#9EEAF2EE</item>
+        <item name="android:textColorAlertDialogListItem">#EAF2EE</item>
+        <item name="android:buttonBarPositiveButtonStyle">@style/MethodDialogButton</item>
+        <item name="android:buttonBarNegativeButtonStyle">@style/MethodDialogButton</item>
+        <item name="android:buttonBarNeutralButtonStyle">@style/MethodDialogButton</item>
+        <item name="android:windowAnimationStyle">@style/MethodDialogAnimation</item>
+    </style>
+
+    <!--
+      Кнопки диалога. Не заглавными: КАПС в русском читается ощутимо медленнее
+      латиницы — букв больше, и слово теряет узнаваемый силуэт.
+    -->
+    <style name="MethodDialogButton" parent="android:style/Widget.Material.Button.Borderless">
+        <item name="android:textColor">#34E28A</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!--
+      Появление экрана. Короткий подъём с проявлением вместо системного
+      «выезда сбоку»: движение задаёт иерархию — новый экран приходит ИЗ
+      глубины, а не сдвигает предыдущий.
+    -->
+    <style name="MethodWindowAnimation" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/screen_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/screen_hold</item>
+        <item name="android:activityCloseEnterAnimation">@anim/screen_hold</item>
+        <item name="android:activityCloseExitAnimation">@anim/screen_exit</item>
+    </style>
+
+    <style name="MethodDialogAnimation" parent="@android:style/Animation.Dialog">
+        <item name="android:windowEnterAnimation">@anim/dialog_enter</item>
+        <item name="android:windowExitAnimation">@anim/dialog_exit</item>
+    </style>
+</resources>
