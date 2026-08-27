@@ -41,14 +41,6 @@ public sealed partial class MainViewModel
     [ObservableProperty]
     private string _downSpeed = "0 Б/с";
 
-    /// <summary>
-    /// Есть ли чем мерить. Туннель, поднятый до открытия окна, мы подхватываем, но
-    /// секрета к его статистике у нас нет — показывать в этом случае нули значило
-    /// бы выдать «трафика нет» за «мы не знаем».
-    /// </summary>
-    [ObservableProperty]
-    private bool _trafficAvailable;
-
     [ObservableProperty]
     private string _upSpeed = "0 Б/с";
 
@@ -69,11 +61,8 @@ public sealed partial class MainViewModel
         _sessionStartDown = 0;
         _sessionStartUp = 0;
 
-        _downHistory.Clear();
-        _upHistory.Clear();
-        PublishHistory();
+        FillFlat();
 
-        TrafficAvailable = true;
         _trafficTimer ??= CreateTrafficTimer();
         _trafficTimer.Start();
     }
@@ -85,10 +74,14 @@ public sealed partial class MainViewModel
         return timer;
     }
 
+    /// <summary>
+    /// Туннель опущен: трафика нет, и нули здесь — правда. Карточку не прячем и
+    /// график не стираем: пропадая, они перекраивали страницу в момент
+    /// подключения, и композиция прыгала на глазах.
+    /// </summary>
     private void StopTraffic()
     {
         _trafficTimer?.Stop();
-        TrafficAvailable = false;
         _clash = null;
         _previousTotals = null;
 
@@ -96,8 +89,46 @@ public sealed partial class MainViewModel
         UpSpeed = "0 Б/с";
         SessionVolume = "0 Б";
 
+        FillFlat();
+    }
+
+    /// <summary>
+    /// Туннель поднят, но считать нечем: его подняли до нас, и секрета к его
+    /// статистике у нас нет. Здесь именно прочерк, а не ноль — ноль означал бы
+    /// «трафика нет», тогда как трафик идёт, просто мимо наших глаз. График по
+    /// той же причине пуст: плоская линия по нулю — такое же враньё.
+    /// </summary>
+    private void MarkTrafficUnknown()
+    {
+        _trafficTimer?.Stop();
+        _clash = null;
+        _previousTotals = null;
+
+        DownSpeed = "—";
+        UpSpeed = "—";
+        SessionVolume = "—";
+
         _downHistory.Clear();
         _upHistory.Clear();
+        PublishHistory();
+    }
+
+    /// <summary>
+    /// Ровная линия по нулю во всю ширину. Без неё график начинает с двух точек,
+    /// растянутых на всю карточку, и первую минуту после подключения шкала
+    /// сжимается на глазах — данные вползают справа, а не перерисовываются целиком.
+    /// </summary>
+    private void FillFlat()
+    {
+        _downHistory.Clear();
+        _upHistory.Clear();
+
+        for (var i = 0; i < HistoryLength; i++)
+        {
+            _downHistory.Add(0);
+            _upHistory.Add(0);
+        }
+
         PublishHistory();
     }
 

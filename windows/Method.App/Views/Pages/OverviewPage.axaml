@@ -14,14 +14,39 @@
              x:Class="Method.App.Views.Pages.OverviewPage"
              x:DataType="vm:MainViewModel">
 
-  <Grid RowDefinitions="*,Auto,Auto,Auto,Auto,*" Margin="40,10,40,24">
+  <!--
+    Прокрутка нужна не ради длины страницы, а ради нижнего края: при малом окне
+    и поднятом туннеле карточка трафика оказывалась за границей и просто не
+    показывалась. Высота содержимого привязана к видимой области, иначе внутри
+    прокрутки растяжки схлопнутся в ноль и знак перестанет стоять по центру.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" c:SmoothScroll.Enabled="True"
+                Padding="40,10,40,24">
+  <Grid RowDefinitions="*,Auto,Auto,Auto,Auto,*"
+        MinHeight="{Binding $parent[ScrollViewer].Viewport.Height}">
 
-    <!-- Циферблат и кнопка -->
-    <Panel Grid.Row="1" Height="300">
-      <!-- Гало под кнопкой -->
-      <Ellipse Classes="glow" Width="230" Height="230"
+    <!--
+      Циферблат и кнопка. Размеры всей композиции переключает оформление по
+      состоянию окна: в обычном окне они те, под которые её собирали, в
+      развёрнутом — крупнее, иначе знак тонул бы в пустоте на весь экран.
+
+      Масштабировать это коробкой Viewbox нельзя: страница лежит в прокрутке,
+      а та отдаёт содержимому неограниченную высоту — коробка бралась
+      подгонять композицию по ширине окна, раздувала её и выталкивала карточки
+      за нижний край.
+    -->
+    <Panel Grid.Row="1" Name="Stage" Classes="dialArea">
+      <!-- Гало под кнопкой: круг в основном оформлении, лучи в плакатном. -->
+      <Ellipse Classes="glow"
                Fill="{DynamicResource ConnectedBrush}"
                IsVisible="{Binding IsConnected}" />
+
+      <c:Rays Name="StageRays" Classes="rays" IsActive="{Binding IsConnected}"
+              RayBrush="{DynamicResource AccentBrush}" />
+
+      <c:Banners Name="StageBanners" Classes="banners"
+                 ClothBrush="{DynamicResource AccentBrush}"
+                 PoleBrush="{DynamicResource EmblemOutlineBrush}" />
 
       <!--
         Кольцо-циферблат. Штрихи нарисованы пунктиром по окружности, а не шестью
@@ -42,7 +67,7 @@
                  Opacity="0.75" IsVisible="{Binding IsConnected}" />
       </Panel>
 
-      <Button Classes="connect" Command="{Binding ToggleCommand}"
+      <Button Name="ConnectButton" Classes="connect" Command="{Binding ToggleCommand}"
               HorizontalAlignment="Center" VerticalAlignment="Center">
         <Panel>
           <!--
@@ -52,14 +77,17 @@
             лишней, поэтому там кнопка теряет фон и рамку, а подпись уходит вниз
             под знак. Видимостью распоряжается оформление, а не разметка.
           -->
-          <c:Emblem Classes="emblem"
+          <c:Emblem Name="StageEmblem" Classes="emblem"
+                    Wreath="Wheat"
                     IsJammed="{Binding IsBusy}" IsRunning="{Binding IsConnected}"
+                    IsNudged="{Binding $parent[Button].IsPointerOver}"
                     FrameBrush="{DynamicResource AccentBrush}"
-                    FlagBrush="{DynamicResource AccentBrush}"
+                    FlagBrush="{DynamicResource EmblemFlagBrush}"
+                    OutlineBrush="{DynamicResource EmblemOutlineBrush}"
                     ToolBrush="{DynamicResource EmblemBrush}"
                     LetterBrush="{DynamicResource EmblemBrush}"
                     FieldBrush="{DynamicResource SurfaceBrush}"
-                    CutBrush="{DynamicResource BackgroundBrush}" />
+                    CutBrush="{DynamicResource EmblemOutlineBrush}" />
 
           <StackPanel Classes="powerFace" Spacing="9">
             <Path Data="{DynamicResource IconPower}" Stretch="Uniform"
@@ -73,14 +101,14 @@
           </StackPanel>
         </Panel>
       </Button>
+      <!-- Подпись действия для плакатного оформления: там она не помещается
+           внутри кнопки, потому что кнопку целиком занимает знак. Стоит внутри
+           коробки, поэтому растёт вместе со знаком. -->
+      <TextBlock Name="ActionCaption" Classes="posterAction" Text="{Binding ActionText}"
+                 FontSize="11.5" LetterSpacing="2.2" FontWeight="Bold"
+                 HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                 Margin="0,0,0,4" />
     </Panel>
-
-    <!-- Подпись действия для плакатного оформления: там она не помещается
-         внутри кнопки, потому что кнопку целиком занимает знак. -->
-    <TextBlock Grid.Row="1" Classes="posterAction" Text="{Binding ActionText}"
-               FontSize="11.5" LetterSpacing="2.2" FontWeight="Bold"
-               HorizontalAlignment="Center" VerticalAlignment="Bottom"
-               Margin="0,0,0,4" />
 
     <!-- Что сейчас выбрано и куда добавлять -->
     <StackPanel Grid.Row="2" Spacing="4" Margin="0,16,0,0" HorizontalAlignment="Center">
@@ -128,13 +156,14 @@
     </StackPanel>
 
     <!--
-      Трафик. Показывается, только когда есть чем мерить: туннель, поднятый до
-      открытия окна, мы подхватываем, но секрета к его статистике у нас нет, и
-      нули на этом месте читались бы как «трафика нет».
+      Трафик. Карточка стоит здесь всегда, в любом состоянии: появляясь только
+      при подключении, она перекраивала страницу ровно в тот момент, когда
+      человек смотрит на кнопку, — всё под ней скакало вниз. Что показывать в
+      цифрах, решает модель: ноль, когда туннеля нет, и прочерк, когда туннель
+      чужой и считать нечем.
     -->
     <Border Grid.Row="4" Classes="card" Padding="20,16" Margin="0,20,0,0"
-            MaxWidth="480" HorizontalAlignment="Center" VerticalAlignment="Top"
-            IsVisible="{Binding TrafficAvailable}">
+            Width="480" HorizontalAlignment="Center" VerticalAlignment="Top">
       <StackPanel Spacing="12">
         <Grid ColumnDefinitions="*,*,*">
           <StackPanel Spacing="4">
@@ -168,4 +197,5 @@
                Foreground="{DynamicResource TextSecondaryBrush}"
                IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
   </Grid>
+  </ScrollViewer>
 </UserControl>

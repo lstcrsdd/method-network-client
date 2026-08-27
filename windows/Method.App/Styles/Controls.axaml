@@ -460,11 +460,36 @@
   </Style>
 
   <!--
+    Площадка под кнопкой и её гало. Высота стоит здесь, а не в разметке
+    страницы: в плакатном оформлении знак крупнее, и площадке нужно больше
+    места — а заданное в разметке значение оформлению не перебить.
+  -->
+  <Style Selector="Panel.dialArea">
+    <Setter Property="Width" Value="380" />
+    <Setter Property="Height" Value="330" />
+  </Style>
+
+  <!--
     Дышащее гало, когда туннель поднят. Дышит прозрачностью, а не размером:
     покадровая анимация RenderTransform требует своего аниматора и без него
-    роняет окно на старте — проверено.
+    роняет окно на старте — проверено. Размер держим шире кнопки: гало видно
+    ободком вокруг неё, и уйди оно целиком под кнопку — сигнал пропадёт.
   -->
+  <!--
+    Лучи — приём плакатного оформления; в основном их место занимает круглое
+    гало, и показывать оба разом значит спорить формами.
+  -->
+  <Style Selector="c|Rays.rays">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <Style Selector="c|Banners.banners">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
   <Style Selector="Ellipse.glow">
+    <Setter Property="Width" Value="230" />
+    <Setter Property="Height" Value="230" />
     <Style.Animations>
       <Animation Duration="0:0:2.6" IterationCount="INFINITE"
                  PlaybackDirection="Alternate" Easing="SineEaseInOut">

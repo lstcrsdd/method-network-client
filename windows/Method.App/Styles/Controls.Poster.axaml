@@ -92,8 +92,8 @@
     По той же причине скрыто кольцо-циферблат.
   -->
   <Style Selector="Button.connect">
-    <Setter Property="Width" Value="204" />
-    <Setter Property="Height" Value="204" />
+    <Setter Property="Width" Value="338" />
+    <Setter Property="Height" Value="338" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="CornerRadius" Value="0" />
     <Setter Property="BorderThickness" Value="0" />
@@ -108,11 +108,78 @@
     <Setter Property="IsVisible" Value="False" />
   </Style>
 
+  <!--
+    Размер площадки задаёт пропорцию всей композиции: коробка масштабирования
+    тянет её целиком под свободное место, а не по отдельным элементам. Ширину
+    диктуют знамёна, высоту — знак с подписью под ним.
+  -->
+  <Style Selector="Panel.dialArea">
+    <Setter Property="Width" Value="600" />
+    <Setter Property="Height" Value="400" />
+  </Style>
+  <!--
+    Здесь свет даёт не круг, а расходящийся веер: обод вокруг обода читался бы
+    мишенью, а лучи задают направление от знака наружу и работают на него.
+    Круглое гало поэтому убрано совсем.
+  -->
+  <Style Selector="Ellipse.glow">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <Style Selector="c|Rays.rays">
+    <Setter Property="IsVisible" Value="True" />
+    <Setter Property="Width" Value="396" />
+    <Setter Property="Height" Value="396" />
+  </Style>
+
+  <!--
+    Знамёна шире знака и ниже его: древки сходятся под картушем, полотнища
+    уходят в стороны. Размер выбран так, чтобы веер кончался раньше карточек —
+    заднику не место поверх показателей.
+  -->
+  <Style Selector="c|Banners.banners">
+    <Setter Property="IsVisible" Value="True" />
+    <Setter Property="Width" Value="600" />
+    <Setter Property="Height" Value="372" />
+  </Style>
+
   <!-- Знак вместо значка питания; подпись действия уходит под кнопку. -->
   <Style Selector="c|Emblem.emblem">
     <Setter Property="IsVisible" Value="True" />
-    <Setter Property="Width" Value="204" />
-    <Setter Property="Height" Value="204" />
+    <Setter Property="Width" Value="338" />
+    <Setter Property="Height" Value="338" />
+  </Style>
+
+  <!--
+    Просторное окно — развёрнутое или растянутое вручную. Места здесь втрое
+    больше, и композиция прежнего размера тонет в пустоте, поэтому вся она
+    разом берёт крупные размеры. Множитель один на все части: знак, кнопка,
+    лучи, знамёна и площадка обязаны расти вместе, иначе выверенные зазоры
+    между ними разъезжаются. Метку ставит страница, каждой части отдельно, —
+    почему не одним классом на окне, написано в её коде.
+  -->
+  <Style Selector="Panel.dialArea.roomy">
+    <Setter Property="Width" Value="840" />
+    <Setter Property="Height" Value="560" />
+  </Style>
+  <Style Selector="Button.connect.roomy">
+    <Setter Property="Width" Value="474" />
+    <Setter Property="Height" Value="474" />
+  </Style>
+  <Style Selector="c|Emblem.emblem.roomy">
+    <Setter Property="Width" Value="474" />
+    <Setter Property="Height" Value="474" />
+  </Style>
+  <Style Selector="c|Rays.rays.roomy">
+    <Setter Property="Width" Value="554" />
+    <Setter Property="Height" Value="554" />
+  </Style>
+  <Style Selector="c|Banners.banners.roomy">
+    <Setter Property="Width" Value="840" />
+    <Setter Property="Height" Value="520" />
+  </Style>
+  <Style Selector="TextBlock.posterAction.roomy">
+    <Setter Property="FontSize" Value="15" />
   </Style>
   <Style Selector="StackPanel.powerFace">
     <Setter Property="IsVisible" Value="False" />

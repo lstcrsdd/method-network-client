@@ -51,4 +51,8 @@
        бы пустое место вместо рисунка. -->
   <SolidColorBrush x:Key="EmblemBrush" Color="#D2B778" />
 
+  <!-- Полотнище и кант знака. В основном оформлении не используются по той же
+       причине, что и латунь, но объявлены: наборы обязаны совпадать ключами. -->
+  <SolidColorBrush x:Key="EmblemFlagBrush" Color="#8F3A2F" />
+  <SolidColorBrush x:Key="EmblemOutlineBrush" Color="#0A0A0A" />
 </ResourceDictionary>

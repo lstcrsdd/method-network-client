@@ -66,6 +66,11 @@ public sealed partial class MainViewModel : ObservableObject
         var settings = LoadSettings();
         RebuildGroups();
 
+        // График заводим сразу ровной линией по нулю: пустой он схлопывает
+        // карточку в первый же кадр, а линия появляется только при подключении —
+        // ровно тот скачок вёрстки, ради которого карточку и оставили на месте.
+        FillFlat();
+
         // Возвращаем тот узел, что был выбран в прошлый раз: клиент, каждый раз
         // сбрасывающий выбор на первый попавшийся, заставляет выбирать заново.
         SelectedServer = Servers.FirstOrDefault(s => s.Profile.Id == settings.SelectedServer)
