@@ -75,6 +75,7 @@ public sealed partial class MainViewModel
             BlockLanDns = BlockLanDns,
             AutoReconnect = AutoReconnect,
             SelectedServer = SelectedServer?.Profile.Id,
+            Rules = Rules.Select(r => r.Rule).ToArray(),
         });
     }
 

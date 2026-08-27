@@ -9,6 +9,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Method.Core.Json;
+using Method.Core.Models;
 
 namespace Method.Core.Storage;
 
@@ -46,6 +47,13 @@ public sealed record AppSettings
     /// <summary>Узел, выбранный в прошлый раз. Пусто — выберется первый.</summary>
     [JsonPropertyName("selectedServer")]
     public Guid? SelectedServer { get; init; }
+
+    /// <summary>
+    /// Правила маршрутизации в том порядке, в каком их применяет движок.
+    /// Секретов в них нет — адреса и домены человек и сам видит в интерфейсе.
+    /// </summary>
+    [JsonPropertyName("rules")]
+    public IReadOnlyList<RouteRule> Rules { get; init; } = [];
 }
 
 /// <summary>Чтение и запись настроек.</summary>

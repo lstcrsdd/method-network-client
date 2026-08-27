@@ -39,6 +39,18 @@
     <StreamGeometry x:Key="IconStar">M12,2.2 L14.6,9.1 L21.9,9.5 L16.2,14.1 L18.1,21.2 L12,17.2 L5.9,21.2 L7.8,14.1 L2.1,9.5 L9.4,9.1 Z</StreamGeometry>
   </Styles.Resources>
 
+  <!--
+    Флажок. Без этого он остаётся системным — синим в основном оформлении и
+    сиреневым в плакатном, где всё остальное красное.
+  -->
+  <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+  <Style Selector="CheckBox:checked /template/ Path#CheckGlyph">
+    <Setter Property="Fill" Value="{DynamicResource OnAccentBrush}" />
+  </Style>
+
   <!-- Значок: линия одинаковой толщины, скруглённые концы. -->
   <Style Selector="Path.icon">
     <Setter Property="StrokeThickness" Value="1.6" />

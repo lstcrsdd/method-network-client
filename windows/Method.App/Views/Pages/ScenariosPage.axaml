@@ -7,11 +7,10 @@
   Foundation, either version 3 of the License, or (at your option) any later
   version. See LICENSE for details.
 
-  Раздел показывает то, что клиент делает на самом деле: три правила, и ровно
-  они попадают в конфигурацию движка. Управление нарисовано, но не подключено —
-  и об этом сказано прямо, значком «скоро» и выключенными кнопками. Показать
-  рабочие на вид элементы, которые ничего не делают, нельзя: человек нажмёт,
-  ничего не произойдёт, и решит, что сломан клиент.
+  Раздел показывает то, что клиент делает на самом деле. Сверху — правила,
+  которые ставит сам клиент: их не убрать, потому что без них туннель либо не
+  поднимется, либо оставит без сети локальные устройства. Ниже — правила
+  человека, в том порядке, в каком их применяет движок.
 -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -23,27 +22,143 @@
   <ScrollViewer VerticalScrollBarVisibility="Auto" c:SmoothScroll.Enabled="True">
     <StackPanel Margin="40,10,40,32">
 
-      <Grid ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,0,0,8">
-        <TextBlock Classes="pageTitle" Text="Сценарии" VerticalAlignment="Center" />
-        <Border Grid.Column="1" Classes="soon" Margin="12,6,0,0">
-          <TextBlock Text="СКОРО" FontSize="9.5" LetterSpacing="0.8"
-                     Foreground="{DynamicResource TextSecondaryBrush}" />
-        </Border>
-        <Button Grid.Column="3" Classes="round" IsEnabled="False" VerticalAlignment="Center"
-                ToolTip.Tip="Свои сценарии появятся вместе с выбором маршрута по качеству">
-          <Path Classes="icon" Data="{DynamicResource IconPlus}"
-                Stroke="{DynamicResource TextMutedBrush}" StrokeThickness="1.8" />
-        </Button>
-      </Grid>
+      <TextBlock Classes="pageTitle" Text="Сценарии" Margin="0,0,0,8" />
 
       <TextBlock Classes="subtitle" Margin="0,0,0,22" TextWrapping="Wrap" MaxWidth="640"
                  HorizontalAlignment="Left"
-                 Text="Правило называет путь, а не сервер. Какой маршрут ему сегодня соответствует — решает клиент." />
+                 Text="Что вести мимо туннеля, а что — в него. Движок применяет первое подошедшее правило, поэтому порядок сверху вниз и есть порядок применения." />
+
+      <!-- Своё правило -->
+      <Border Classes="card" Padding="16,14" Margin="0,0,0,22">
+        <StackPanel Spacing="12">
+          <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBox Name="RuleBox" Text="{Binding NewRuleValue}"
+                     Watermark="example.com или 192.168.0.0/16"
+                     VerticalContentAlignment="Center" />
+
+            <!--
+              Направление выбирается до добавления, а не после: правило без
+              направления бессмысленно, и спрашивать о нём вдогонку значит
+              заставлять исправлять только что созданное.
+            -->
+            <Button Grid.Column="1" Classes="quiet" Margin="10,0,0,0"
+                    Command="{Binding ToggleNewRuleAimCommand}"
+                    ToolTip.Tip="Куда отправлять то, что подошло под правило">
+              <StackPanel Orientation="Horizontal" Spacing="7">
+                <Path Data="{DynamicResource IconArrowOut}" Stretch="Uniform" Width="15" Height="15"
+                      StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                      Stroke="{Binding $parent[Button].Foreground}" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding NewRuleAimText}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+
+            <Button Grid.Column="2" Classes="pill" Margin="10,0,0,0" Content="Добавить"
+                    Command="{Binding AddRuleCommand}" IsDefault="True" />
+          </Grid>
+
+          <TextBlock Text="{Binding RuleError}" FontSize="12" TextWrapping="Wrap"
+                     Foreground="{DynamicResource ErrorBrush}"
+                     IsVisible="{Binding RuleError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+          <TextBlock FontSize="12" TextWrapping="Wrap"
+                     Foreground="{DynamicResource WarningBrush}"
+                     IsVisible="{Binding RulesPending}"
+                     Text="Туннель поднят: правила применятся при следующем подключении." />
+        </StackPanel>
+      </Border>
+
+      <!-- Правила человека -->
+      <TextBlock Classes="sectionLabel" Text="ВАШИ ПРАВИЛА" Margin="0,0,0,10"
+                 IsVisible="{Binding HasRules}" />
+
+      <ItemsControl ItemsSource="{Binding Rules}" Margin="0,0,0,22" IsVisible="{Binding HasRules}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:RuleItem">
+            <Border Classes="row" Padding="16,13" Margin="0,0,0,8">
+              <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                <CheckBox Grid.Column="0" IsChecked="{Binding Enabled, Mode=OneWay}"
+                          Command="{Binding $parent[ItemsControl].((vm:MainViewModel)DataContext).ToggleRuleCommand}"
+                          CommandParameter="{Binding}"
+                          VerticalAlignment="Center" Margin="0,0,12,0"
+                          ToolTip.Tip="Выключенное правило остаётся в списке, но в туннель не идёт" />
+
+                <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Value}" FontSize="13.5" FontWeight="SemiBold"
+                             Foreground="{DynamicResource TextPrimaryBrush}" />
+                  <TextBlock Text="{Binding MatchText}" FontSize="11.5"
+                             Foreground="{DynamicResource TextMutedBrush}" />
+                </StackPanel>
+
+                <Button Grid.Column="2" Classes="lane" VerticalAlignment="Center" Margin="0,0,8,0"
+                        Command="{Binding $parent[ItemsControl].((vm:MainViewModel)DataContext).FlipRuleCommand}"
+                        CommandParameter="{Binding}"
+                        ToolTip.Tip="Переставить туда-обратно">
+                  <TextBlock Text="{Binding AimText}" FontSize="12"
+                             Foreground="{DynamicResource TextPrimaryBrush}" />
+                </Button>
+
+                <Button Grid.Column="3" Classes="quiet" VerticalAlignment="Center"
+                        Command="{Binding $parent[ItemsControl].((vm:MainViewModel)DataContext).RemoveRuleCommand}"
+                        CommandParameter="{Binding}">
+                  <Path Data="{DynamicResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
+                        StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                        Stroke="{Binding $parent[Button].Foreground}" />
+                </Button>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- Правила клиента -->
+      <TextBlock Classes="sectionLabel" Text="СТАВИТ КЛИЕНТ" Margin="0,0,0,10" />
 
       <StackPanel Spacing="8">
 
         <Border Classes="row" Padding="16,13">
-          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <Path Grid.Column="0" Data="{DynamicResource IconArrowOut}" Stretch="Uniform"
+                  Width="18" Height="18" StrokeThickness="1.6" StrokeLineCap="Round"
+                  StrokeJoin="Round" Stroke="{DynamicResource WarningBrush}"
+                  VerticalAlignment="Center" Margin="0,0,12,0" />
+
+            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+              <TextBlock Text="Адрес самого сервера" FontSize="13.5" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
+              <TextBlock Text="Иначе пакеты к нему ушли бы в туннель, который они же и поднимают"
+                         FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}" />
+            </StackPanel>
+
+            <Border Grid.Column="2" Classes="lane" VerticalAlignment="Center">
+              <TextBlock Text="мимо туннеля" FontSize="12"
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
+            </Border>
+          </Grid>
+        </Border>
+
+        <Border Classes="row" Padding="16,13">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <Path Grid.Column="0" Data="{DynamicResource IconArrowOut}" Stretch="Uniform"
+                  Width="18" Height="18" StrokeThickness="1.6" StrokeLineCap="Round"
+                  StrokeJoin="Round" Stroke="{DynamicResource WarningBrush}"
+                  VerticalAlignment="Center" Margin="0,0,12,0" />
+
+            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+              <TextBlock Text="Локальная сеть" FontSize="13.5" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
+              <TextBlock Text="Принтеры, хранилища и шлюз в домашней сети" FontSize="11.5"
+                         Foreground="{DynamicResource TextMutedBrush}" />
+            </StackPanel>
+
+            <Border Grid.Column="2" Classes="lane" VerticalAlignment="Center">
+              <TextBlock Text="мимо туннеля" FontSize="12"
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
+            </Border>
+          </Grid>
+        </Border>
+
+        <Border Classes="row" Padding="16,13">
+          <Grid ColumnDefinitions="Auto,*,Auto">
             <Path Grid.Column="0" Data="{DynamicResource IconLock}" Stretch="Uniform"
                   Width="18" Height="18" StrokeThickness="1.6" StrokeLineCap="Round"
                   StrokeJoin="Round" Stroke="{DynamicResource ConnectedBrush}"
@@ -58,95 +173,21 @@
               </Border>
             </StackPanel>
 
-            <Border Grid.Column="2" Classes="lane" VerticalAlignment="Center" Margin="0,0,8,0">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="через туннель" FontSize="12"
-                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                <Path Data="{DynamicResource IconChevron}" Stretch="Uniform" Width="9" Height="9"
-                      StrokeThickness="2" StrokeLineCap="Round" StrokeJoin="Round"
-                      Stroke="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
-              </StackPanel>
-            </Border>
-
-            <Button Grid.Column="3" Classes="quiet" IsEnabled="False" VerticalAlignment="Center">
-              <Path Data="{DynamicResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
-                    StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
-                    Stroke="{DynamicResource TextMutedBrush}" />
-            </Button>
-          </Grid>
-        </Border>
-
-        <Border Classes="row" Padding="16,13">
-          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-            <Path Grid.Column="0" Data="{DynamicResource IconArrowOut}" Stretch="Uniform"
-                  Width="18" Height="18" StrokeThickness="1.6" StrokeLineCap="Round"
-                  StrokeJoin="Round" Stroke="{DynamicResource WarningBrush}"
-                  VerticalAlignment="Center" Margin="0,0,12,0" />
-
-            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
-              <TextBlock Text="Локальная сеть" FontSize="13.5" FontWeight="SemiBold"
+            <Border Grid.Column="2" Classes="lane" VerticalAlignment="Center">
+              <TextBlock Text="через туннель" FontSize="12"
                          Foreground="{DynamicResource TextPrimaryBrush}" />
-              <TextBlock Text="Принтеры, хранилища и шлюз в домашней сети" FontSize="11.5"
-                         Foreground="{DynamicResource TextMutedBrush}" />
-            </StackPanel>
-
-            <Border Grid.Column="2" Classes="lane" VerticalAlignment="Center" Margin="0,0,8,0">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="мимо туннеля" FontSize="12"
-                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                <Path Data="{DynamicResource IconChevron}" Stretch="Uniform" Width="9" Height="9"
-                      StrokeThickness="2" StrokeLineCap="Round" StrokeJoin="Round"
-                      Stroke="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
-              </StackPanel>
             </Border>
-
-            <Button Grid.Column="3" Classes="quiet" IsEnabled="False" VerticalAlignment="Center">
-              <Path Data="{DynamicResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
-                    StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
-                    Stroke="{DynamicResource TextMutedBrush}" />
-            </Button>
           </Grid>
         </Border>
 
-        <Border Classes="row" Padding="16,13">
-          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-            <Path Grid.Column="0" Data="{DynamicResource IconArrowOut}" Stretch="Uniform"
-                  Width="18" Height="18" StrokeThickness="1.6" StrokeLineCap="Round"
-                  StrokeJoin="Round" Stroke="{DynamicResource WarningBrush}"
-                  VerticalAlignment="Center" Margin="0,0,12,0" />
-
-            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
-              <TextBlock Text="Адрес самого сервера" FontSize="13.5" FontWeight="SemiBold"
-                         Foreground="{DynamicResource TextPrimaryBrush}" />
-              <TextBlock Text="Иначе пакеты к нему ушли бы в туннель, который они же и поднимают"
-                         FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}" />
-            </StackPanel>
-
-            <Border Grid.Column="2" Classes="lane" VerticalAlignment="Center" Margin="0,0,8,0">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="мимо туннеля" FontSize="12"
-                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                <Path Data="{DynamicResource IconChevron}" Stretch="Uniform" Width="9" Height="9"
-                      StrokeThickness="2" StrokeLineCap="Round" StrokeJoin="Round"
-                      Stroke="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
-              </StackPanel>
-            </Border>
-
-            <Button Grid.Column="3" Classes="quiet" IsEnabled="False" VerticalAlignment="Center">
-              <Path Data="{DynamicResource IconTrash}" Stretch="Uniform" Width="15" Height="15"
-                    StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
-                    Stroke="{DynamicResource TextMutedBrush}" />
-            </Button>
-          </Grid>
-        </Border>
       </StackPanel>
 
       <Border Classes="card" Padding="16,14" Margin="0,20,0,0">
         <StackPanel Spacing="6">
-          <TextBlock Text="Пока правила неизменяемые" FontSize="13"
+          <TextBlock Text="Как это работает" FontSize="13"
                      Foreground="{DynamicResource TextPrimaryBrush}" />
           <TextBlock Classes="subtitle" TextWrapping="Wrap" MaxWidth="640" HorizontalAlignment="Left"
-                     Text="Это ровно то, что уходит в конфигурацию движка сейчас. Свои сценарии заработают вместе с выбором маршрута по качеству: правило будет называть путь, а какой узел ему сегодня соответствует — решать клиенту." />
+                     Text="Домен ловится вместе с поддоменами: правило на example.com относится и к www.example.com. Адрес можно писать и одиночным — 8.8.8.8 равносильно 8.8.8.8/32. Ваши правила применяются раньше правила о локальной сети, поэтому домашние адреса при желании можно завернуть в туннель. Единственное, что не перебить, — адрес самого сервера." />
         </StackPanel>
       </Border>
     </StackPanel>

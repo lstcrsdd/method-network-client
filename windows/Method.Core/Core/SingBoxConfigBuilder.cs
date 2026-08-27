@@ -75,6 +75,18 @@ public static class SingBoxConfigBuilder
         /// ставится на время работы туннеля.
         /// </summary>
         public bool StrictRoute { get; init; }
+
+        /// <summary>
+        /// Правила человека: что вести мимо туннеля, а что в него.
+        ///
+        /// <para>Порядок сохраняется — движок применяет первое подошедшее. Они
+        /// встают после служебных правил, но до правила о частных адресах:
+        /// иначе локальную сеть нельзя было бы завернуть в туннель, даже если
+        /// это ровно то, что человеку нужно. Единственное, что пользовательским
+        /// правилом не перебить, — адрес самой ноды: пакеты к ней обязаны идти
+        /// мимо туннеля, который они же и поднимают.</para>
+        /// </summary>
+        public IReadOnlyList<RouteRule> Rules { get; init; } = [];
     }
 
     private static readonly string[] AllowedTunStacks = ["gvisor", "system", "mixed"];
@@ -120,7 +132,7 @@ public static class SingBoxConfigBuilder
                 proxy,
                 new Dictionary<string, object?> { ["type"] = "direct", ["tag"] = DirectTag },
             },
-            ["route"] = Route(profile),
+            ["route"] = Route(profile, options),
             ["experimental"] = new Dictionary<string, object?>
             {
                 ["clash_api"] = new Dictionary<string, object?>
@@ -235,7 +247,7 @@ public static class SingBoxConfigBuilder
         ["stack"] = options.TunStack,
     };
 
-    private static Dictionary<string, object?> Route(ServerProfile profile) => new()
+    private static Dictionary<string, object?> Route(ServerProfile profile, Options options) => new()
     {
         // Всё, что ядро разрешает само, уходит внутрь туннеля. Замыкания не
         // возникает: адрес самой ноды разрешает domain_resolver у proxy-outbound,
@@ -247,16 +259,48 @@ public static class SingBoxConfigBuilder
         // при мёртвом туннеле имя не разрешится вовсе, зато мимо туннеля не уйдёт
         // ничего.
         ["default_domain_resolver"] = new Dictionary<string, object?> { ["server"] = RemoteDnsTag },
-        ["rules"] = new object[]
+        ["rules"] = Rules(profile, options),
+        ["final"] = ProxyTag,
+        ["auto_detect_interface"] = true,
+    };
+
+    /// <summary>
+    /// Правила маршрутизации по порядку применения: служебные, адрес ноды,
+    /// правила человека, частные адреса.
+    /// </summary>
+    private static object[] Rules(ServerProfile profile, Options options)
+    {
+        var rules = new List<object>
         {
             new Dictionary<string, object?> { ["action"] = "sniff" },
             new Dictionary<string, object?> { ["protocol"] = "dns", ["action"] = "hijack-dns" },
             ServerDirectRule(profile.Host),
-            new Dictionary<string, object?> { ["ip_is_private"] = true, ["outbound"] = DirectTag },
-        },
-        ["final"] = ProxyTag,
-        ["auto_detect_interface"] = true,
-    };
+        };
+
+        foreach (var rule in options.Rules)
+        {
+            if (!rule.Enabled || string.IsNullOrWhiteSpace(rule.Value)) continue;
+
+            rules.Add(UserRule(rule));
+        }
+
+        rules.Add(new Dictionary<string, object?> { ["ip_is_private"] = true, ["outbound"] = DirectTag });
+
+        return rules.ToArray();
+    }
+
+    /// <summary>
+    /// Правило человека. Домен берём вместе с поддоменами: написав «example.com»,
+    /// имеют в виду и «www.example.com» — обратное пришлось бы объяснять.
+    /// </summary>
+    private static Dictionary<string, object?> UserRule(RouteRule rule)
+    {
+        var outbound = rule.Aim == RouteAim.Tunnel ? ProxyTag : DirectTag;
+
+        return rule.Match == RouteMatch.Cidr
+            ? new Dictionary<string, object?> { ["ip_cidr"] = new[] { rule.Value }, ["outbound"] = outbound }
+            : new Dictionary<string, object?> { ["domain_suffix"] = new[] { rule.Value }, ["outbound"] = outbound };
+    }
 
     /// <summary>
     /// Сама нода — мимо туннеля. Без этого правила пакеты к ней уходили бы в

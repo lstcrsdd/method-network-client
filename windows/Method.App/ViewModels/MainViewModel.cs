@@ -64,6 +64,7 @@ public sealed partial class MainViewModel : ObservableObject
             Subscriptions.Add(new SubscriptionItem(subscription));
 
         var settings = LoadSettings();
+        LoadRules(settings.Rules);
         RebuildGroups();
 
         // График заводим сразу ровной линией по нулю: пустой он схлопывает
@@ -249,6 +250,11 @@ public sealed partial class MainViewModel : ObservableObject
                 // это отсутствие секрета, а управлять движком по этому адресу может
                 // любой процесс на машине.
                 ClashSecret = secret,
+
+                // Правила человека уходят в движок вместе с конфигурацией: менять
+                // их на лету движок не даёт, поэтому они применяются с этого
+                // подключения и до отключения.
+                Rules = Rules.Select(r => r.Rule).ToArray(),
             });
         }
         catch (Exception e)
