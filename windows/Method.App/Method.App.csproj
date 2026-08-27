@@ -47,6 +47,17 @@
     <AvaloniaResource Include="Assets/*.ico" />
   </ItemGroup>
 
+  <!-- Граница общего ядра. Библиотеку собирает core/Scripts/build-windows.ps1;
+       в репозитории её нет, как и движка. Условие не роняет сборку у того, кто
+       ядро ещё не собирал: клиент соберётся, а отсутствие библиотеки скажется
+       понятной ошибкой при первом обращении к ней, а не загадочной при сборке. -->
+  <ItemGroup>
+    <None Include="..\..\core\build\method_core_ffi.dll" Condition="Exists('..\..\core\build\method_core_ffi.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>method_core_ffi.dll</Link>
+    </None>
+  </ItemGroup>
+
   <!-- Движок вшивается в exe и извлекается при установке. Файлов нет в
        репозитории — их приносит Scripts/bootstrap.ps1. -->
   <ItemGroup>

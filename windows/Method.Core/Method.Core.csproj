@@ -10,6 +10,13 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>Method.Core</RootNamespace>
+
+    <!--
+      Нужен для границы общего ядра: генератор LibraryImport выпускает
+      указатели, а строки из ядра читаются прямо из его памяти, без лишнего
+      копирования в промежуточный массив.
+    -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
 </Project>
