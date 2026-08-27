@@ -1,4 +1,4 @@
-# Собрать границу ядра в DLL для клиента Windows и положить её туда, где её
+﻿# Собрать границу ядра в DLL для клиента Windows и положить её туда, где её
 # найдёт сборка .NET.
 #
 #   pwsh core/Scripts/build-windows.ps1
@@ -54,6 +54,15 @@ if (-not (Test-Path $vswhere)) {
 }
 
 # ── Сборка ──
+
+# В PATH может лежать `link` из состава Git for Windows — это утилита coreutils
+# для жёстких ссылок, а не компоновщик. Cargo зовёт компоновщик по имени
+# `link.exe`, находит чужой и получает от него «extra operand» посреди сборки
+# зависимостей. Сообщение не упоминает ни Git, ни PATH, поэтому чинится оно
+# долго. Убираем каталоги Git из PATH на время сборки.
+$env:PATH = ($env:PATH -split ';' | Where-Object {
+    $_ -and $_ -notmatch '\\Git\\usr\\bin' -and $_ -notmatch '\\Git\\bin' -and $_ -notmatch '\\Git\\mingw'
+}) -join ';'
 
 Push-Location $root
 

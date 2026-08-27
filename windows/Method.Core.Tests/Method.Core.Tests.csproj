@@ -17,4 +17,14 @@
     <ProjectReference Include="..\Method.Core\Method.Core.csproj" />
   </ItemGroup>
 
+  <!-- Граница общего ядра. Проверки идут против настоящей библиотеки, а не
+       заглушки, поэтому она нужна рядом с тестами. Условие не роняет прогон у
+       того, кто ядро не собирал: такие проверки пропускаются. -->
+  <ItemGroup>
+    <None Include="..\..\core\build\method_core_ffi.dll" Condition="Exists('..\..\core\build\method_core_ffi.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>method_core_ffi.dll</Link>
+    </None>
+  </ItemGroup>
+
 </Project>

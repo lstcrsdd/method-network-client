@@ -32,6 +32,12 @@ public class MethodCoreTests
     private const string Link =
         "hysteria2://shared%3Asecret@node.example.net:8443?sni=node.example.net&insecure=1#Узел%20FI";
 
+    /// <summary>Узел на другой оси обхода — для проверок, где нужен запасной путь.</summary>
+    private const string RealityLink =
+        "vless://11111111-2222-3333-4444-555555555555@203.0.113.20:443" +
+        "?security=reality&pbk=PUBKEY&sid=a1b2&fp=chrome&sni=www.example.org&flow=xtls-rprx-vision" +
+        "#LT%20Vision";
+
     [SkippableFact]
     public void Ядро_разбирает_ссылку_так_же_как_наш_разбор()
     {
@@ -71,6 +77,48 @@ public class MethodCoreTests
 
         Assert.NotEqual(McStatus.Ok, failure.Status);
         Assert.False(string.IsNullOrWhiteSpace(failure.Message));
+    }
+
+    /// <summary>
+    /// Конфигурация в схеме полос. Проверяем не «не упало», а то, ради чего
+    /// переходим: движок получает готовый конфиг, а управляющий слой — разбор
+    /// полос и маршрутов, чтобы не разбирать конфиг обратно.
+    /// </summary>
+    [SkippableFact]
+    public void Ядро_собирает_конфигурацию_полос()
+    {
+        Skip.IfNot(CoreAvailable(), "библиотека ядра не собрана");
+
+        // Двух узлов мало не потому, что так красивее: ядро требует у полосы
+        // минимум два НЕЗАВИСИМЫХ способа пройти. Второй Hysteria2 запасным не
+        // считается — обе оси одинаково умирают в сети, которая режет QUIC.
+        var quic = MethodCore.ParseLink(Link);
+        var tls = MethodCore.ParseLink(RealityLink);
+
+        var options = """{"clashSecret":"проверка","tunStack":"gvisor"}""";
+
+        var plan = MethodCore.BuildLanes($"[{quic},{tls}]", string.Empty, options);
+
+        using var parsed = JsonDocument.Parse(plan);
+        var root = parsed.RootElement;
+
+        var config = root.GetProperty("config");
+        Assert.True(config.TryGetProperty("outbounds", out _));
+        Assert.True(config.TryGetProperty("route", out _));
+        Assert.True(config.TryGetProperty("inbounds", out _));
+
+        // Полосы и маршруты — то, чего в нашей сборке конфигурации нет вовсе.
+        Assert.True(root.GetProperty("lanes").EnumerateObject().Any());
+        Assert.True(root.GetProperty("routes").EnumerateObject().Any());
+        Assert.False(string.IsNullOrWhiteSpace(root.GetProperty("defaultLaneTag").GetString()));
+
+        // Стек передан нами и обязан дойти без подмены: с системным стеком
+        // туннель на Windows поднимается, показывает «подключено» и не
+        // пропускает TCP.
+        var tun = config.GetProperty("inbounds").EnumerateArray()
+            .First(i => i.GetProperty("type").GetString() == "tun");
+
+        Assert.Equal("gvisor", tun.GetProperty("stack").GetString());
     }
 
     /// <summary>
