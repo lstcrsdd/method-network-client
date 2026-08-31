@@ -11,6 +11,7 @@ using Method.Core.Core;
 using Method.Core.Models;
 using Method.Core.Storage;
 using Method.Core.Json;
+using Method.Core.Tunnel;
 using Xunit;
 
 namespace Method.Core.Tests;
@@ -49,6 +50,89 @@ public class RouteRuleTests
         Assert.NotNull(rule);
         Assert.Equal(RouteMatch.Cidr, rule.Match);
         Assert.Equal(expected, rule.Value);
+    }
+
+    [Theory]
+    [InlineData("chrome.exe", RouteMatch.Process, "chrome.exe")]
+    [InlineData("  Steam.exe  ", RouteMatch.Process, "Steam.exe")]     // регистр у файла свой
+    [InlineData("\"qbittorrent.exe\"", RouteMatch.Process, "qbittorrent.exe")]
+    [InlineData(@"C:\Games\game.exe", RouteMatch.ProcessPath, @"C:\Games\game.exe")]
+    [InlineData("C:/Games/game.exe", RouteMatch.ProcessPath, @"C:\Games\game.exe")]
+    public void Программа_распознаётся_по_расширению(string input, RouteMatch match, string expected)
+    {
+        var rule = RouteRule.TryParse(input, RouteAim.Direct);
+
+        Assert.NotNull(rule);
+        Assert.Equal(match, rule.Match);
+        Assert.Equal(expected, rule.Value);
+    }
+
+    /// <summary>
+    /// «chrome.exe» проходит и проверку на домен: «exe» ничем не хуже любой
+    /// другой зоны. Правило молча стало бы доменным и не срабатывало никогда —
+    /// худший вид ошибки, потому что снаружи он выглядит как рабочее правило.
+    /// </summary>
+    [Fact]
+    public void Программа_не_принимается_за_домен()
+    {
+        var rule = RouteRule.TryParse("chrome.exe", RouteAim.Direct);
+
+        Assert.NotNull(rule);
+        Assert.NotEqual(RouteMatch.Domain, rule.Match);
+    }
+
+    [Fact]
+    public void Правило_по_программе_доходит_до_движка()
+    {
+        var config = SingBoxConfigBuilder.Build(Profile(), new SingBoxConfigBuilder.Options
+        {
+            ClashSecret = "секрет",
+            Rules =
+            [
+                RouteRule.TryParse("game.exe", RouteAim.Direct)!,
+                RouteRule.TryParse(@"C:\Program Files\App\app.exe", RouteAim.Tunnel)!,
+            ],
+        });
+
+        var rules = Rules(config);
+
+        Assert.Equal(new[] { "game.exe" }, rules[3]["process_name"]);
+        Assert.Equal("direct", rules[3]["outbound"]);
+
+        Assert.Equal(new[] { @"C:\Program Files\App\app.exe" }, rules[4]["process_path"]);
+        Assert.Equal("proxy", rules[4]["outbound"]);
+    }
+
+    /// <summary>
+    /// Движок принимает конфигурацию с правилами по процессам.
+    ///
+    /// <para>Проверка не лишняя: схему <c>process_name</c> движок понимает не на
+    /// всех платформах, и узнать об этом на живом подключении означало бы
+    /// «туннель не поднялся» без внятной причины. Здесь же отказ читается прямо
+    /// из вывода <c>sing-box check</c>.</para>
+    /// </summary>
+    [SkippableFact]
+    public async Task Движок_принимает_правила_по_процессам()
+    {
+        var engine = Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "Resources", "sing-box.exe");
+
+        Skip.IfNot(File.Exists(engine), "движка нет в Resources");
+
+        var config = SingBoxConfigBuilder.BuildJson(Profile(), new SingBoxConfigBuilder.Options
+        {
+            ClashSecret = "секрет",
+            Rules =
+            [
+                RouteRule.TryParse("steam.exe", RouteAim.Direct)!,
+                RouteRule.TryParse(@"C:\Program Files\App\app.exe", RouteAim.Tunnel)!,
+                RouteRule.TryParse("example.com", RouteAim.Direct)!,
+            ],
+        });
+
+        var result = await EngineValidator.ValidateAsync(config, engine);
+
+        Assert.True(result.Ok, result.Error);
     }
 
     [Theory]

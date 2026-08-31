@@ -29,6 +29,19 @@ public enum RouteMatch
 
     /// <summary>Диапазон адресов в записи CIDR.</summary>
     Cidr,
+
+    /// <summary>
+    /// Имя исполняемого файла: <c>chrome.exe</c>. Ловит программу, где бы она
+    /// ни лежала, и переживает её обновление — папки с номером версии меняются,
+    /// имя нет.
+    /// </summary>
+    Process,
+
+    /// <summary>
+    /// Полный путь к исполняемому файлу. Нужен, когда одноимённых программ
+    /// несколько и различать их надо по месту, а не по имени.
+    /// </summary>
+    ProcessPath,
 }
 
 /// <summary>
@@ -63,7 +76,28 @@ public sealed record RouteRule
     /// </summary>
     public static RouteRule? TryParse(string input, RouteAim aim)
     {
-        var value = (input ?? string.Empty).Trim().Trim('.').ToLowerInvariant();
+        var raw = (input ?? string.Empty).Trim().Trim('"');
+        if (raw.Length == 0) return null;
+
+        // Программу распознаём первой: «chrome.exe» прошло бы и проверку на
+        // домен — «exe» ничем не хуже любой другой зоны, — и правило молча
+        // стало бы доменным, то есть никогда бы не сработало.
+        if (LooksLikeProcess(raw))
+        {
+            var path = raw.Contains('\\') || raw.Contains('/');
+
+            // Регистр у имени процесса не трогаем: путь на диске может быть
+            // каким угодно, а домен по стандарту регистронезависим — это разные
+            // сущности, и общее правило к ним не применить.
+            return new RouteRule
+            {
+                Value = path ? raw.Replace('/', '\\') : raw,
+                Aim = aim,
+                Match = path ? RouteMatch.ProcessPath : RouteMatch.Process,
+            };
+        }
+
+        var value = raw.Trim('.').ToLowerInvariant();
         if (value.Length == 0) return null;
 
         if (LooksLikeCidr(value))
@@ -75,6 +109,14 @@ public sealed record RouteRule
             ? new RouteRule { Value = value, Aim = aim, Match = RouteMatch.Domain }
             : null;
     }
+
+    /// <summary>
+    /// Исполняемый файл Windows — по расширению. Проверка нарочно узкая: ловим
+    /// только «.exe», потому что маршрутизация по процессу в движке опирается
+    /// ровно на исполняемый файл соединения.
+    /// </summary>
+    private static bool LooksLikeProcess(string value) =>
+        value.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && value.Length > 4;
 
     /// <summary>
     /// Похоже на диапазон или отдельный адрес. Двоеточие выдаёт IPv6, точки с

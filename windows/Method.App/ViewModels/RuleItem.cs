@@ -31,9 +31,13 @@ public sealed partial class RuleItem(RouteRule rule) : ObservableObject
     public string AimText => ToTunnel ? "через туннель" : "мимо туннеля";
 
     /// <summary>Чем правило поймано. Человеку важно видеть, что домен ловит и поддомены.</summary>
-    public string MatchText => Rule.Match == RouteMatch.Cidr
-        ? "диапазон адресов"
-        : "домен и поддомены";
+    public string MatchText => Rule.Match switch
+    {
+        RouteMatch.Cidr => "диапазон адресов",
+        RouteMatch.Process => "программа, где бы она ни лежала",
+        RouteMatch.ProcessPath => "программа по этому пути",
+        _ => "домен и поддомены",
+    };
 
     public void Flip()
     {

@@ -297,9 +297,15 @@ public static class SingBoxConfigBuilder
     {
         var outbound = rule.Aim == RouteAim.Tunnel ? ProxyTag : DirectTag;
 
-        return rule.Match == RouteMatch.Cidr
-            ? new Dictionary<string, object?> { ["ip_cidr"] = new[] { rule.Value }, ["outbound"] = outbound }
-            : new Dictionary<string, object?> { ["domain_suffix"] = new[] { rule.Value }, ["outbound"] = outbound };
+        var key = rule.Match switch
+        {
+            RouteMatch.Cidr => "ip_cidr",
+            RouteMatch.Process => "process_name",
+            RouteMatch.ProcessPath => "process_path",
+            _ => "domain_suffix",
+        };
+
+        return new Dictionary<string, object?> { [key] = new[] { rule.Value }, ["outbound"] = outbound };
     }
 
     /// <summary>
