@@ -30,6 +30,7 @@ internal static class Program
             null => RunGui(args),
             "--service" => RunHost(),
             "--firewall-reset" => ResetFirewall(),
+            "--wfp-check" => CheckFilters(),
             "--install" => RunInstaller(install: true),
             "--uninstall" => RunInstaller(install: false),
             _ => UnknownMode(mode),
@@ -105,6 +106,46 @@ internal static class Program
     }
 
     /// <summary>
+    /// Проверить, что блокировка на фильтрах платформы ставится на этой машине.
+    ///
+    /// <para>Проверка нужна отдельно от подключения: фильтры может отвергнуть
+    /// стороннее средство защиты, и узнать об этом в момент, когда человек жмёт
+    /// «подключить», означало бы отказ вместо туннеля. Здесь же блокировка
+    /// ставится на пару секунд, докладывает о себе и снимается.</para>
+    /// </summary>
+    private static int CheckFilters()
+    {
+        if (!Elevation.IsElevated())
+        {
+            WriteLine("Method: проверка фильтров требует прав администратора. " +
+                      "Запустите командную строку от имени администратора и повторите.");
+            return 77;
+        }
+
+        using var guard = new WfpKillSwitch();
+
+        var engine = Method.Core.AppPaths.EngineFile;
+        WriteLine($"Method: движок — {engine}");
+
+        if (!guard.Enable(engine, Method.Core.Tunnel.TunLifecycle.InterfaceName, allowLan: true))
+        {
+            WriteLine($"Method: блокировка НЕ поставлена — {guard.LastError ?? "причина неизвестна"}");
+            return 1;
+        }
+
+        WriteLine("Method: блокировка поставлена. Проверьте своим средством: " +
+                  "netsh wfp show filters file=-  (искать «Method»).");
+        WriteLine("Method: снимаю через пять секунд.");
+
+        Thread.Sleep(TimeSpan.FromSeconds(5));
+
+        guard.Disable();
+        WriteLine("Method: блокировка снята. Фильтры динамического сеанса система убрала сама.");
+
+        return 0;
+    }
+
+    /// <summary>
     /// Режим объявлен, но не написан. Возвращаем ненулевой код и говорим прямо:
     /// установщик, который «отработал» и ничего не сделал, обнаруживается уже на
     /// машине человека.
@@ -117,7 +158,7 @@ internal static class Program
 
     private static int UnknownMode(string mode)
     {
-        WriteLine($"Method: неизвестный режим «{mode}». Доступны: --service, --install, --uninstall, --firewall-reset.");
+        WriteLine($"Method: неизвестный режим «{mode}». Доступны: --service, --install, --uninstall, --firewall-reset, --wfp-check.");
         return 64;
     }
 

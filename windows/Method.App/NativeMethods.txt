@@ -1,0 +1,43 @@
+// Что генерировать из описаний Win32. Список ведём руками и держим коротким:
+// каждая строка — это код, который появится в сборке.
+//
+// Платформа фильтрации Windows (WFP) — на ней сделана блокировка утечки.
+// Правила брандмауэра для того же не годятся: они меняют политику всей машины,
+// то есть ломают соседние клиенты, и переживают падение процесса.
+
+Windows.Win32.NetworkManagement.WindowsFilteringPlatform.FwpmEngineOpen0
+Windows.Win32.NetworkManagement.WindowsFilteringPlatform.FwpmEngineClose0
+Windows.Win32.NetworkManagement.WindowsFilteringPlatform.FwpmProviderAdd0
+Windows.Win32.NetworkManagement.WindowsFilteringPlatform.FwpmSubLayerAdd0
+Windows.Win32.NetworkManagement.WindowsFilteringPlatform.FwpmFilterAdd0
+Windows.Win32.NetworkManagement.WindowsFilteringPlatform.FwpmFreeMemory0
+Windows.Win32.NetworkManagement.WindowsFilteringPlatform.FwpmGetAppIdFromFileName0
+
+FWPM_SESSION0
+FWPM_PROVIDER0
+FWPM_SUBLAYER0
+FWPM_FILTER0
+FWPM_FILTER_CONDITION0
+FWPM_ACTION0
+FWP_VALUE0
+FWP_CONDITION_VALUE0
+FWP_BYTE_BLOB
+FWP_V4_ADDR_AND_MASK
+FWP_V6_ADDR_AND_MASK
+
+FWPM_SESSION_FLAG_DYNAMIC
+FWPM_LAYER_ALE_AUTH_CONNECT_V4
+FWPM_LAYER_ALE_AUTH_CONNECT_V6
+FWPM_CONDITION_ALE_APP_ID
+FWPM_CONDITION_IP_LOCAL_INTERFACE
+FWPM_CONDITION_IP_REMOTE_ADDRESS
+FWPM_CONDITION_IP_PROTOCOL
+FWPM_CONDITION_IP_REMOTE_PORT
+
+// Идентификатор сетевого интерфейса: блокировку снимаем только с адаптера
+// туннеля, а найти его можно лишь по LUID, не по имени.
+ConvertInterfaceAliasToLuid
+ConvertInterfaceIndexToLuid
+
+// Идентификатор интерфейса — им фильтр привязывается к адаптеру туннеля.
+NET_LUID_LH
