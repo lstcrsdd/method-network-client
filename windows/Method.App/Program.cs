@@ -132,12 +132,18 @@ internal static class Program
     }
 
     /// <summary>
-    /// Проверить, что блокировка на фильтрах платформы ставится на этой машине.
+    /// Проверить, что блокировка на фильтрах платформы на этой машине ставится,
+    /// действительно режет трафик и снимается.
     ///
     /// <para>Проверка нужна отдельно от подключения: фильтры может отвергнуть
     /// стороннее средство защиты, и узнать об этом в момент, когда человек жмёт
-    /// «подключить», означало бы отказ вместо туннеля. Здесь же блокировка
-    /// ставится на пару секунд, докладывает о себе и снимается.</para>
+    /// «подключить», означало бы отказ вместо туннеля.</para>
+    ///
+    /// <para>Проверяется не установка фильтров, а результат. Поставленный фильтр
+    /// — это ещё не блокировка: он мог оказаться перекрыт чужим разрешением с
+    /// большим весом, привязан не к тому интерфейсу или просто не подойти ни к
+    /// одному соединению. Разница видна только пробой, поэтому проба и делается
+    /// трижды: до, во время и после.</para>
     /// </summary>
     private static int CheckFilters()
     {
@@ -148,10 +154,29 @@ internal static class Program
             return 77;
         }
 
-        using var guard = new WfpKillSwitch();
+        // Платформа фильтрации живёт в службе «Базовая фильтрация». Без неё
+        // фильтры не поставить вовсе, и отказ выглядел бы кодом ошибки без
+        // объяснения.
+        var filteringProblem = FilteringEngineProblem();
+        if (filteringProblem is not null)
+        {
+            WriteLine($"Method: {filteringProblem}");
+            return 1;
+        }
 
         var engine = Method.Core.AppPaths.EngineFile;
         WriteLine($"Method: движок — {engine}");
+
+        if (!Probe(out var why))
+        {
+            WriteLine($"Method: сеть не отвечает ещё ДО блокировки ({why}). " +
+                      "Проверять нечего: отличить нашу блокировку от общего отсутствия сети будет нельзя.");
+            return 1;
+        }
+
+        WriteLine("Method: сеть до блокировки есть. Ставлю блокировку…");
+
+        using var guard = new WfpKillSwitch();
 
         if (!guard.Enable(engine, Method.Core.Tunnel.TunLifecycle.InterfaceName, allowLan: true))
         {
@@ -159,16 +184,93 @@ internal static class Program
             return 1;
         }
 
-        WriteLine("Method: блокировка поставлена. Проверьте своим средством: " +
-                  "netsh wfp show filters file=-  (искать «Method»).");
-        WriteLine("Method: снимаю через пять секунд.");
-
-        Thread.Sleep(TimeSpan.FromSeconds(5));
-
+        var leaks = Probe(out _);
         guard.Disable();
-        WriteLine("Method: блокировка снята. Фильтры динамического сеанса система убрала сама.");
 
-        return 0;
+        var restored = Probe(out var afterWhy);
+
+        if (leaks)
+        {
+            WriteLine("Method: ПЛОХО — фильтры встали, но трафик прошёл мимо них. " +
+                      "Блокировку в таком виде включать нельзя: она обещает защиту, которой нет.");
+        }
+        else
+        {
+            WriteLine("Method: блокировка работает — при ней соединение не проходит.");
+        }
+
+        if (!restored)
+        {
+            // Сеть после снятия обязана вернуться. Если не вернулась — говорим
+            // прямо и напоминаем, что динамический сеанс система снимает сама при
+            // выходе процесса: то есть выход отсюда и есть лечение.
+            WriteLine($"Method: ВНИМАНИЕ — после снятия сеть не вернулась ({afterWhy}). " +
+                      "Фильтры динамического сеанса система снимет при выходе этого процесса; " +
+                      "если сеть не вернётся и после — перезагрузка уберёт их гарантированно.");
+            return 1;
+        }
+
+        WriteLine("Method: блокировка снята, сеть вернулась.");
+        return leaks ? 1 : 0;
+    }
+
+    /// <summary>
+    /// Работает ли платформа фильтрации. Возвращает описание беды или <c>null</c>.
+    /// </summary>
+    private static string? FilteringEngineProblem()
+    {
+        try
+        {
+            using var bfe = new System.ServiceProcess.ServiceController("BFE");
+
+            return bfe.Status is System.ServiceProcess.ServiceControllerStatus.Running
+                ? null
+                : $"служба «Базовая фильтрация» (BFE) в состоянии {bfe.Status}. " +
+                  "Пока она не запущена, блокировку утечки поставить нельзя ничем.";
+        }
+        catch (Exception e)
+        {
+            return $"состояние службы «Базовая фильтрация» (BFE) выяснить не удалось: {e.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Проба сети: пройдёт ли исходящее соединение отсюда наружу.
+    ///
+    /// <para>Адреса заданы числами и берутся три штуки. Имя разрешать нельзя —
+    /// при поднятой блокировке не пройдёт и запрос имени, и вместо «трафик
+    /// закрыт» мы получили бы «имя не разрешилось», то есть тот же ответ по
+    /// другой причине. Три адреса — чтобы отказ одного узла не сошёл за
+    /// блокировку.</para>
+    /// </summary>
+    private static bool Probe(out string why)
+    {
+        (string Host, int Port)[] targets = [("1.1.1.1", 443), ("8.8.8.8", 443), ("9.9.9.9", 443)];
+
+        var reasons = new List<string>();
+
+        foreach (var (host, port) in targets)
+        {
+            try
+            {
+                using var client = new System.Net.Sockets.TcpClient();
+
+                if (client.ConnectAsync(host, port).Wait(TimeSpan.FromSeconds(3)))
+                {
+                    why = "";
+                    return true;
+                }
+
+                reasons.Add($"{host}: не ответил за три секунды");
+            }
+            catch (Exception e)
+            {
+                reasons.Add($"{host}: {(e.InnerException ?? e).Message}");
+            }
+        }
+
+        why = string.Join("; ", reasons);
+        return false;
     }
 
     /// <summary>
