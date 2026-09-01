@@ -96,6 +96,7 @@ public static class TunnelHost
                 "Обычно её запускает служба Method от SYSTEM.";
             Console.Error.WriteLine("Method: " + message);
             Log.Write(message);
+            SystemJournal.Error(SystemJournal.Id.HostFailed, "Method: " + message);
             return 78;
         }
 
@@ -148,6 +149,11 @@ public static class TunnelHost
         catch (Exception e)
         {
             Log.Write($"неустранимая ошибка: {e}");
+
+            SystemJournal.Error(SystemJournal.Id.HostFailed,
+                $"Привилегированная часть Method не смогла работать: {e.Message}. " +
+                "Туннель не поднимется, пока причина не устранена.");
+
             return 1;
         }
     }
@@ -532,7 +538,15 @@ public static class TunnelHost
                 BeginLogReaders();
                 _restartCount = 0;
                 _everConnected = true;
-                return new Ipc.Response { Ok = true, Running = true, Warning = ApplyProtection() };
+
+                var protectionWarning = ApplyProtection();
+
+                SystemJournal.Info(SystemJournal.Id.TunnelUp,
+                    protectionWarning is null
+                        ? "Туннель поднят, трафик машины идёт через него."
+                        : $"Туннель поднят, но часть защиты не применилась: {protectionWarning}");
+
+                return new Ipc.Response { Ok = true, Running = true, Warning = protectionWarning };
             }
         }
 
@@ -573,6 +587,10 @@ public static class TunnelHost
             Log.Write("блокировка остаётся: туннель стоял и упал — это и есть kill switch. " +
                       "Надзор продолжает попытки");
 
+            SystemJournal.Warn(SystemJournal.Id.TrafficBlocked,
+                $"Туннель упал ({error}), а Kill Switch включён — трафик заблокирован намеренно. " +
+                "Клиент продолжает поднимать туннель. Вернуть прямой доступ: «Отключить» в окне Method.");
+
             // Конфигурацию не забываем: без неё надзору нечего поднимать.
             _ = Task.Run(SuperviseRestartAsync);
 
@@ -600,6 +618,10 @@ public static class TunnelHost
             // единственный след, по которому можно будет понять причину.
             Log.Write($"КРИТИЧНО: не удалось снять блокировку: {e.Message}. " +
                       "Восстановление: Method.exe --firewall-reset от администратора");
+
+            SystemJournal.Error(SystemJournal.Id.BlockStuck,
+                $"Туннель не поднялся, а блокировку исходящего трафика снять не удалось: {e.Message}. " +
+                "Пока она стоит, машина без сети. Восстановление: Method.exe --firewall-reset от администратора.");
         }
 
         return new Ipc.Response { Ok = false, Error = error };
@@ -682,10 +704,18 @@ public static class TunnelHost
         KillSwitch.UnblockIpv6();
         KillSwitch.UnblockLanDns();
 
-        if (killSwitchOff) return new Ipc.Response { Ok = true, Running = false };
+        if (killSwitchOff)
+        {
+            SystemJournal.Info(SystemJournal.Id.TunnelDown, "Туннель остановлен, трафик идёт напрямую.");
+            return new Ipc.Response { Ok = true, Running = false };
+        }
 
         var why = KillSwitch.LastError ?? "причина неизвестна";
         Log.Write($"kill switch не снят при остановке: {why}");
+
+        SystemJournal.Error(SystemJournal.Id.BlockStuck,
+            $"Туннель остановлен, но блокировку исходящего трафика снять не удалось: {why}. " +
+            "Пока она стоит, машина без сети. Восстановление: Method.exe --firewall-reset от администратора.");
 
         return new Ipc.Response
         {
@@ -795,6 +825,14 @@ public static class TunnelHost
             Log.Write($"движок завершился (код {code}, проработал {lived.TotalSeconds:N0} с)");
 
             var shouldRestart = !_intentionalStop && !string.IsNullOrEmpty(_lastConfig);
+
+            // В системный журнал — только неожиданная смерть. Штатная остановка
+            // туда уже записана как «туннель остановлен», и дублировать её значит
+            // приучать читателя пролистывать.
+            if (shouldRestart)
+                SystemJournal.Warn(SystemJournal.Id.EngineDied,
+                    $"Движок туннеля завершился сам (код {code}, проработал {lived.TotalSeconds:N0} с). " +
+                    "Клиент поднимает его заново.");
 
             try { process?.Dispose(); } catch { /* уже освобождён */ }
             if (ReferenceEquals(_engine, process)) _engine = null;

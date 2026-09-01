@@ -121,6 +121,13 @@ public static class Installer
             var registerProblem = ServiceControl.Register(InstalledExe, Log.Write);
             if (registerProblem is not null) return FailInstall(registerProblem);
 
+            // Источник в системном журнале регистрируется здесь, а не при первом
+            // событии: регистрация требует прав администратора, а привилегированная
+            // часть хоть их и имеет, но писать в реестр на горячем пути — плохая
+            // привычка. Без источника события просто не попадут в журнал, туннель
+            // от этого не пострадает.
+            SystemJournal.EnsureSource(Log.Write);
+
             ConfigureFirewall();
 
             var startProblem = ServiceControl.Start(TimeSpan.FromSeconds(30));
@@ -178,6 +185,7 @@ public static class Installer
             if (removeProblem is not null) return Fail(removeProblem);
 
             RemoveLegacyTask();
+            SystemJournal.RemoveSource(Log.Write);
             StopHost();
 
             // Правила брандмауэра снимаются обязательно и до удаления файлов:
