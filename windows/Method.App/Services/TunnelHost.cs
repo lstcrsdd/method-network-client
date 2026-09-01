@@ -21,8 +21,11 @@ namespace Method.App.Services;
 /// Привилегированная часть: режим <c>--service</c>, работает под SYSTEM. Держит
 /// именованный канал, запускает движок и надзирает за ним.
 ///
-/// <para>Это не служба Windows. Права даёт запланированная задача, а сам процесс —
-/// тот же <c>Method.exe</c>, запущенный с другим аргументом.</para>
+/// <para>Права даёт служба Windows <c>MethodTunnel</c>: она запускает тот же
+/// <c>Method.exe</c> с аргументом <c>--service</c> под учётной записью SYSTEM.
+/// Сама эта часть про службу ничего не знает — она получает отмену и по ней
+/// сворачивается, поэтому её можно гонять и в консоли (<c>--service --debug</c>),
+/// где отмену даёт Ctrl+C.</para>
 /// </summary>
 [SupportedOSPlatform("windows")]
 public static class TunnelHost
@@ -70,7 +73,14 @@ public static class TunnelHost
     private static string WintunPath => Path.Combine(WorkDir, "wintun.dll");
     private static string ConfigPath => AppPaths.ConfigFile;
 
-    public static async Task<int> RunAsync()
+    /// <param name="token">
+    /// Отмена приходит от диспетчера служб: «остановить» и «машина выключается».
+    /// По ней цикл канала выходит, движок гасится, блокировка снимается. Без
+    /// отмены остановка службы была бы убийством процесса, а убитый держатель
+    /// туннеля оставляет за собой блокировку исходящего трафика — то есть машину
+    /// без сети.
+    /// </param>
+    public static async Task<int> RunAsync(CancellationToken token = default)
     {
         // Проверяем права первым делом. Без них не выйдет ничего: ни создать
         // адаптер, ни поправить маршруты, ни даже писать в собственный рабочий
@@ -83,7 +93,7 @@ public static class TunnelHost
             const string message =
                 "привилегированная часть запущена без прав администратора. " +
                 "Так она работать не может: адаптер туннеля создаётся только с правами. " +
-                "Обычно её запускает запланированная задача от SYSTEM.";
+                "Обычно её запускает служба Method от SYSTEM.";
             Console.Error.WriteLine("Method: " + message);
             Log.Write(message);
             return 78;
@@ -127,7 +137,12 @@ public static class TunnelHost
             ProcessJobGuard.EnsureCreated(Log.Write);
 
             Log.Write("готов, слушаю канал");
-            await ServeLoopAsync().ConfigureAwait(false);
+            await ServeLoopAsync(token).ConfigureAwait(false);
+
+            // Уборка здесь, а не в вызывающем: цикл канала выходит только по
+            // отмене, и всякий, кто нас остановил, обязан получить машину в том же
+            // виде, в каком взял, — без движка, без адаптера и без блокировки.
+            await ShutdownAsync().ConfigureAwait(false);
             return 0;
         }
         catch (Exception e)
@@ -135,6 +150,52 @@ public static class TunnelHost
             Log.Write($"неустранимая ошибка: {e}");
             return 1;
         }
+    }
+
+    /// <summary>
+    /// Свернуться начисто: погасить движок, убрать адаптер, снять блокировку.
+    ///
+    /// <para>Вызывается на остановке службы и на выключении машины. Порядок здесь
+    /// важнее краткости: сперва снимается намерение поднимать движок заново
+    /// (иначе надзор поднимет его прямо во время остановки), затем гасится сам
+    /// движок, и только потом снимается блокировка. Снять блокировку раньше —
+    /// значит на несколько секунд выпустить трафик мимо ещё живого туннеля.</para>
+    ///
+    /// <para>Блокировка снимается в любом случае, даже если движок погасить не
+    /// удалось. Здесь мы уходим, и оставленная блокировка означает машину без
+    /// сети до тех пор, пока человек не догадается запустить
+    /// <c>--firewall-reset</c>.</para>
+    /// </summary>
+    public static async Task ShutdownAsync()
+    {
+        Log.Write("остановка привилегированной части");
+
+        // Ставим до ворот: надзор проверяет этот флаг, а ждать ворота он может
+        // дольше, чем у нас есть времени на остановку службы.
+        _intentionalStop = true;
+        _lastConfig = null;
+
+        // Ворота ждём ограниченно. Диспетчер служб не ждёт вечно, и лучше
+        // погасить движок поверх чужой затянувшейся операции, чем быть убитыми
+        // на середине с поднятой блокировкой.
+        var gateTaken = await Gate.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        if (!gateTaken) Log.Write("ворота заняты дольше десяти секунд — гашу движок поверх");
+
+        try
+        {
+            await StopEngineAsync().ConfigureAwait(false);
+        }
+        catch (Exception e)
+        {
+            Log.Write($"остановка движка при завершении: {e.Message}");
+        }
+        finally
+        {
+            if (gateTaken) Gate.Release();
+        }
+
+        ClearLeftoverProtection();
+        Log.Write("привилегированная часть остановлена");
     }
 
     private static void ClearLeftoverProtection()
@@ -153,35 +214,53 @@ public static class TunnelHost
 
     // MARK: Канал
 
-    private static async Task ServeLoopAsync()
+    private static async Task ServeLoopAsync(CancellationToken token)
     {
-        while (true)
+        while (!token.IsCancellationRequested)
         {
             NamedPipeServerStream? server = null;
             try
             {
                 server = CreatePipeWithRetry();
-                await server.WaitForConnectionAsync().ConfigureAwait(false);
+                await server.WaitForConnectionAsync(token).ConfigureAwait(false);
 
                 var accepted = server;
                 server = null; // владение переходит обработчику
-                _ = Task.Run(() => HandleConnectionSafeAsync(accepted));
+                _ = Task.Run(() => HandleConnectionSafeAsync(accepted), CancellationToken.None);
 
                 // Тут же возвращаемся принимать следующего: приём не ждёт долгого
                 // обработчика.
             }
+            catch (OperationCanceledException)
+            {
+                // Служба остановлена. Это штатный выход, а не сбой: ловим отдельно
+                // и до общего обработчика, иначе отмена попала бы в него, была бы
+                // записана как ошибка — и цикл пошёл бы на второй круг.
+                break;
+            }
             catch (Exception e)
             {
                 // Ни одна ошибка канала — обрыв клиента, отказ при создании — не
-                // должна нас ронять: задача поднимет процесс только после перезагрузки.
+                // должна нас ронять: упавшую службу поднимут действия при падении,
+                // но это перезапуск процесса, а не продолжение работы.
                 Log.Write($"ошибка цикла канала: {e.Message}");
-                await Task.Delay(200).ConfigureAwait(false);
+
+                try
+                {
+                    await Task.Delay(200, token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
             finally
             {
                 server?.Dispose();
             }
         }
+
+        Log.Write("цикл канала завершён");
     }
 
     private static async Task HandleConnectionSafeAsync(NamedPipeServerStream server)
@@ -725,7 +804,7 @@ public static class TunnelHost
         catch (Exception ex)
         {
             // Необработанное исключение из обработчика завершения убивает процесс
-            // целиком, а запланированная задача поднимет нас лишь после перезагрузки.
+            // целиком; поднимет нас система по действиям при падении, но это перезапуск с нуля.
             Log.Write($"ошибка в обработчике завершения: {ex.Message}");
         }
     }

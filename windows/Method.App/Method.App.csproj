@@ -41,6 +41,12 @@
     <!-- События сна и пробуждения: без них туннель после закрытия крышки
          выглядит рабочим и не работает. -->
     <PackageReference Include="Microsoft.Win32.SystemEvents" Version="8.0.0" />
+    <!-- Служба Windows: точка входа диспетчера (ServiceBase) и управление
+         состоянием (ServiceController). В базовую поставку .NET не входит.
+         Писать диспетчер служб руками поверх StartServiceCtrlDispatcher — это
+         делегаты, живущие дольше вызова, и своя машина состояний, в которой
+         ошибка означает службу, зависшую на запуске. -->
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

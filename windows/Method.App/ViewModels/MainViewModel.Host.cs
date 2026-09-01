@@ -44,7 +44,7 @@ public sealed partial class MainViewModel
     public string HostStatusText => Host switch
     {
         HostState.Ready => "Установлена и отвечает",
-        HostState.Installed => "Задача есть, но не отвечает",
+        HostState.Installed => "Служба есть, но не отвечает",
         HostState.NotInstalled => "Не установлена",
         _ => "Проверяется…",
     };
@@ -56,9 +56,9 @@ public sealed partial class MainViewModel
     /// <summary>
     /// Проверка состояния. Сначала спрашиваем саму привилегированную часть: она
     /// отвечает по каналу, и положительный ответ означает, что всё действительно
-    /// работает. Наличие задачи — только запасной признак: из-под обычного
-    /// пользователя запрос к чужой задаче может не пройти по правам, и «нет» там
-    /// означает «не смогли посмотреть» ровно так же, как «не установлено».
+    /// работает. Наличие службы — только запасной признак: он отличает «стоит, но
+    /// молчит» от «не установлено», то есть решает, что человеку предложить —
+    /// разбираться или ставить.
     /// </summary>
     [RelayCommand]
     public async Task CheckHostAsync()
@@ -69,7 +69,7 @@ public sealed partial class MainViewModel
             return;
         }
 
-        Host = Installer.TaskExists() ? HostState.Installed : HostState.NotInstalled;
+        Host = Installer.HostRegistered() ? HostState.Installed : HostState.NotInstalled;
     }
 
     [RelayCommand]

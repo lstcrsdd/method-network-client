@@ -41,3 +41,20 @@ ConvertInterfaceIndexToLuid
 
 // Идентификатор интерфейса — им фильтр привязывается к адаптеру туннеля.
 NET_LUID_LH
+
+// Служба Windows: создание, правка и удаление записи в базе служб. Через
+// sc.exe то же самое делается строками, а строка с путём в кавычках внутри
+// аргумента с кавычками — классический способ зарегистрировать службу,
+// которая не запускается.
+OpenSCManager
+CreateService
+OpenService
+ChangeServiceConfig
+ChangeServiceConfig2
+DeleteService
+CloseServiceHandle
+
+SERVICE_DESCRIPTIONW
+SERVICE_FAILURE_ACTIONSW
+SC_ACTION
+SERVICE_SID_INFO

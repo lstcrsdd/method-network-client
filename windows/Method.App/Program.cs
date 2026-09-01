@@ -28,7 +28,7 @@ internal static class Program
         return mode switch
         {
             null => RunGui(args),
-            "--service" => RunHost(),
+            "--service" => RunHost(args),
             "--firewall-reset" => ResetFirewall(),
             "--wfp-check" => CheckFilters(),
             "--install" => RunInstaller(install: true),
@@ -44,15 +44,41 @@ internal static class Program
     }
 
     /// <summary>
-    /// Привилегированный режим. Консоль подключается до запуска: если журнал
-    /// окажется недоступен, объяснение уйдёт хотя бы туда, откуда режим запустили.
-    /// Обычно его запускает запланированная задача, и консоли нет — тогда вызов
-    /// просто ничего не делает.
+    /// Привилегированный режим.
+    ///
+    /// <para>Обычно сюда попадает служба Windows: процесс отдаётся диспетчеру, и
+    /// возврат случится, когда службу остановят. Отдельный ключ <c>--debug</c>
+    /// запускает ту же привилегированную часть прямо в консоли, где остановка —
+    /// это Ctrl+C. Различать эти два случая самим, по догадкам о том, кто нас
+    /// запустил, нельзя: догадка «мы под диспетчером» ошибается ровно в ту
+    /// сторону, где служба зависает на запуске.</para>
+    ///
+    /// <para>Консоль подключается до запуска: если журнал окажется недоступен,
+    /// объяснение уйдёт хотя бы туда, откуда режим запустили. Под службой консоли
+    /// нет, и вызов просто ничего не делает.</para>
     /// </summary>
-    private static int RunHost()
+    private static int RunHost(string[] args)
     {
         AttachToParentConsole();
-        return TunnelHost.RunAsync().GetAwaiter().GetResult();
+
+        if (!args.Contains("--debug", StringComparer.OrdinalIgnoreCase))
+        {
+            TunnelService.RunUnderScm();
+            return 0;
+        }
+
+        using var stopping = new CancellationTokenSource();
+
+        Console.CancelKeyPress += (_, e) =>
+        {
+            // Отменяем стандартную реакцию: она убивает процесс на месте, а нам
+            // надо погасить движок и снять блокировку.
+            e.Cancel = true;
+            WriteLine("Method: останавливаюсь…");
+            stopping.Cancel();
+        };
+
+        return TunnelHost.RunAsync(stopping.Token).GetAwaiter().GetResult();
     }
 
     /// <summary>Установка и удаление привилегированной части. Требуют прав администратора.</summary>
@@ -158,7 +184,8 @@ internal static class Program
 
     private static int UnknownMode(string mode)
     {
-        WriteLine($"Method: неизвестный режим «{mode}». Доступны: --service, --install, --uninstall, --firewall-reset, --wfp-check.");
+        WriteLine($"Method: неизвестный режим «{mode}». Доступны: --service [--debug], --install, --uninstall, " +
+                  "--firewall-reset, --wfp-check.");
         return 64;
     }
 

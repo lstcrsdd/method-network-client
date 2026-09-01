@@ -8,7 +8,6 @@
 
 using System.Diagnostics;
 using System.Runtime.Versioning;
-using System.Text;
 using Method.Core;
 using Method.Core.Tunnel;
 
@@ -17,20 +16,28 @@ namespace Method.App.Services;
 /// <summary>
 /// Установка привилегированной части.
 ///
-/// <para>Она работает под SYSTEM, а запускает её запланированная задача. Не служба:
-/// служба — это своя запись в базе служб, свой жизненный цикл и свой способ не
-/// подняться после обновления. Задача даёт те же права и снимается тем же
-/// движением, каким ставится.</para>
+/// <para>Она работает под SYSTEM, а запускает её служба Windows
+/// <c>MethodTunnel</c> — см. <see cref="ServiceControl"/>. Начинали с
+/// запланированной задачи, и она работала, но платой были три вещи: у задачи
+/// нельзя спросить состояние (её «запущена» означает «действие выполняется»),
+/// её нельзя корректно остановить (снятие — это убийство процесса, а убитый
+/// держатель туннеля оставляет блокировку исходящего трафика), и она не
+/// существует на сборках Windows с выключенным планировщиком.</para>
 ///
-/// <para>Задача запускает <c>Method.exe --service</c> напрямую, без промежуточного
-/// файла-запускателя. Промежуточный файл — это ещё один путь, который надо
-/// защищать от подмены: подменивший его получил бы выполнение своего кода от
-/// SYSTEM при ближайшем входе в систему.</para>
+/// <para>Служба запускает <c>Method.exe --service</c> напрямую, без
+/// промежуточного файла-запускателя. Промежуточный файл — это ещё один путь,
+/// который надо защищать от подмены: подменивший его получил бы выполнение
+/// своего кода от SYSTEM при следующей загрузке.</para>
+///
+/// <para>Установка поверх прежней версии снимает задачу, если та осталась от
+/// сборки до перехода на службу. Иначе на машине оказались бы двое желающих
+/// держать один и тот же канал.</para>
 /// </summary>
 [SupportedOSPlatform("windows")]
 public static class Installer
 {
-    public const string TaskName = "MethodTunnelHost";
+    /// <summary>Задача из сборок до перехода на службу. Осталась только чтобы её снимать.</summary>
+    private const string LegacyTaskName = "MethodTunnelHost";
 
     private const string FirewallRuleName = "Method Core";
 
@@ -41,16 +48,39 @@ public static class Installer
 
     private static readonly HelperLog Log = new(Path.Combine(AppPaths.ProgramDataDir, "install.log"));
 
+    /// <summary>Журнал привилегированной части — на него ссылаются сообщения об отказах.</summary>
+    private static string HelperLogPath => Path.Combine(AppPaths.ProgramDataDir, "helper.log");
+
     /// <summary>
-    /// Задача зарегистрирована?
+    /// Служба зарегистрирована?
     ///
-    /// <para>Достоверен только положительный ответ: из-под обычного пользователя
-    /// запрос к чужой задаче может не пройти по правам, и «нет» здесь означает
-    /// «не смогли посмотреть» ровно так же, как «не установлено». Поэтому
-    /// состояние в интерфейсе показывается по ответу самой привилегированной
-    /// части, а это — вспомогательная проверка.</para>
+    /// <para>Вспомогательная проверка: главный признак — ответ самой
+    /// привилегированной части по каналу. Здесь же мы всего лишь отличаем
+    /// «поставлено, но молчит» от «не поставлено вовсе», чтобы человеку было что
+    /// нажать.</para>
     /// </summary>
-    public static bool TaskExists() => Run("schtasks", $"/Query /TN \"{TaskName}\"") == 0;
+    public static bool HostRegistered() =>
+        ServiceControl.Query() is not ServiceControl.State.Missing || LegacyTaskExists();
+
+    /// <summary>Осталась ли задача от сборок до перехода на службу.</summary>
+    private static bool LegacyTaskExists() => Run("schtasks", $"/Query /TN \"{LegacyTaskName}\"") == 0;
+
+    /// <summary>
+    /// Снять задачу из прежних сборок.
+    ///
+    /// <para>Делается при любой установке и удалении, даже когда задачи нет:
+    /// команда на несуществующей задаче просто вернёт ошибку, а вот оставленная
+    /// задача подняла бы вторую привилегированную часть, и две штуки принялись бы
+    /// делить один канал и один адаптер.</para>
+    /// </summary>
+    private static void RemoveLegacyTask()
+    {
+        if (!LegacyTaskExists()) return;
+
+        Run("schtasks", $"/End /TN \"{LegacyTaskName}\"");
+        var code = Run("schtasks", $"/Delete /TN \"{LegacyTaskName}\" /F");
+        Log.Write($"задача прежних сборок снята (код {code})");
+    }
 
     // MARK: Установка
 
@@ -71,32 +101,58 @@ public static class Installer
             var hardenProblem = SecureDirectory.Harden(AppPaths.ProgramDataDir);
             if (hardenProblem is not null) Log.Write($"права рабочего каталога: {hardenProblem}");
 
+            // Службу останавливаем по-хорошему, а не убийством процесса. У
+            // остановленной по-хорошему не сработают действия при падении — иначе
+            // система подняла бы её обратно ровно в тот момент, когда мы
+            // переписываем её же файлы.
+            var stopProblem = ServiceControl.Stop(TimeSpan.FromSeconds(30));
+            if (stopProblem is not null) Log.Write($"остановка службы: {stopProblem}");
+
+            // Выключаем до убийства процессов: убитая служба для системы —
+            // упавшая, и она поднимет её обратно через пять секунд, пока мы
+            // переписываем её файлы. Обратно включит регистрация.
+            ServiceControl.SetStartType(enabled: false, Log.Write);
+
+            RemoveLegacyTask();
             StopHost();
             CopyApplication();
             ExtractEngine();
 
-            if (!RegisterTask())
-                return Fail("зарегистрировать запланированную задачу не удалось");
+            var registerProblem = ServiceControl.Register(InstalledExe, Log.Write);
+            if (registerProblem is not null) return FailInstall(registerProblem);
 
             ConfigureFirewall();
 
-            Run("schtasks", $"/Run /TN \"{TaskName}\"");
+            var startProblem = ServiceControl.Start(TimeSpan.FromSeconds(30));
+            if (startProblem is not null) return FailInstall($"{startProblem} — смотри {HelperLogPath}");
 
-            // Проверяем результат, а не факт запуска. Задача может отработать и
-            // тут же умереть — например, если рядом с исполняемым файлом не
-            // оказалось того, что ему нужно. Сказать «готово», не спросив, значит
-            // соврать: человек нажмёт «Подключить» и получит отказ без объяснения.
+            // Проверяем результат, а не факт запуска. Служба может отрапортовать
+            // «выполняется» и тут же свернуться — например, если рядом с
+            // исполняемым файлом не оказалось того, что ему нужно. Сказать
+            // «готово», не спросив, значит соврать: человек нажмёт «Подключить» и
+            // получит отказ без объяснения.
             if (!WaitForHost(TimeSpan.FromSeconds(20)))
-                return Fail("задача зарегистрирована, но привилегированная часть не отвечает — " +
-                            $"смотри {Path.Combine(AppPaths.ProgramDataDir, "helper.log")}");
+                return FailInstall($"служба зарегистрирована, но привилегированная часть не отвечает — смотри {HelperLogPath}");
 
             Log.Write("установка закончена, привилегированная часть отвечает");
             return new InstallOutcome(true, null);
         }
         catch (Exception e)
         {
-            return Fail($"{e.GetType().Name}: {e.Message}");
+            return FailInstall($"{e.GetType().Name}: {e.Message}");
         }
+    }
+
+    /// <summary>
+    /// Отказ установки. От обычного отличается тем, что возвращает службе запуск
+    /// при загрузке: установка его снимала, и уйти, не вернув, значило бы оставить
+    /// после неудачной попытки заведомо мёртвую запись — та бы молчала и после
+    /// перезагрузки.
+    /// </summary>
+    private static InstallOutcome FailInstall(string reason)
+    {
+        ServiceControl.SetStartType(enabled: true, Log.Write);
+        return Fail(reason);
     }
 
     public static InstallOutcome Uninstall()
@@ -108,8 +164,20 @@ public static class Installer
         {
             Log.Write("удаление началось");
 
-            Run("schtasks", $"/End /TN \"{TaskName}\"");
-            Run("schtasks", $"/Delete /TN \"{TaskName}\" /F");
+            // Сначала останавливаем, потом снимаем запись. В обратном порядке
+            // служба осталась бы работать до перезагрузки — с поднятым туннелем и
+            // без всякой возможности ею командовать.
+            var stopProblem = ServiceControl.Stop(TimeSpan.FromSeconds(30));
+            if (stopProblem is not null) Log.Write($"остановка службы: {stopProblem}");
+
+            // Отказ здесь — это отказ удаления целиком. Снести файлы, оставив
+            // запись службы, значит получить службу, которая при каждой загрузке
+            // пытается запустить несуществующий файл и пишет об этом в системный
+            // журнал, а починить её нечем: клиента на машине уже нет.
+            var removeProblem = ServiceControl.Remove(Log.Write);
+            if (removeProblem is not null) return Fail(removeProblem);
+
+            RemoveLegacyTask();
             StopHost();
 
             // Правила брандмауэра снимаются обязательно и до удаления файлов:
@@ -179,7 +247,7 @@ public static class Installer
     ///
     /// <para>Копировать только exe нельзя, и это стоило разбора: у сборки, собранной
     /// не в один файл, рядом лежат две сотни библиотек. Одинокий exe в каталоге
-    /// установки не стартует вовсе — задача поднимает его, он умирает мгновенно, и
+    /// установки не стартует вовсе — служба поднимает его, он умирает мгновенно, и
     /// журнала после себя не оставляет, потому что не успевает дойти до первой
     /// строки. Со стороны это выглядит как «установка прошла, но ничего не
     /// работает».</para>
@@ -266,52 +334,6 @@ public static class Installer
     }
 
     /// <summary>
-    /// Задача описывается XML, а не набором ключей командной строки: перезапуск
-    /// при падении и снятие предельного времени работы через ключи не задаются
-    /// вовсе, а без них задача умирает через трое суток и не поднимается до
-    /// перезагрузки.
-    /// </summary>
-    private static bool RegisterTask()
-    {
-        var xmlPath = Path.Combine(AppPaths.ProgramDataDir, "task.xml");
-
-        var xml =
-            """
-            <?xml version="1.0" encoding="UTF-16"?>
-            <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-              <RegistrationInfo><Description>Method: привилегированная часть туннеля</Description></RegistrationInfo>
-              <Triggers>
-                <BootTrigger><Enabled>true</Enabled><Delay>PT30S</Delay></BootTrigger>
-                <LogonTrigger><Enabled>true</Enabled><Delay>PT15S</Delay></LogonTrigger>
-              </Triggers>
-              <Principals><Principal id="Author"><UserId>S-1-5-18</UserId><RunLevel>HighestAvailable</RunLevel></Principal></Principals>
-              <Settings>
-                <RestartOnFailure><Interval>PT1M</Interval><Count>99</Count></RestartOnFailure>
-                <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
-                <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
-                <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
-                <AllowHardTerminate>true</AllowHardTerminate>
-                <StartWhenAvailable>true</StartWhenAvailable>
-                <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
-                <Enabled>true</Enabled>
-                <Hidden>false</Hidden>
-              </Settings>
-              <Actions><Exec><Command>{COMMAND}</Command><Arguments>--service</Arguments></Exec></Actions>
-            </Task>
-            """
-            .Replace("{COMMAND}", InstalledExe.Replace("&", "&amp;"), StringComparison.Ordinal);
-
-        // Кодировка UTF-16 обязательна: планировщик читает XML по объявлению в
-        // самом файле и на несовпадении отвергает его целиком.
-        File.WriteAllText(xmlPath, xml, Encoding.Unicode);
-
-        var code = RunWithOutput("schtasks", $"/Create /TN \"{TaskName}\" /XML \"{xmlPath}\" /F", out var output);
-        Log.Write($"регистрация задачи: код {code}, {output.Trim()}");
-
-        return code == 0 && TaskExists();
-    }
-
-    /// <summary>
     /// Разрешить движку сеть. Без этого правила брандмауэр спрашивает разрешение
     /// у того, кого рядом нет: движок запускает SYSTEM, и окно с вопросом человек
     /// не увидит — соединение просто не встанет.
@@ -340,7 +362,7 @@ public static class Installer
         catch (Exception e)
         {
             // Каталог мог быть занят. Это не повод считать удаление неудавшимся:
-            // задача снята, правила сняты, туннель больше не поднимется.
+            // служба снята, правила сняты, туннель больше не поднимется.
             Log.Write($"каталог {path} не удалён: {e.Message}");
         }
     }
