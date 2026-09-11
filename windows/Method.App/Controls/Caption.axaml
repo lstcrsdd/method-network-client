@@ -1,0 +1,21 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Надпись, у которой в плакатном оформлении прописные буквы, а в основном —
+  обычные. Регистр — часть оформления, а не текста, поэтому в разметке название
+  пишется один раз и по-человечески.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Method.App.Controls.Caption">
+  <Panel VerticalAlignment="Center">
+    <TextBlock Name="PlainCaptionText" Classes="plainCaption" VerticalAlignment="Center" />
+    <TextBlock Name="CapsCaptionText" Classes="capsCaption" VerticalAlignment="Center" />
+  </Panel>
+</UserControl>

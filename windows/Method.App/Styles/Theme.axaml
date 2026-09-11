@@ -7,44 +7,115 @@
   Foundation, either version 3 of the License, or (at your option) any later
   version. See LICENSE for details.
 
-  Значения взяты из клиента macOS: цвет у Method один на все платформы, и
-  подбирать его заново на каждой означало бы получить три разных продукта.
+  Гамма знака: та же, что в иконке приложения, — закат, слива и неон. Иконку
+  видят до того, как открыли окно, и она задаёт ожидание; окно обязано его
+  подтвердить, иначе продукт выглядит собранным из двух разных.
+
+  Гамма тёплая, и это не вкусовщина. Клиент держат открытым часами, а холодный
+  синий свет утомляет быстрее тёплого при той же яркости — в интерфейсе, куда
+  заглядывают весь день, это сказывается раньше, чем успеваешь понять, отчего
+  устал. Поэтому подложка уведена в сливово-закатную, а холодный цвет оставлен
+  ровно там, где он работает акцентом на тёплом, а не фоном под глазами.
+
+  Неон приглушён намеренно: цвета берутся из иконки по тону, но не по яркости.
+  Чистый #FF0844 или #00F2FE на тёмном светится как индикатор прибора. По той
+  же причине ни один цвет не доведён до предела — ни чёрный в фоне, ни белый в
+  тексте.
+
+  Это расхождение с macOS и Android: там гамма прежняя, зелёная. Решение
+  осознанное, принято владельцем; выравнивать остальные платформы — отдельная
+  работа, и делать её должен тот, кто за них отвечает.
 -->
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <!-- Фон -->
-  <Color x:Key="BackgroundTopColor">#0D0D0D</Color>
-  <Color x:Key="BackgroundBottomColor">#060606</Color>
-  <SolidColorBrush x:Key="BackgroundBrush" Color="#0A0A0A" />
+  <!--
+    Фон повторяет ход подложки иконки: сверху ночная слива, снизу закатная
+    тень. Разница между верхом и низом мала нарочно — градиент должен
+    ощущаться, а не рассматриваться.
+  -->
+  <Color x:Key="BackgroundTopColor">#181320</Color>
+  <Color x:Key="BackgroundBottomColor">#241520</Color>
+  <SolidColorBrush x:Key="BackgroundBrush" Color="#1B1320" />
 
-  <SolidColorBrush x:Key="SidebarBrush" Color="White" Opacity="0.03" />
-  <SolidColorBrush x:Key="ChipBrush" Color="White" Opacity="0.08" />
+  <!--
+    Подложки и стекло подкрашены тёплым, а не белым: белая плёнка поверх
+    сливового даёт грязно-серый, и вся глубина фона пропадает.
 
-  <!-- Стекло -->
-  <SolidColorBrush x:Key="SurfaceBrush" Color="White" Opacity="0.04" />
-  <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="White" Opacity="0.06" />
-  <SolidColorBrush x:Key="GlassStrokeBrush" Color="White" Opacity="0.08" />
-  <SolidColorBrush x:Key="HoverBrush" Color="White" Opacity="0.06" />
+    Цвета сплошные, хотя выведены как плёнка тёплого поверх фона — доли
+    оставлены в комментариях. Причина в зерне: оно ложится на фон, и всё, что
+    над фоном прозрачно, пропускает его сквозь себя. Полупрозрачная панель во
+    всю высоту окна показывала зерно ровно так же, как пустое поле рядом, и
+    вместо фактуры фона выходил шумный фильтр, наброшенный на весь интерфейс.
+    Непрозрачная подложка зерно перекрывает — фактура остаётся там, где ей
+    место.
 
-  <!-- Текст -->
-  <SolidColorBrush x:Key="TextPrimaryBrush" Color="White" />
-  <SolidColorBrush x:Key="TextSecondaryBrush" Color="White" Opacity="0.42" />
-  <SolidColorBrush x:Key="TextMutedBrush" Color="White" Opacity="0.28" />
+    Плата за это — подложки не следуют за градиентом фона, а стоят на его
+    средней ноте. Перепад фона от верха к низу невелик (десяток ступеней), и
+    расхождение в половину этого глазом не ловится; зерно, пролезающее на
+    карточки, ловится сразу.
+  -->
+  <SolidColorBrush x:Key="SidebarBrush" Color="#251A25" />
+  <SolidColorBrush x:Key="ChipBrush" Color="#31242C" />
 
-  <!-- Акцент. Зелёный, а не синий: это фирменный цвет Method. -->
-  <Color x:Key="AccentColor">#2ECC4D</Color>
-  <SolidColorBrush x:Key="AccentBrush" Color="#2ECC4D" />
-  <SolidColorBrush x:Key="ConnectedBrush" Color="#29C940" />
-  <SolidColorBrush x:Key="WarningBrush" Color="#FFBD2E" />
-  <SolidColorBrush x:Key="ErrorBrush" Color="#FF5E57" />
+  <SolidColorBrush x:Key="SurfaceBrush" Color="#291D27" />
+  <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#2E212A" />
+  <SolidColorBrush x:Key="GlassStrokeBrush" Color="#35272F" />
+
+  <!--
+    Подсветка при наведении остаётся плёнкой: она ложится поверх уже
+    непрозрачной подложки, и пропускать сквозь себя ей нечего.
+  -->
+  <SolidColorBrush x:Key="HoverBrush" Color="#F0C2A6" Opacity="0.075" />
+
+  <!--
+    Текст. Не чистый белый: #FFFFFF на почти чёрном даёт контраст выше 19:1 —
+    вдвое больше, чем нужно для чтения, и ровно столько, чтобы к вечеру резало
+    глаза. Тёплый оттенок роднит текст с подложкой.
+  -->
+  <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F4E7E0" />
+  <SolidColorBrush x:Key="TextSecondaryBrush" Color="#F4E7E0" Opacity="0.46" />
+  <SolidColorBrush x:Key="TextMutedBrush" Color="#F4E7E0" Opacity="0.30" />
+
+  <!--
+    Акцент — закатный коралл: тот оранжевый, что в иконке лежит серединой
+    солнца. Им живут кнопки, переключатели и выделение — всё, чего человек
+    касается.
+  -->
+  <Color x:Key="AccentColor">#EE7A4E</Color>
+  <SolidColorBrush x:Key="AccentBrush" Color="#EE7A4E" />
+
+  <!--
+    Тот же закат, уведённый в глубину. Им живёт изображение — знак и бегущий
+    код, — а не органы управления: на кнопке такой цвет съедает надпись поверх
+    заливки. В основном оформлении знака нет, но ключ обязан существовать:
+    разметка одна на оба набора.
+  -->
+  <SolidColorBrush x:Key="AccentDeepBrush" Color="#C2492A" />
+
+  <!--
+    «На связи» — бирюза с верхней половины литеры. Единственный холодный цвет
+    в наборе, и место ему выбрано не случайно: на тёплом фоне он виден мгновенно
+    и ни с чем не путается, а состояние подключения и должно читаться первым.
+    Заодно окно повторяет сам знак — бирюза сверху, закат снизу.
+  -->
+  <SolidColorBrush x:Key="ConnectedBrush" Color="#4FC7D9" />
+
+  <!--
+    Предупреждение — янтарь из верхушки солнца, отказ — малина из его подошвы и
+    низа литеры. Вместе с кораллом это три тёплых цвета рядом, поэтому они
+    разведены по тону, а не по яркости: жёлтый, оранжевый, розовый различимы и
+    боковым зрением, а три оттенка одного оранжевого — нет.
+  -->
+  <SolidColorBrush x:Key="WarningBrush" Color="#E8B45C" />
+  <SolidColorBrush x:Key="ErrorBrush" Color="#E0446E" />
 
   <!--
     Что писать поверх акцентной заливки. Здесь акцент светлый, и текст по нему
     тёмный; в плакатном наборе всё наоборот. Ключ нужен именно потому, что
     правильный ответ у наборов разный, а стиль кнопки один на оба.
   -->
-  <SolidColorBrush x:Key="OnAccentBrush" Color="#0A0A0A" />
+  <SolidColorBrush x:Key="OnAccentBrush" Color="#1B0F12" />
 
   <!-- Латунь для эмблемы. В основном оформлении не используется, но ключ обязан
        существовать: разметка одна на оба, и ссылка на отсутствующий ключ выдала

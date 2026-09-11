@@ -33,6 +33,13 @@ public static class SkinManager
 
     public static AppSkin Current { get; private set; } = AppSkin.Base;
 
+    /// <summary>
+    /// Оформление сменилось. Нужно тем частям интерфейса, которые при смене
+    /// не перекрашиваются, а пересобираются заново, — там, где у оформлений
+    /// расходится само устройство экрана, а не отделка.
+    /// </summary>
+    public static event Action<AppSkin>? Changed;
+
     /// <summary>Применить оформление. Пусто — вышло; иначе причина отказа.</summary>
     public static string? Apply(AppSkin skin)
     {
@@ -45,6 +52,7 @@ public static class SkinManager
             SwapControls(application, skin == AppSkin.Poster);
 
             Current = skin;
+            Changed?.Invoke(skin);
             return null;
         }
         catch (Exception e)

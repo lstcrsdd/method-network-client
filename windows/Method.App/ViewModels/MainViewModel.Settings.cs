@@ -56,6 +56,7 @@ public sealed partial class MainViewModel
         KillSwitchEnabled = settings.KillSwitch;
         BlockLanDns = settings.BlockLanDns;
         AutoReconnect = settings.AutoReconnect;
+        AutoRouting = settings.AutoRouting;
         Skin = settings.Skin;
 
         // Флаг ставится последним: до него каждое присваивание выше вызвало бы
@@ -74,6 +75,7 @@ public sealed partial class MainViewModel
             KillSwitch = KillSwitchEnabled,
             BlockLanDns = BlockLanDns,
             AutoReconnect = AutoReconnect,
+            AutoRouting = AutoRouting,
             SelectedServer = SelectedServer?.Profile.Id,
             Rules = Rules.Select(r => r.Rule).ToArray(),
         });
@@ -84,4 +86,6 @@ public sealed partial class MainViewModel
     partial void OnBlockLanDnsChanged(bool value) => SaveSettings();
 
     partial void OnAutoReconnectChanged(bool value) => SaveSettings();
+
+    partial void OnAutoRoutingChanged(bool value) => SaveSettings();
 }

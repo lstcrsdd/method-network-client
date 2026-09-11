@@ -34,9 +34,32 @@
     <StreamGeometry x:Key="IconChevron">M6,9 L12,15 L18,9</StreamGeometry>
     <StreamGeometry x:Key="IconCheck">M6,12.5 L10,16.5 L18,8</StreamGeometry>
 
+    <!-- Кнопки окна. Своими линиями, а не шрифтом значков: шрифт есть не на
+         всякой системе, и там, где его нет, вместо кнопки пустой квадрат. -->
+    <StreamGeometry x:Key="IconMinimize">M5,12 H19</StreamGeometry>
+    <StreamGeometry x:Key="IconMaximize">M6,6 H18 V18 H6 Z</StreamGeometry>
+    <StreamGeometry x:Key="IconClose">M6.5,6.5 L17.5,17.5 M17.5,6.5 L6.5,17.5</StreamGeometry>
+
     <!-- Пятиконечная звезда. Читается на любом размере, в отличие от всего,
          что внутри неё, — потому в мелких отметках стоит она одна. -->
     <StreamGeometry x:Key="IconStar">M12,2.2 L14.6,9.1 L21.9,9.5 L16.2,14.1 L18.1,21.2 L12,17.2 L5.9,21.2 L7.8,14.1 L2.1,9.5 L9.4,9.1 Z</StreamGeometry>
+
+    <!--
+      Знак Method: подъём, спад к середине, подъём, спад. Это и литера «М», и
+      ход сигнала — та же ломаная, какой рисуют всплеск на приборе.
+
+      Набрана она одной непрерывной линией: неоновую трубку не разрезают на
+      куски, и знак из отдельных штрихов перестаёт читаться трубкой.
+
+      Три коротких штриха под ней — уровень сигнала, тот же ряд, каким его
+      рисуют на приборах. Средний спущен на треть длины соседних и сам длиннее
+      их: ряд из трёх равных черт читается паузой в наборе, а не знаком. Они лежат в том же пути, а не рядом отдельной
+      фигурой: так у них с литерой общая середина, общий масштаб и общий
+      свет. Собранные из двух фигур, они разъехались бы на первом же
+      изменении размера — ровно этим уже болел знак, пока слои были разными
+      путями.
+    -->
+    <StreamGeometry x:Key="IconMark">M4,17.5 L4,4 L12,12 L20,4 L20,17.5 M8.5,19.8 V23.6 M12,21.1 V26.2 M15.5,19.8 V23.6</StreamGeometry>
   </Styles.Resources>
 
   <!--
@@ -83,6 +106,40 @@
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
+
+  <!--
+    Части, которые есть только в плакатном оформлении: номер раздела в боковой
+    панели, плашка марки и имя прописными. Объявлены и здесь, потому что стиль
+    обязан их прятать — иначе в основном оформлении рядом с обычной маркой
+    висела бы вторая, красная.
+  -->
+  <Style Selector="TextBlock.navNo">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <!-- Прописные буквы — часть плакатного оформления, а не текста:
+       в основном наборе показывается обычная надпись. -->
+  <Style Selector="TextBlock.capsCaption">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <Style Selector="Border.brandPlate">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <Style Selector="TextBlock.brandCaps">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <!--
+    Корпус окна. Скругление задаёт оформление, а не разметка: у плаката
+    углы прямые, и мягкий угол самого окна выдавал бы приложение раньше,
+    чем человек успевал посмотреть на его содержимое.
+  -->
+  <Style Selector="Border.shell">
+    <Setter Property="CornerRadius" Value="12" />
+  </Style>
+
   <!-- Карточка -->
   <Style Selector="Border.card">
     <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -94,6 +151,10 @@
   <Style Selector="Border.row">
     <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
     <Setter Property="CornerRadius" Value="12" />
+
+    <!-- Отступ между строками задаёт оформление, а не разметка: в плакате
+         строки идут сплошной ведомостью, без промежутков. -->
+    <Setter Property="Margin" Value="0,0,0,6" />
   </Style>
 
   <!-- Заголовки -->
@@ -101,6 +162,48 @@
     <Setter Property="FontSize" Value="30" />
     <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+
+
+  <!--
+    Название раздела в плакатном виде: номер и прописные в разрядку. В основном
+    оформлении обе части скрыты — там название пишется обычной крупной надписью.
+    Держать их здесь, а не на страницах, дешевле: правка идёт в одном месте.
+  -->
+  <Style Selector="StackPanel.posterTitle">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <Style Selector="TextBlock.headingNumber">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="2.4" />
+    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.headingCaps">
+    <Setter Property="FontSize" Value="30" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+
+  <!--
+    Линейка под шапкой раздела. Приём плаката: заголовок отбит от содержимого
+    не пустотой, а краской. В основном оформлении её нет — там разделяет воздух.
+  -->
+  <!--
+    Линия под заголовком раздела. В основном оформлении её не видно — но место
+    она занимает, и это не небрежность.
+
+    Отступ между заголовком и первой секцией задают её поля. Спрячь её через
+    IsVisible — и вместе с линией исчезнут тридцать три пикселя воздуха:
+    подпись секции подъезжает к заголовку вплотную. В плакатном виде страница
+    при этом дышит, в основном слипается, и разницу видно только глазами, на
+    снимке готовой страницы.
+  -->
+  <Style Selector="Border.rule">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Height" Value="1" />
   </Style>
 
   <Style Selector="TextBlock.sectionLabel">
@@ -130,10 +233,15 @@
     <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
   </Style>
 
-  <!-- Кнопка-пилюля, белая: главное действие на пустом экране -->
+  <!--
+    Кнопка-пилюля, светлая: главное действие на пустом экране.
+
+    Не чисто белая. Белое пятно на тёмном фоне бьёт по глазам сильнее любого
+    акцента и перетягивает внимание с того, ради чего экран открыт.
+  -->
   <Style Selector="Button.pill">
-    <Setter Property="Background" Value="White" />
-    <Setter Property="Foreground" Value="#0A0A0A" />
+    <Setter Property="Background" Value="#F4E7E0" />
+    <Setter Property="Foreground" Value="#1B0F12" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="21" />
     <Setter Property="Padding" Value="28,10" />
@@ -141,7 +249,7 @@
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
   <Style Selector="Button.pill:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="#E8E8E8" />
+    <Setter Property="Background" Value="#E5D3C9" />
   </Style>
 
   <!-- Незаметная кнопка-ссылка -->
@@ -156,6 +264,17 @@
   <Style Selector="Button.quiet:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
     <Setter Property="TextBlock.Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+
+  <!-- Значок кнопки окна: тоньше обычного, он не действие, а рамка. -->
+  <Style Selector="Path.chromeIcon">
+    <Setter Property="Width" Value="24" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Stretch" Value="None" />
+    <Setter Property="StrokeThickness" Value="1.2" />
+    <Setter Property="StrokeLineCap" Value="Round" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <!-- Кнопка окна -->
@@ -179,13 +298,21 @@
     <Setter Property="TextBlock.Foreground" Value="White" />
   </Style>
 
-  <!-- Тумблер: во включённом виде зелёный, как на других платформах. -->
+  <!--
+    Тумблер: во включённом виде горит акцентом.
+
+    Раньше он брал цвет связи, и пока связь была того же цвета, что и акцент,
+    разницы не было. Теперь она есть: цвет связи в основном наборе холодный и
+    занят одним смыслом — «туннель поднят». Тумблер настройки к этому смыслу
+    отношения не имеет, и загораться им не должен, иначе включённое
+    автоподключение выглядит как состояние сети.
+  -->
   <Style Selector="ToggleSwitch">
     <Setter Property="Padding" Value="0" />
     <Setter Property="MinWidth" Value="0" />
   </Style>
   <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
-    <Setter Property="Background" Value="{DynamicResource ConnectedBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
   </Style>
 
   <!--
@@ -265,6 +392,32 @@
   </Style>
 
   <!--
+    Отметка выбранного узла. В основном оформлении это неоновое кольцо — то же,
+    что вокруг кнопки подключения, только размером со строку: выбранный узел
+    надо находить взглядом сразу, а галочка того же тона, что и весь список,
+    заставляла его искать.
+
+    Зажигается быстрее, чем большое кольцо на обзоре: там свет наливается
+    вслед за туннелем и оттого медленный, здесь он отвечает на щелчок, и
+    задержка читалась бы промахом мимо кнопки.
+  -->
+  <Style Selector="c|Orbit.pick">
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="GlowOpacity" Duration="0:0:0.25" Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <!--
+    Кольцо-след и звезда — язык плакатного оформления; в основном их место
+    занимает неон. Прятать приходится здесь: разметка на оба набора одна.
+  -->
+  <Style Selector="Ellipse.pickRing">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <!--
     Кольцо сжимается к центру при выборе, отметка оттуда же разворачивается.
     Сделано переходами, а не покадровой анимацией: покадровая анимация
     превращения требует своего аниматора и без него роняет окно при разборе
@@ -313,10 +466,6 @@
     <Setter Property="Opacity" Value="1" />
   </Style>
 
-  <!-- Чем именно отмечен выбор: в основном оформлении галочкой. -->
-  <Style Selector="Path.markCheck">
-    <Setter Property="Stroke" Value="{DynamicResource ConnectedBrush}" />
-  </Style>
   <!--
     Звезда с окантовкой. Обводка на той же фигуре, а не вторая звезда сверху:
     два наложенных пути пришлось бы держать в одном размере и в одной анимации
@@ -379,6 +528,70 @@
     Порядок объявления — часть договора: базовый разряд идёт первым, условные
     следом, и при равной силе побеждает объявленный позже.
   -->
+  <!--
+    Точка состояния туннеля. Цвет назначает оформление, а не модель: кисть из
+    кода знала бы только про один набор, и в плакатном точка осталась бы
+    оранжевой посреди красного.
+
+    Разряды задержки (toneOk и прочие) сюда не годятся — они про качество
+    связи, а не про состояние, и раскрашены иначе.
+  -->
+  <Style Selector="c|StatusDot">
+    <Setter Property="Fill" Value="{DynamicResource TextMutedBrush}" />
+    <Setter Property="GlowBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="GlowOpacity" Value="0" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="GlowOpacity" Duration="0:0:0.35" Easing="CubicEaseOut" />
+        <BrushTransition Property="Fill" Duration="0:0:0.35" Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <!-- Туннель поднят: точка горит ровно, как кольцо на кнопке. -->
+  <Style Selector="c|StatusDot.on">
+    <Setter Property="Fill" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="GlowOpacity" Value="1" />
+  </Style>
+
+  <!--
+    Поднимается: точка дышит. Движение здесь и есть сообщение — «идёт работа»,
+    а не «уже готово»; ровным светом это не сказать.
+
+    Ядро при этом остаётся серым: дышит свечение поверх него. Покрась ядро
+    акцентом — и точка станет мигать из оранжевого в оранжевый, то есть
+    сообщать «подключено» ещё до того, как туннель поднят.
+  -->
+  <Style Selector="c|StatusDot.busy">
+    <!--
+      Переход на время дыхания снимается. Он сглаживает всякое изменение
+      свечения, а дышит оно само — и вдвоём они тянут значение каждый в свою
+      сторону: размах съедается, и точка вместо «серая — оранжевая» ходит
+      «оранжевая — оранжевая поярче».
+    -->
+    <Setter Property="Transitions">
+      <Transitions />
+    </Setter>
+    <Style.Animations>
+      <Animation Duration="0:0:1.4" IterationCount="INFINITE"
+                 PlaybackDirection="Alternate" Easing="SineEaseInOut">
+        <KeyFrame Cue="0%">
+          <Setter Property="GlowOpacity" Value="0.05" />
+        </KeyFrame>
+        <KeyFrame Cue="100%">
+          <Setter Property="GlowOpacity" Value="1" />
+        </KeyFrame>
+      </Animation>
+    </Style.Animations>
+  </Style>
+
+  <!-- Отказ: тот же неон, но своим цветом. -->
+  <Style Selector="c|StatusDot.bad">
+    <Setter Property="Fill" Value="{DynamicResource ErrorBrush}" />
+    <Setter Property="GlowBrush" Value="{DynamicResource ErrorBrush}" />
+    <Setter Property="GlowOpacity" Value="1" />
+  </Style>
+
   <Style Selector="Ellipse.toneMuted">
     <Setter Property="Fill" Value="{DynamicResource TextMutedBrush}" />
   </Style>
@@ -446,7 +659,14 @@
   -->
 
   <!-- Кнопка подключения -->
+  <!--
+    Отступы обнулены намеренно. Готовая тема даёт кнопке несимметричное поле —
+    сверху пять точек, снизу шесть, — и знак внутри круга вставал на пиксель
+    выше середины. На прямоугольной кнопке с текстом этого не видно, на круглой
+    с одним знаком в середине видно сразу.
+  -->
   <Style Selector="Button.connect">
+    <Setter Property="Padding" Value="0" />
     <Setter Property="Width" Value="152" />
     <Setter Property="Height" Value="152" />
     <Setter Property="CornerRadius" Value="76" />
@@ -456,19 +676,120 @@
     <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <!--
+    Подсветка при наведении наливается, а не вспыхивает. Кисти меняются
+    переходом: без него кант щёлкает с приглушённого на акцентный за один кадр,
+    и это читается не откликом, а рывком отрисовки — тем заметнее, что кнопка
+    здесь крупная и в середине экрана.
+
+    Переход объявлен у ContentPresenter, а не у самой кнопки: заливку и кант
+    рисует он, на нём же их и надо сглаживать.
+  -->
+  <Style Selector="Button.connect /template/ ContentPresenter">
     <Setter Property="Transitions">
       <Transitions>
-        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+        <BrushTransition Property="Background" Duration="0:0:0.22" Easing="CubicEaseOut" />
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.22" Easing="CubicEaseOut" />
       </Transitions>
     </Setter>
   </Style>
+
   <Style Selector="Button.connect:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
   </Style>
-  <!-- Лёгкое сжатие при нажатии: движение подтверждает, что кнопка сработала. -->
+
+  <!--
+    Лёгкое сжатие при нажатии: движение подтверждает, что кнопка сработала.
+
+    Заливку при этом держим свою. Готовая тема на нажатие красит кнопку в
+    служебный серый — на белом фоне он уместен, а здесь диск на секунду
+    выцветал в камень, и выглядело это не нажатием, а зависанием.
+  -->
   <Style Selector="Button.connect:pressed">
     <Setter Property="RenderTransform" Value="scale(0.97)" />
+  </Style>
+  <Style Selector="Button.connect:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <!--
+    Надпись и значок внутри диска загораются тем же светом, что и кольцо:
+    наведение зажигает их заранее, поднятый туннель держит зажжёнными. Переход
+    по кисти — та же плавность, что у подсветки канта; цвет здесь и есть
+    состояние, поэтому щёлкать ему нельзя.
+  -->
+  <Style Selector="Button.connect">
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+        <BrushTransition Property="Foreground" Duration="0:0:0.35" Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <!--
+    Надпись и значок остаются светлыми, горит воздух вокруг них. Так устроена
+    неоновая вывеска: трубка белёсая, светится оболочка. Покрась саму букву
+    цветом свечения — выйдет не подсветка, а перекрашенная надпись, вдобавок
+    размытая собственным ореолом.
+
+    Поэтому цвет содержимого при наведении лишь чуть подаётся вперёд, до
+    основного текстового, а всю работу делает ореол.
+  -->
+  <Style Selector="Button.connect:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="Button.connect.lit">
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+
+  <!--
+    Знак внутри диска зажигается тем же светом, что и кольцо: наведение
+    зажигает его заранее, поднятый туннель держит зажжённым. Слои трубки —
+    ореол, средний, нить — рисует сам контрол одним путём; стилям остаётся
+    сказать, горит знак или нет.
+  -->
+  <Style Selector="c|NeonMark.mark">
+    <Setter Property="GlowOpacity" Value="0" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="GlowOpacity" Duration="0:0:0.35" Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Button.connect:pointerover c|NeonMark.mark">
+    <Setter Property="GlowOpacity" Value="1" />
+  </Style>
+
+  <Style Selector="Button.connect.lit c|NeonMark.mark">
+    <Setter Property="GlowOpacity" Value="1" />
+  </Style>
+
+  <!--
+    Ореол надписи зажигается вместе с цветом: погашенная надпись остаётся просто
+    надписью, горящая обрастает свечением. Плавность — тем же переходом по
+    вещественному свойству, что и у кольца.
+  -->
+  <Style Selector="c|NeonText">
+    <Setter Property="GlowOpacity" Value="0" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="GlowOpacity" Duration="0:0:0.35" Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Button.connect:pointerover c|NeonText">
+    <Setter Property="GlowOpacity" Value="1" />
+  </Style>
+
+  <Style Selector="Button.connect.lit c|NeonText">
+    <Setter Property="GlowOpacity" Value="1" />
   </Style>
 
   <!--
@@ -482,58 +803,31 @@
   </Style>
 
   <!--
-    Дышащее гало, когда туннель поднят. Дышит прозрачностью, а не размером:
-    покадровая анимация RenderTransform требует своего аниматора и без него
-    роняет окно на старте — проверено. Размер держим шире кнопки: гало видно
-    ободком вокруг неё, и уйди оно целиком под кнопку — сигнал пропадёт.
+    Неон разгорается и гаснет плавно, а не щёлкает. Секунда с небольшим: за это
+    время трубка и правда набирает свет, и глаз успевает заметить, что
+    состояние сменилось, — мгновенная вспышка читается сбоем отрисовки.
+
+    Плавность даёт переход по вещественному свойству. Такие Avalonia умеет
+    анимировать сама; преобразования — нет, на них клиент уже падал при
+    попытке раскрутить это же кольцо.
   -->
-  <!--
-    Лучи — приём плакатного оформления; в основном их место занимает круглое
-    гало, и показывать оба разом значит спорить формами.
-  -->
-  <Style Selector="c|Rays.rays">
-    <Setter Property="IsVisible" Value="False" />
+  <Style Selector="c|Orbit">
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="GlowOpacity" Duration="0:0:1.1" Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
   </Style>
 
-  <Style Selector="c|Banners.banners">
-    <Setter Property="IsVisible" Value="False" />
-  </Style>
-
-  <Style Selector="Ellipse.glow">
-    <Setter Property="Width" Value="230" />
-    <Setter Property="Height" Value="230" />
-    <Style.Animations>
-      <Animation Duration="0:0:2.6" IterationCount="INFINITE"
-                 PlaybackDirection="Alternate" Easing="SineEaseInOut">
-        <KeyFrame Cue="0%">
-          <Setter Property="Opacity" Value="0.10" />
-        </KeyFrame>
-        <KeyFrame Cue="100%">
-          <Setter Property="Opacity" Value="0.30" />
-        </KeyFrame>
-      </Animation>
-    </Style.Animations>
-  </Style>
-
-  <!--
-    Знак на кнопке подключения ждёт плакатного оформления: в основном на кнопке
-    остаётся значок питания с подписью — так же, как на других платформах.
-    Прятать приходится здесь, потому что видимость самой кнопки в разметке уже
-    занята другим, а заданное в разметке сильнее стиля.
-  -->
-  <Style Selector="c|Emblem.emblem">
-    <Setter Property="IsVisible" Value="False" />
-  </Style>
-
-  <Style Selector="TextBlock.posterAction">
-    <Setter Property="IsVisible" Value="False" />
-  </Style>
 
   <!-- Показатель на обзоре: время, адрес, протокол. -->
   <Style Selector="Border.stat">
     <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
     <Setter Property="CornerRadius" Value="14" />
-    <Setter Property="Padding" Value="22,14" />
+    <Setter Property="Padding" Value="12,14" />
+
+    <!-- Ширину задаёт колонка обзора, здесь только нижняя граница на случай
+         узкого окна. -->
     <Setter Property="MinWidth" Value="150" />
   </Style>
 

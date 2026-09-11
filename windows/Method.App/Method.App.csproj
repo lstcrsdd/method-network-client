@@ -8,7 +8,17 @@
     <AssemblyName>Method</AssemblyName>
     <RootNamespace>Method.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- Знак один на все платформы: иконка взята с эталона macOS. Без неё
+         Windows рисует у exe пустой лист бумаги — и в панели задач, и в
+         проводнике, и в списке установленных программ. -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- Маска лампового экрана пишется прямо в пиксели: перебирать сотни строк
+         через безопасную обёртку тридцать раз в секунду — это выделения на
+         каждый кадр там, где хватает одного указателя. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <!-- Параметры применяются при publish -r win-x64. Один файл — потому что
          клиент раздаётся как «скопировал и запустил»: россыпь библиотек рядом с
@@ -66,6 +76,36 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>method_core_ffi.dll</Link>
     </None>
+  </ItemGroup>
+
+  <!--
+    Исходники для бегущей ленты на обзоре. Показываем настоящий код клиента, а
+    не набор знаков «под хакера»: клиент открытый, и чужая выдумка на его месте
+    была бы единственным враньём на весь экран.
+
+    Файлы выбраны те, что и правда работают в туннеле: сборка конфигурации,
+    измерительный контур, исполнитель решений ядра, граница с общим ядром и
+    блокировка трафика мимо туннеля. Секретов в них нет и быть не может —
+    репозиторий публичный, и бегущие строки при желании сверяются с ним.
+
+    Комментарии лента отбрасывает сама: в ней они читались текстом, а не кодом.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\Method.Core\Core\SingBoxConfigBuilder.cs">
+      <LogicalName>source/config.cs</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Method.Core\Core\ProbeLoop.cs">
+      <LogicalName>source/probes.cs</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Method.Core\Core\LanePilot.cs">
+      <LogicalName>source/pilot.cs</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Method.Core\Native\CoreEngine.cs">
+      <LogicalName>source/core.cs</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Services\WfpKillSwitch.cs">
+      <LogicalName>source/wfp.cs</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <!-- Движок вшивается в exe и извлекается при установке. Файлов нет в

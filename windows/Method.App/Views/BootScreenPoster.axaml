@@ -1,0 +1,86 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Заставка запуска: что клиент делает, прежде чем показать окно.
+
+  Разметка одного оформления, поэтому свои стили держит у себя — в основном
+  оформлении этой заставки нет вовсе.
+
+  Вид взят у приборной техники, а не у кино про хакеров: шильдик с названием и
+  номером изделия сверху, столбец шагов с точками-выносками, метка исхода
+  справа. Ничего не мигает и не сыплется — прибор докладывает, а не пугает.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:Method.App.Controls"
+             x:Class="Method.App.Views.BootScreenPoster"
+             Focusable="True">
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.plate">
+      <Setter Property="FontSize" Value="17" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="LetterSpacing" Value="3.4" />
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
+    <Style Selector="TextBlock.stamp">
+      <Setter Property="FontSize" Value="11.5" />
+      <Setter Property="LetterSpacing" Value="1.2" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+    </Style>
+
+    <Style Selector="TextBlock.hint">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="LetterSpacing" Value="1.6" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+    </Style>
+  </UserControl.Styles>
+
+  <!-- Непрозрачный фон обязателен: заставка закрывает собой готовое окно, и
+       сквозь неё не должно просвечивать то, что человеку ещё рано видеть. -->
+  <Border Background="{DynamicResource BackgroundBrush}">
+    <!-- Выравнивание по центру заставило бы столбец сжаться по самой длинной
+         надписи: метки исхода тогда липнут к тексту вместо правого поля.
+         Растягиваем и ограничиваем шириной. -->
+    <Grid Margin="46,34,46,28" RowDefinitions="Auto,Auto,Auto,*,Auto"
+          MaxWidth="820" HorizontalAlignment="Stretch">
+
+      <!-- Шильдик -->
+      <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="14">
+        <Border Width="38" Height="38" Background="{DynamicResource AccentBrush}">
+          <Path Data="{DynamicResource IconStar}" Stretch="Uniform" Width="21" Height="21"
+                Fill="{DynamicResource EmblemBrush}"
+                HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+
+        <StackPanel VerticalAlignment="Center" Spacing="3">
+          <TextBlock Classes="plate" Text="МЕТОД · СЕТЕВОЙ КОМПЛЕКС" />
+          <TextBlock Name="StampText" Classes="stamp" />
+        </StackPanel>
+      </StackPanel>
+
+      <Border Grid.Row="1" Height="2" Margin="0,16,0,0"
+              Background="{DynamicResource AccentBrush}" />
+
+      <TextBlock Grid.Row="2" Classes="stamp" Margin="0,14,0,10" Text="ПРОВЕРКА ПЕРЕД ПУСКОМ" />
+
+      <c:Teletype Grid.Row="3" Name="Tape"
+                  Foreground="{DynamicResource TextPrimaryBrush}"
+                  Accent="{DynamicResource AccentBrush}"
+                  Warning="{DynamicResource WarningBrush}"
+                  Muted="{DynamicResource TextMutedBrush}" />
+
+      <StackPanel Grid.Row="4" Spacing="10">
+        <Border Height="1" Background="{DynamicResource GlassStrokeBrush}" />
+        <TextBlock Classes="hint" Text="НАЖМИТЕ ЛЮБУЮ КЛАВИШУ ИЛИ ЩЁЛКНИТЕ, ЧТОБЫ ПРОДОЛЖИТЬ" />
+      </StackPanel>
+    </Grid>
+  </Border>
+</UserControl>

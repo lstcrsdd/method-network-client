@@ -13,6 +13,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Method.App.ViewModels;
+using Method.Core.Storage;
 
 namespace Method.App.Services;
 
@@ -34,8 +35,9 @@ public sealed class TrayPresence : IDisposable
     private readonly MainViewModel _model;
     private readonly TrayIcon _icon;
     private readonly NativeMenuItem _toggleItem;
-    private readonly WindowIcon _iconOn;
-    private readonly WindowIcon _iconOff;
+    // Значки меняются вместе с оформлением, поэтому не только для чтения.
+    private WindowIcon _iconOn;
+    private WindowIcon _iconOff;
 
     private Window? _window;
 
@@ -43,8 +45,7 @@ public sealed class TrayPresence : IDisposable
     {
         _model = model;
 
-        _iconOn = Load("avares://Method/Assets/tray-on.ico");
-        _iconOff = Load("avares://Method/Assets/tray-off.ico");
+        (_iconOn, _iconOff) = Icons(SkinManager.Current);
 
         _toggleItem = new NativeMenuItem("Подключить");
         _toggleItem.Click += (_, _) => _model.ToggleCommand.Execute(null);
@@ -66,6 +67,7 @@ public sealed class TrayPresence : IDisposable
         _icon.Clicked += (_, _) => ShowWindow();
 
         _model.PropertyChanged += OnModelChanged;
+        SkinManager.Changed += OnSkinChanged;
         Sync();
     }
 
@@ -125,11 +127,30 @@ public sealed class TrayPresence : IDisposable
         _toggleItem.Header = connected ? "Отключить" : "Подключить";
     }
 
+    /// <summary>
+    /// Значок оформления. В трее знак живёт крошечным, поэтому у плакатного
+    /// набора он свой: не картуш со знамёнами, а один обод с зубцами и звезда —
+    /// на шестнадцати точках от полного знака остаётся пятно.
+    /// </summary>
+    private static (WindowIcon On, WindowIcon Off) Icons(AppSkin skin) =>
+        skin == AppSkin.Poster
+            ? (Load("avares://Method/Assets/tray-poster-on.ico"),
+               Load("avares://Method/Assets/tray-poster-off.ico"))
+            : (Load("avares://Method/Assets/tray-on.ico"),
+               Load("avares://Method/Assets/tray-off.ico"));
+
+    private void OnSkinChanged(AppSkin skin)
+    {
+        (_iconOn, _iconOff) = Icons(skin);
+        Sync();
+    }
+
     private static WindowIcon Load(string uri) => new(AssetLoader.Open(new Uri(uri)));
 
     public void Dispose()
     {
         _model.PropertyChanged -= OnModelChanged;
+        SkinManager.Changed -= OnSkinChanged;
         if (_window is not null) _window.Closing -= OnWindowClosing;
         _icon.Dispose();
     }

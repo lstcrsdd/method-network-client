@@ -1,0 +1,205 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Обзор в основном оформлении: круглая кнопка со значком питания по центру,
+  под ней показатели. Форма повторяет клиент macOS — один продукт на разных
+  платформах должен выглядеть одинаково.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Method.App.ViewModels"
+             xmlns:c="using:Method.App.Controls"
+             x:Class="Method.App.Views.Pages.OverviewPlain"
+             x:DataType="vm:MainViewModel">
+
+  <UserControl.Resources>
+    <!--
+      Ширина средней колонки обзора: по ней выстроены и три показателя, и блок
+      трафика под ними. Одно число на оба, потому что два числа в разных местах
+      однажды разойдутся, и разойдутся они молча — увидит это не сборка, а глаз,
+      да и то не всякий: перекос в десяток точек читается «криво», но не
+      «сломано».
+    -->
+    <x:Double x:Key="OverviewColumnWidth">580</x:Double>
+  </UserControl.Resources>
+
+  <!--
+    Прокрутка нужна не ради длины страницы, а ради нижнего края: при малом окне
+    и поднятом туннеле карточка трафика оказывалась за границей и просто не
+    показывалась. Высота содержимого привязана к видимой области, иначе внутри
+    прокрутки растяжки схлопнутся в ноль и кнопка перестанет стоять по центру.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" c:SmoothScroll.Enabled="True"
+                Padding="40,10,40,24">
+
+  <!--
+    Коробка масштабирования. На развёрнутом окне вся композиция берётся в
+    полтора раза крупнее — и берётся целиком, одним преобразованием: диск,
+    знак, подписи и карточки растут вместе и остаются в тех же отношениях.
+    Перебирать размеры и кегли поодиночке значило бы завести вторую раскладку,
+    которая начнёт расходиться с первой на первой же правке.
+
+    Масштаб ставится из кода по ширине страницы: разметка про размер окна
+    ничего не знает. Там же выставляется и наименьшая высота содержимого —
+    делённая на масштаб, иначе увеличенная страница сама себя выталкивает за
+    нижний край и заводит прокрутку на ровном месте.
+  -->
+  <LayoutTransformControl Name="Zoom">
+  <Grid Name="Composition" RowDefinitions="*,Auto,Auto,Auto,Auto,*">
+
+    <Panel Grid.Row="1" Classes="dialArea">
+      <!--
+        Неоновое кольцо вокруг кнопки.
+
+        До него здесь побывали три приёма, и все три убраны по делу: циферблат
+        из штрихов рвался в ступеньки на крупном кольце (пунктир держится, пока
+        штрих крупнее пикселя), дышащее гало и бегущая дуга оказались лишним
+        движением. Неон не крутится и не дышит — он просто горит, и этого
+        довольно: состояние читается тем, что кольцо зажглось.
+      -->
+      <Panel Classes="dialRound">
+        <c:Orbit Width="292" Height="292"
+                 TrackBrush="{DynamicResource GlassStrokeBrush}"
+                 GlowBrush="{DynamicResource AccentBrush}"
+                 IsLit="{Binding IsConnected}" />
+      </Panel>
+
+      <!--
+        Класс «горит» держит надпись и значок зажжёнными, пока туннель поднят;
+        наведение зажигает их и без подключения. Оба случая ведут к одному
+        цвету, поэтому разбирается это набором стилей, а не двумя ветками в
+        разметке.
+      -->
+      <!--
+        Внутри диска — сам знак, без подписи. Он читается и литерой «М», и ходом
+        сигнала, а слово под ним было третьим объяснением подряд: круг, кольцо и
+        надпись говорили об одном. Что именно случится по нажатию, подсказывает
+        всплывающая подпись; что происходит сейчас — горит знак или нет и что
+        написано в карточке состояния слева.
+      -->
+      <Button Classes="connect" Classes.lit="{Binding IsConnected}"
+              Command="{Binding ToggleCommand}"
+              ToolTip.Tip="{Binding ActionText}"
+              HorizontalAlignment="Center" VerticalAlignment="Center">
+
+        <!--
+          Один знак на весь диск. Прежде их было два — символ питания и марка
+          под ним — и вместе они твердили одно: круг и без того сообщает, что
+          это выключатель. Литера служит и маркой, и выключателем сразу, а что
+          именно случится по нажатию, говорит всплывающая подпись.
+
+          Размер задан числом, а не отступами: знак обязан стоять ровно в
+          середине диска, и середину проще посчитать, чем выровнять на глаз.
+        -->
+        <c:NeonMark Classes="mark" Width="60" Height="84"
+                    Thickness="1.5" GlowSpread="9"
+                    Data="{DynamicResource IconMark}"
+                    Stroke="{Binding $parent[Button].Foreground}"
+                    GlowBrush="{DynamicResource AccentBrush}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Button>
+    </Panel>
+
+    <!-- Что сейчас выбрано и куда добавлять -->
+    <StackPanel Grid.Row="2" Spacing="4" Margin="0,16,0,0" HorizontalAlignment="Center">
+      <TextBlock Text="{Binding SelectedName}" FontSize="13.5" HorizontalAlignment="Center"
+                 Foreground="{DynamicResource TextPrimaryBrush}"
+                 IsVisible="{Binding HasServers}" />
+      <Button Classes="quiet" Command="{Binding GoToCommand}" CommandParameter="Servers"
+              HorizontalAlignment="Center">
+        <StackPanel Orientation="Horizontal" Spacing="7">
+          <Path Data="{DynamicResource IconPlus}" Stretch="Uniform" Width="15" Height="15"
+                StrokeThickness="2" StrokeLineCap="Round"
+                Stroke="{Binding $parent[Button].Foreground}" VerticalAlignment="Center" />
+          <TextBlock Text="Добавить конфигурацию" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </StackPanel>
+
+    <!--
+      Три показателя. Сетка равных долей, а не строка карточек по содержимому:
+      иначе ширина зависит от того, что внутри, — адрес из пятнадцати знаков
+      растягивает свою карточку, соседние остаются узкими, и вся колонка съезжает
+      относительно блока трафика под ней. Общая ширина задана той же, что у него,
+      одним ключом на оба: два числа в разных местах однажды разойдутся.
+    -->
+    <Grid Grid.Row="3" ColumnDefinitions="*,*,*" Margin="0,26,0,0"
+          Width="{StaticResource OverviewColumnWidth}" HorizontalAlignment="Center">
+      <Border Classes="stat" Margin="0,0,7,0">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="sectionLabel" Text="ВРЕМЯ" HorizontalAlignment="Center" />
+          <TextBlock Text="{Binding Elapsed}" FontSize="19" FontWeight="SemiBold"
+                     HorizontalAlignment="Center"
+                     Foreground="{DynamicResource TextPrimaryBrush}" />
+        </StackPanel>
+      </Border>
+      <Border Grid.Column="1" Classes="stat" Margin="7,0">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="sectionLabel" Text="IP-АДРЕС" HorizontalAlignment="Center" />
+          <TextBlock Text="{Binding ExternalIp}" FontSize="19" FontWeight="SemiBold"
+                     HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
+                     Foreground="{DynamicResource TextPrimaryBrush}" />
+        </StackPanel>
+      </Border>
+      <Border Grid.Column="2" Classes="stat" Margin="7,0,0,0">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="sectionLabel" Text="ПРОТОКОЛ" HorizontalAlignment="Center" />
+          <TextBlock Text="{Binding ProtocolName}" FontSize="19" FontWeight="SemiBold"
+                     HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
+                     Foreground="{DynamicResource TextPrimaryBrush}" />
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <!--
+      Трафик. Карточка стоит здесь всегда, в любом состоянии: появляясь только
+      при подключении, она перекраивала страницу ровно в тот момент, когда
+      человек смотрит на кнопку, — всё под ней скакало вниз. Что показывать в
+      цифрах, решает модель: ноль, когда туннеля нет, и прочерк, когда туннель
+      чужой и считать нечем.
+    -->
+    <Border Grid.Row="4" Classes="card" Padding="20,16" Margin="0,20,0,0"
+            Width="{StaticResource OverviewColumnWidth}"
+            HorizontalAlignment="Center" VerticalAlignment="Top">
+      <StackPanel Spacing="12">
+        <Grid ColumnDefinitions="*,*,*">
+          <StackPanel Spacing="4">
+            <TextBlock Classes="sectionLabel" Text="ПРИЁМ" />
+            <TextBlock Text="{Binding DownSpeed}" FontSize="15" FontWeight="SemiBold"
+                       Foreground="{DynamicResource ConnectedBrush}" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Spacing="4">
+            <TextBlock Classes="sectionLabel" Text="ОТДАЧА" />
+            <TextBlock Text="{Binding UpSpeed}" FontSize="15" FontWeight="SemiBold"
+                       Foreground="{DynamicResource AccentBrush}" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Spacing="4">
+            <TextBlock Classes="sectionLabel" Text="ЗА СЕССИЮ" />
+            <TextBlock Text="{Binding SessionVolume}" FontSize="15" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+          </StackPanel>
+        </Grid>
+
+        <Panel Height="46">
+          <c:Sparkline Values="{Binding DownHistoryView}" Stroke="{DynamicResource ConnectedBrush}" />
+          <c:Sparkline Values="{Binding UpHistoryView}" Stroke="{DynamicResource AccentBrush}" />
+        </Panel>
+      </StackPanel>
+    </Border>
+
+    <!-- Ошибка или предупреждение. Молчать здесь нельзя. -->
+    <TextBlock Grid.Row="5" Text="{Binding Detail}" Margin="0,22,0,0"
+               FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="520"
+               HorizontalAlignment="Center" VerticalAlignment="Top"
+               Foreground="{DynamicResource TextSecondaryBrush}"
+               IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </Grid>
+  </LayoutTransformControl>
+  </ScrollViewer>
+</UserControl>

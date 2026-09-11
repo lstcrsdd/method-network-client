@@ -44,6 +44,17 @@ public sealed record AppSettings
     [JsonPropertyName("autoReconnect")]
     public bool AutoReconnect { get; init; } = true;
 
+    /// <summary>
+    /// Доверить выбор узла клиенту: весь трафик, не описанный сценариями, идёт
+    /// через тот узел, что отвечает быстрее прочих.
+    ///
+    /// <para>По умолчанию выключено. Пока человек не сказал иначе, трафик идёт
+    /// тем узлом, который он выбрал сам: уводить его куда-то по своему
+    /// усмотрению без спроса клиент не должен.</para>
+    /// </summary>
+    [JsonPropertyName("autoRouting")]
+    public bool AutoRouting { get; init; }
+
     /// <summary>Узел, выбранный в прошлый раз. Пусто — выберется первый.</summary>
     [JsonPropertyName("selectedServer")]
     public Guid? SelectedServer { get; init; }

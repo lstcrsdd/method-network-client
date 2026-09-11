@@ -21,7 +21,7 @@
       ближайший список принадлежит ей, и путь до модели оттуда другой.
     -->
     <DataTemplate x:Key="ServerRow" x:DataType="vm:ServerItem">
-      <Border Classes="row" Margin="0,0,0,6" Padding="14,11">
+      <Border Classes="row" Padding="14,11">
         <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
 
           <c:CountryFlag Grid.Column="0" Code="{Binding CountryCode}" Width="26" Height="18"
@@ -77,19 +77,24 @@
                   Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SelectCommand}"
                   CommandParameter="{Binding}">
             <!--
-              Отметки лежат здесь всегда, а не появляются по условию. Показывать
-              их видимостью значило бы включать их мгновенно — а весь смысл в
-              том, что кружок сжимается к центру и оттуда разворачивается
-              отметка. Появляться и исчезать нечему, меняется только размер.
+              Отметки лежат здесь всегда, а не появляются по условию: у каждой
+              своё превращение, и включать их видимостью значило бы включать
+              мгновенно.
+
+              Их две, потому что наборы говорят разными знаками. В основном —
+              кольцо, которое загорается неоном под выбранным узлом. В
+              плакатном — кольцо-след, сжимающееся к центру, и звезда,
+              разворачивающаяся оттуда. Что показать, решает оформление.
             -->
-            <Panel Width="22" Height="22">
+            <Panel Width="30" Height="30">
+              <c:Orbit Classes="pick" Width="30" Height="30"
+                       TrackBrush="{DynamicResource TextMutedBrush}" TrackThickness="1.5"
+                       GlowThickness="1.7" GlowSpread="6"
+                       GlowBrush="{DynamicResource AccentBrush}"
+                       IsLit="{Binding IsSelected}" />
+
               <Ellipse Classes="pickRing" Width="22" Height="22"
                        RenderTransformOrigin="50%,50%" />
-              <Path Classes="mark markCheck" Data="{DynamicResource IconCheck}" Stretch="Uniform"
-                    Width="13" Height="13" StrokeThickness="2.4"
-                    StrokeLineCap="Round" StrokeJoin="Round"
-                    RenderTransformOrigin="50%,50%"
-                    HorizontalAlignment="Center" VerticalAlignment="Center" />
               <Path Classes="mark markStar" Data="{DynamicResource IconStar}" Stretch="Uniform"
                     Width="19" Height="19"
                     RenderTransformOrigin="50%,50%"
@@ -125,7 +130,11 @@
 
     <!-- Заголовок и действия -->
     <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,22">
-      <TextBlock Classes="pageTitle" Text="Серверы" VerticalAlignment="Center" />
+      <c:PageHeading Number="02" Text="Серверы" VerticalAlignment="Center" />
+
+      <!-- Линейка под шапкой: в плакатном оформлении заголовок отбит краской,
+           в основном её нет и разделяет воздух. -->
+      <Border Classes="rule" Grid.ColumnSpan="4" VerticalAlignment="Bottom" Margin="0,0,0,-11" />
 
       <Button Grid.Column="1" Classes="quiet" Margin="0,0,6,0" VerticalAlignment="Center"
               Command="{Binding RefreshAllSubscriptionsCommand}"

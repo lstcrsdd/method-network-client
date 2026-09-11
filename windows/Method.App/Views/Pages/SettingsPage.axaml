@@ -21,7 +21,8 @@
   <ScrollViewer VerticalScrollBarVisibility="Auto" c:SmoothScroll.Enabled="True">
     <StackPanel Margin="40,10,40,32">
 
-      <TextBlock Classes="pageTitle" Text="Настройки" Margin="0,0,0,22" />
+      <c:PageHeading Number="04" Text="Настройки" HorizontalAlignment="Left" />
+      <Border Classes="rule" Margin="0,11,0,22" />
 
       <TextBlock Classes="sectionLabel" Text="ОФОРМЛЕНИЕ" Margin="4,0,0,10" />
 
@@ -40,14 +41,14 @@
               обязан совпадать со значением в Theme.axaml; за этим следит тест.
             -->
             <StackPanel Orientation="Horizontal" Spacing="6">
-              <Border Width="26" Height="26" CornerRadius="13" Background="#2ECC4D" />
-              <Border Width="26" Height="26" CornerRadius="13" Background="#1A1A1A" />
-              <Border Width="26" Height="26" CornerRadius="13" Background="#FFFFFF" Opacity="0.85" />
+              <Border Width="26" Height="26" CornerRadius="13" Background="#EE7A4E" />
+              <Border Width="26" Height="26" CornerRadius="13" Background="#241520" />
+              <Border Width="26" Height="26" CornerRadius="13" Background="#4FC7D9" />
             </StackPanel>
             <StackPanel Spacing="3">
               <TextBlock Text="Основное" FontSize="13.5" FontWeight="SemiBold"
                          Foreground="{DynamicResource TextPrimaryBrush}" />
-              <TextBlock Text="Тёмное, зелёный акцент — как на других платформах" FontSize="11.5"
+              <TextBlock Text="Закат и неон — гамма знака Method" FontSize="11.5"
                          TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" />
             </StackPanel>
           </StackPanel>
@@ -58,7 +59,7 @@
           <StackPanel Spacing="10">
             <!-- То же и здесь: акцент плакатного набора, сверяется тестом. -->
             <StackPanel Orientation="Horizontal" Spacing="6">
-              <Border Width="26" Height="26" Background="#BE5347" />
+              <Border Width="26" Height="26" Background="#A3222B" />
               <Border Width="26" Height="26" Background="#1A1613" />
               <Border Width="26" Height="26" Background="#EDE4D4" />
             </StackPanel>
@@ -131,6 +132,25 @@
 
           <Border Height="1" Background="{DynamicResource GlassStrokeBrush}" Margin="18,0" />
 
+          <!--
+            Автоматика — фон, а не замена сценариям, и подпись обязана это
+            сказать: иначе человек, написавший «Tor только через Hysteria2»,
+            будет думать, что включённый выбор узла его правило отменил.
+          -->
+          <Grid ColumnDefinitions="*,Auto" Margin="18,16">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Автоматическая маршрутизация" FontSize="13.5"
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
+              <TextBlock TextWrapping="Wrap" MaxWidth="520" FontSize="12" HorizontalAlignment="Left"
+                         Foreground="{DynamicResource TextSecondaryBrush}"
+                         Text="Клиент сам ведёт трафик через узел, который отвечает быстрее прочих, и переключается, когда обстановка меняется. Ваши сценарии всегда главнее: что задано вручную, то и выполняется" />
+            </StackPanel>
+            <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
+                          IsChecked="{Binding AutoRouting}" />
+          </Grid>
+
+          <Border Height="1" Background="{DynamicResource GlassStrokeBrush}" Margin="18,0" />
+
           <Grid ColumnDefinitions="*,Auto" Margin="18,16">
             <StackPanel Spacing="4">
               <TextBlock Text="Автопереподключение" FontSize="13.5"
@@ -176,7 +196,7 @@
           <ItemsControl ItemsSource="{Binding Subscriptions}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:SubscriptionItem">
-                <Border Classes="row" Padding="14,11" Margin="0,0,0,6">
+                <Border Classes="row" Padding="14,11">
                   <Grid ColumnDefinitions="*,Auto,Auto">
                     <StackPanel Spacing="3">
                       <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"

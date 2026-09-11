@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Растеризация знака из вектора. Инструмент разработки: в решение Method.sln
+       намеренно не входит и в поставку не попадает. Нужен затем, чтобы иконку
+       можно было пересобрать из исходника, а не хранить растр, к которому потом
+       не подступиться. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>svg2ico</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Svg.Skia" Version="1.0.0.18" />
+  </ItemGroup>
+
+</Project>

@@ -19,20 +19,142 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:c="using:Method.App.Controls">
 
+
+  <!--
+    Один набор на весь интерфейс: чертёжный DIN. Задан на окне, а не в
+    каждом стиле, потому что начертание наследуется вниз по дереву — так
+    его нельзя забыть поставить новому экрану, и разнобоя не возникает.
+
+    Единственное, что раньше выпадало, — лента журнала: она держалась
+    моноширинного шрифта, потому что раскладывала строку по знакоместам.
+    Теперь лента считает раскладку в точках и берёт общий набор.
+  -->
+  <Style Selector="Window">
+    <Setter Property="FontFamily" Value="Bahnschrift SemiCondensed, Bahnschrift, Segoe UI" />
+  </Style>
+
+  <!--
+    Боковая панель. Линейный значок — язык другого продукта: тонкая скруглённая
+    линия рядом с плакатной краской читается как чужая наклейка. Вместо него
+    номер раздела: та же роль опознавательного знака, но набором, а не
+    рисунком, — и это ровно то, чем плакат размечает содержание.
+
+    Цвет номеру не задан нарочно: он наследует цвет кнопки и потому сам
+    становится выворотным на красной плашке выбранного раздела.
+  -->
+  <Style Selector="Path.navIcon">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+
+  <Style Selector="TextBlock.navNo">
+    <Setter Property="IsVisible" Value="True" />
+    <Setter Property="Width" Value="22" />
+    <Setter Property="FontSize" Value="11.5" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="LetterSpacing" Value="0.6" />
+    <Setter Property="Opacity" Value="0.75" />
+  </Style>
+
+  <!-- Названия разделов и состояние — прописными в разрядку. -->
+  <Style Selector="TextBlock.plainCaption">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+  <Style Selector="TextBlock.capsCaption">
+    <Setter Property="IsVisible" Value="True" />
+    <Setter Property="FontFamily" Value="Bahnschrift SemiCondensed, Bahnschrift, Segoe UI" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="LetterSpacing" Value="1.7" />
+  </Style>
+
+  <!-- Марка: плашка со звездой вместо стеклянного квадрата с цепью. -->
+  <Style Selector="Border.brandGlass">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+  <Style Selector="Border.brandPlate">
+    <Setter Property="IsVisible" Value="True" />
+  </Style>
+  <Style Selector="TextBlock.brandName">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+  <!--
+    Заголовки набираем DIN: это чертёжный шрифт, тот самый, которым подписывали
+    приборы и указатели. Он стоит в системе с десятой версии, поэтому в поставку
+    ничего тащить не надо; запасные имена в списке — на случай, если его всё же
+    не окажется.
+  -->
+  <Style Selector="TextBlock.brandCaps">
+    <Setter Property="IsVisible" Value="True" />
+    <Setter Property="FontFamily" Value="Bahnschrift SemiCondensed, Bahnschrift, Segoe UI" />
+    <Setter Property="FontSize" Value="18" />
+    <Setter Property="LetterSpacing" Value="3.4" />
+  </Style>
+
+  <!--
+    Название раздела. Своего шрифта у нас нет, поэтому плакатность строится на
+    том, чем располагаем: прописные, крупный кегль, разрядка и номер над
+    названием. Разрядка здесь не украшение — она отделяет заголовок-вывеску от
+    заголовка-надписи, и без неё прописные читаются просто громким текстом.
+  -->
+  <Style Selector="TextBlock.plainTitle">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+  <Style Selector="StackPanel.posterTitle">
+    <Setter Property="IsVisible" Value="True" />
+  </Style>
+  <Style Selector="TextBlock.headingCaps">
+    <Setter Property="FontFamily" Value="Bahnschrift SemiCondensed, Bahnschrift, Segoe UI" />
+    <Setter Property="FontSize" Value="33" />
+    <Setter Property="LetterSpacing" Value="5" />
+  </Style>
+
+  <!-- Линейка под шапкой: краска вместо пустоты. -->
+  <Style Selector="Border.rule">
+    <Setter Property="IsVisible" Value="True" />
+    <Setter Property="Height" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <!--
+    Штрих значков. Скруглённые концы и тонкая линия — почерк экранного
+    интерфейса; плакат режет краской, поэтому концы прямые, а линия заметно
+    толще. Одна эта правка меняет вид всех значков разом.
+  -->
+  <Style Selector="Path.icon">
+    <Setter Property="StrokeThickness" Value="2.1" />
+    <Setter Property="StrokeLineCap" Value="Flat" />
+    <Setter Property="StrokeJoin" Value="Miter" />
+  </Style>
+
   <!-- Карточки и строки: прямые углы, заметная рамка. -->
+  <!--
+    Карточка на плакате — не плитка, а поле ведомости: рамка вместо подложки.
+    Залитые прямоугольники, положенные друг на друга, читаются стопкой карточек
+    приложения; расчерченное поле читается документом.
+  -->
   <Style Selector="Border.card">
     <Setter Property="CornerRadius" Value="2" />
     <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Background" Value="Transparent" />
   </Style>
 
+  <!--
+    Строка списка. Промежутков между строками нет, разделяет их линейка снизу —
+    так устроена любая ведомость, и так же строки перестают быть плитками.
+    Слева планка: она же показывает наведение.
+  -->
   <Style Selector="Border.row">
     <Setter Property="CornerRadius" Value="0" />
-    <Setter Property="BorderThickness" Value="3,0,0,0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="3,0,0,1" />
     <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
+    <Setter Property="Margin" Value="0" />
   </Style>
 
+  <!-- Под курсором строка подсвечивается краской, а не подложкой: заливка
+       вернула бы плитку, от которой мы здесь и уходим. -->
   <Style Selector="Border.row:pointerover">
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
   </Style>
 
   <!--
@@ -86,116 +208,6 @@
     <Setter Property="CornerRadius" Value="0" />
   </Style>
 
-  <!--
-    Кнопка подключения здесь — сам знак. Ни фона, ни рамки: шестерня уже
-    служит оправой, а обод вокруг обода читался бы небрежностью, а не приёмом.
-    По той же причине скрыто кольцо-циферблат.
-  -->
-  <Style Selector="Button.connect">
-    <Setter Property="Width" Value="338" />
-    <Setter Property="Height" Value="338" />
-    <Setter Property="Padding" Value="0" />
-    <Setter Property="CornerRadius" Value="0" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Background" Value="Transparent" />
-  </Style>
-  <Style Selector="Button.connect /template/ ContentPresenter">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-  </Style>
-
-  <Style Selector="Panel.dialRound">
-    <Setter Property="IsVisible" Value="False" />
-  </Style>
-
-  <!--
-    Размер площадки задаёт пропорцию всей композиции: коробка масштабирования
-    тянет её целиком под свободное место, а не по отдельным элементам. Ширину
-    диктуют знамёна, высоту — знак с подписью под ним.
-  -->
-  <Style Selector="Panel.dialArea">
-    <Setter Property="Width" Value="600" />
-    <Setter Property="Height" Value="400" />
-  </Style>
-  <!--
-    Здесь свет даёт не круг, а расходящийся веер: обод вокруг обода читался бы
-    мишенью, а лучи задают направление от знака наружу и работают на него.
-    Круглое гало поэтому убрано совсем.
-  -->
-  <Style Selector="Ellipse.glow">
-    <Setter Property="IsVisible" Value="False" />
-  </Style>
-
-  <Style Selector="c|Rays.rays">
-    <Setter Property="IsVisible" Value="True" />
-    <Setter Property="Width" Value="396" />
-    <Setter Property="Height" Value="396" />
-  </Style>
-
-  <!--
-    Знамёна шире знака и ниже его: древки сходятся под картушем, полотнища
-    уходят в стороны. Размер выбран так, чтобы веер кончался раньше карточек —
-    заднику не место поверх показателей.
-  -->
-  <Style Selector="c|Banners.banners">
-    <Setter Property="IsVisible" Value="True" />
-    <Setter Property="Width" Value="600" />
-    <Setter Property="Height" Value="372" />
-  </Style>
-
-  <!-- Знак вместо значка питания; подпись действия уходит под кнопку. -->
-  <Style Selector="c|Emblem.emblem">
-    <Setter Property="IsVisible" Value="True" />
-    <Setter Property="Width" Value="338" />
-    <Setter Property="Height" Value="338" />
-  </Style>
-
-  <!--
-    Просторное окно — развёрнутое или растянутое вручную. Места здесь втрое
-    больше, и композиция прежнего размера тонет в пустоте, поэтому вся она
-    разом берёт крупные размеры. Множитель один на все части: знак, кнопка,
-    лучи, знамёна и площадка обязаны расти вместе, иначе выверенные зазоры
-    между ними разъезжаются. Метку ставит страница, каждой части отдельно, —
-    почему не одним классом на окне, написано в её коде.
-  -->
-  <Style Selector="Panel.dialArea.roomy">
-    <Setter Property="Width" Value="840" />
-    <Setter Property="Height" Value="560" />
-  </Style>
-  <Style Selector="Button.connect.roomy">
-    <Setter Property="Width" Value="474" />
-    <Setter Property="Height" Value="474" />
-  </Style>
-  <Style Selector="c|Emblem.emblem.roomy">
-    <Setter Property="Width" Value="474" />
-    <Setter Property="Height" Value="474" />
-  </Style>
-  <Style Selector="c|Rays.rays.roomy">
-    <Setter Property="Width" Value="554" />
-    <Setter Property="Height" Value="554" />
-  </Style>
-  <Style Selector="c|Banners.banners.roomy">
-    <Setter Property="Width" Value="840" />
-    <Setter Property="Height" Value="520" />
-  </Style>
-  <Style Selector="TextBlock.posterAction.roomy">
-    <Setter Property="FontSize" Value="15" />
-  </Style>
-  <Style Selector="StackPanel.powerFace">
-    <Setter Property="IsVisible" Value="False" />
-  </Style>
-  <Style Selector="TextBlock.posterAction">
-    <Setter Property="IsVisible" Value="True" />
-    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-  </Style>
-
-  <!--
-    Отклик на курсор. Без него знак остаётся картинкой: рука понимает, что
-    элемент живой, именно по тому, что он отвечает на наведение.
-  -->
-  <Style Selector="Button.connect:pointerover c|Emblem.emblem">
-    <Setter Property="FieldBrush" Value="{DynamicResource SurfaceRaisedBrush}" />
-  </Style>
 
   <Style Selector="Border.lane">
     <Setter Property="CornerRadius" Value="0" />
@@ -228,7 +240,22 @@
     <Setter Property="CornerRadius" Value="0" />
   </Style>
 
-  <!-- Кнопки окна импорта. -->
+  <!-- Штрих значков окна: прямые концы, как у остальных на плакате. -->
+  <Style Selector="Path.chromeIcon">
+    <Setter Property="StrokeThickness" Value="1.5" />
+    <Setter Property="StrokeLineCap" Value="Flat" />
+  </Style>
+
+  <!-- Углы у самого окна: плакат прямоугольный целиком, включая корпус. -->
+  <Style Selector="Border.shell">
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <!--
+    Кнопки окна импорта. Главная — плашкой краски, вторая — одной рамкой:
+    залитая серым «Отмена» спорит по весу с «Добавить», а на плакате вес
+    показывает, что делать, вернее любой подписи.
+  -->
   <Style Selector="Button.primary">
     <Setter Property="CornerRadius" Value="0" />
     <Setter Property="FontWeight" Value="Bold" />
@@ -236,6 +263,17 @@
 
   <Style Selector="Button.secondary">
     <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <!--
+    Поле для ссылок держит общий набор: моноширинный шрифт был здесь ради
+    ровной колонки знаков, но в плакате он выпадает из строя, а ссылки
+    читаются и обычным.
+  -->
+  <Style Selector="TextBox.mono">
+    <Setter Property="FontFamily" Value="Bahnschrift SemiCondensed, Bahnschrift, Segoe UI" />
+    <Setter Property="FontSize" Value="12.5" />
   </Style>
 
   <Style Selector="Button.skin">
@@ -247,11 +285,20 @@
     четырнадцати пикселях превращаются в пятно, и узнаётся там ровно контур.
     Полная эмблема живёт на кнопке подключения, где ей хватает размера.
   -->
-  <Style Selector="Path.markCheck">
-    <Setter Property="IsVisible" Value="False" />
-  </Style>
   <Style Selector="Path.markStar">
     <Setter Property="IsVisible" Value="True" />
+  </Style>
+
+  <!--
+    Отметка выбора здесь своя: кольцо-след и звезда, разворачивающаяся из
+    центра. Неоновое кольцо основного набора в плакате выключено — светящаяся
+    трубка в ведомости выглядит вывеской, попавшей не на тот лист.
+  -->
+  <Style Selector="Ellipse.pickRing">
+    <Setter Property="IsVisible" Value="True" />
+  </Style>
+  <Style Selector="c|Orbit.pick">
+    <Setter Property="IsVisible" Value="False" />
   </Style>
 
   <Style Selector="TextBox">
@@ -264,9 +311,83 @@
     <Setter Property="Margin" Value="3,0" />
   </Style>
 
-  <!-- Тумблер во включённом виде красный, как и всё работающее. -->
-  <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
+
+  <!--
+    Рубильник вместо тумблера.
+
+    Овальная дорожка с кружком — узнаваемая форма из телефонов, и в плакате она
+    выпадает сильнее, чем любой цвет: круглое среди прямого видно сразу. Здесь
+    свой шаблон, а не перекраска частей чужого, потому что перекрасить круг в
+    прямоугольник нельзя — форма задана самой фигурой.
+
+    Ход штока мгновенный, без плавного переезда: рубильник щёлкает, а не
+    перетекает, и задержка здесь читалась бы задумчивостью прибора.
+  -->
+  <Style Selector="ToggleSwitch">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="Track" Width="46" Height="22"
+                Background="{DynamicResource SurfaceRaisedBrush}"
+                BorderBrush="{DynamicResource GlassStrokeBrush}"
+                BorderThickness="1"
+                HorizontalAlignment="Right" VerticalAlignment="Center">
+          <!-- Обёртка с этим именем обязательна: за неё элемент управления
+               берётся, когда шток тянут мышью. -->
+          <Panel Name="PART_MovingKnobs">
+            <Border Name="Knob" Width="16" Height="16" Margin="2"
+                    HorizontalAlignment="Left"
+                    Background="{DynamicResource TextMutedBrush}" />
+          </Panel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+
+  <Style Selector="ToggleSwitch:checked /template/ Border#Track">
     <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="ToggleSwitch:checked /template/ Border#Knob">
+    <Setter Property="HorizontalAlignment" Value="Right" />
+    <Setter Property="Background" Value="{DynamicResource OnAccentBrush}" />
+  </Style>
+
+  <Style Selector="ToggleSwitch:pointerover /template/ Border#Track">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <!--
+    Флаг. Скруглённый угол здесь — та же чужая наклейка, что и линейный значок:
+    флаг на плакате печатают прямоугольником.
+  -->
+  <Style Selector="c|CountryFlag">
+    <Setter Property="Radius" Value="0" />
+  </Style>
+
+  <!--
+    Метки транспорта. Мягкая серая плашка глушит их до фона; рамка вместо
+    заливки держит ту же плотность, что и всё остальное на странице.
+  -->
+  <Style Selector="Border.chip, Border.tag">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassStrokeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <!--
+    Круглая кнопка действия — это «добавить», главное действие раздела, и в
+    плакате оно берёт цвет действия, а не тонет серым квадратом в углу.
+  -->
+  <Style Selector="Button.round">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+  </Style>
+  <Style Selector="Button.round /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+  </Style>
+  <Style Selector="Button.round:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#A34438" />
   </Style>
 
 </Styles>

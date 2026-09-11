@@ -14,10 +14,11 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Method.App.ViewModels"
-        xmlns:pages="using:Method.App.Views.Pages"
+        xmlns:c="using:Method.App.Controls"
         x:Class="Method.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="Method"
+        Icon="avares://Method/Assets/app.ico"
         Width="1180" Height="780"
         MinWidth="980" MinHeight="620"
         WindowStartupLocation="CenterScreen"
@@ -26,13 +27,23 @@
         ExtendClientAreaTitleBarHeightHint="-1"
         Background="Transparent">
 
-  <Border CornerRadius="12" ClipToBounds="True">
+  <Border Classes="shell" ClipToBounds="True">
     <Border.Background>
       <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
         <GradientStop Color="{DynamicResource BackgroundTopColor}" Offset="0" />
         <GradientStop Color="{DynamicResource BackgroundBottomColor}" Offset="1" />
       </LinearGradientBrush>
     </Border.Background>
+
+    <!--
+      Плёнка шума поверх фона и под всем остальным. Без неё градиент на
+      развёрнутом окне распадается на широкие ленты с ясными границами: разница
+      между верхним и нижним тоном — десяток ступеней восьмибитного канала, и
+      растянуть их на тысячу точек высоты без полос нельзя. Шум эти границы
+      размывает, а сам не виден.
+    -->
+    <Panel>
+      <c:Dither IsHitTestVisible="False" />
 
     <Grid RowDefinitions="40,*">
 
@@ -42,99 +53,24 @@
                    Foreground="{DynamicResource TextSecondaryBrush}"
                    HorizontalAlignment="Center" VerticalAlignment="Center" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-          <Button Classes="chrome" Content="&#xE921;" FontFamily="Segoe MDL2 Assets"
-                  Click="OnMinimize" ToolTip.Tip="Свернуть" />
-          <Button Classes="chrome" Content="&#xE922;" FontFamily="Segoe MDL2 Assets"
-                  Click="OnMaximize" ToolTip.Tip="Развернуть" />
-          <Button Classes="chrome close" Content="&#xE8BB;" FontFamily="Segoe MDL2 Assets"
-                  Click="OnClose" ToolTip.Tip="Закрыть" />
+          <Button Classes="chrome" Click="OnMinimize" ToolTip.Tip="Свернуть">
+            <Path Classes="chromeIcon" Data="{DynamicResource IconMinimize}"
+                  Stroke="{Binding $parent[Button].Foreground}" />
+          </Button>
+          <Button Classes="chrome" Click="OnMaximize" ToolTip.Tip="Развернуть">
+            <Path Classes="chromeIcon" Data="{DynamicResource IconMaximize}"
+                  Stroke="{Binding $parent[Button].Foreground}" />
+          </Button>
+          <Button Classes="chrome close" Click="OnClose" ToolTip.Tip="Закрыть">
+            <Path Classes="chromeIcon" Data="{DynamicResource IconClose}"
+                  Stroke="{Binding $parent[Button].Foreground}" />
+          </Button>
         </StackPanel>
       </Grid>
 
-      <Grid Grid.Row="1" ColumnDefinitions="252,*">
-
-        <!-- Боковая панель -->
-        <Border Grid.Column="0" BorderThickness="0,0,1,0"
-                BorderBrush="{DynamicResource GlassStrokeBrush}"
-                Background="{DynamicResource SidebarBrush}">
-          <Grid RowDefinitions="Auto,*,Auto" Margin="14,4,14,14">
-
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="6,4,0,18">
-              <Border Width="34" Height="34" CornerRadius="9"
-                      Background="{DynamicResource SurfaceRaisedBrush}">
-                <Path Classes="icon" Data="{DynamicResource IconBrand}"
-                      Stroke="{DynamicResource TextPrimaryBrush}"
-                      HorizontalAlignment="Center" VerticalAlignment="Center" />
-              </Border>
-              <TextBlock Text="Method" FontSize="17" FontWeight="Bold"
-                         Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-            </StackPanel>
-
-            <StackPanel Grid.Row="1" Spacing="4">
-              <Button Classes="nav" Classes.active="{Binding IsOverview}"
-                      Command="{Binding GoToCommand}" CommandParameter="Overview">
-                <StackPanel Orientation="Horizontal" Spacing="11">
-                  <Path Classes="icon" Data="{DynamicResource IconHome}" Stroke="{Binding $parent[Button].Foreground}" />
-                  <TextBlock Text="Обзор" VerticalAlignment="Center" />
-                </StackPanel>
-              </Button>
-
-              <Button Classes="nav" Classes.active="{Binding IsServers}"
-                      Command="{Binding GoToCommand}" CommandParameter="Servers">
-                <StackPanel Orientation="Horizontal" Spacing="11">
-                  <Path Classes="icon" Data="{DynamicResource IconServers}" Stroke="{Binding $parent[Button].Foreground}" />
-                  <TextBlock Text="Серверы" VerticalAlignment="Center" />
-                </StackPanel>
-              </Button>
-
-              <Button Classes="nav" Classes.active="{Binding IsScenarios}"
-                      Command="{Binding GoToCommand}" CommandParameter="Scenarios">
-                <StackPanel Orientation="Horizontal" Spacing="11">
-                  <Path Classes="icon" Data="{DynamicResource IconScenarios}" Stroke="{Binding $parent[Button].Foreground}" />
-                  <TextBlock Text="Сценарии" VerticalAlignment="Center" />
-                </StackPanel>
-              </Button>
-
-              <Button Classes="nav" Classes.active="{Binding IsSettings}"
-                      Command="{Binding GoToCommand}" CommandParameter="Settings">
-                <StackPanel Orientation="Horizontal" Spacing="11">
-                  <Path Classes="icon" Data="{DynamicResource IconSettings}" Stroke="{Binding $parent[Button].Foreground}" />
-                  <TextBlock Text="Настройки" VerticalAlignment="Center" />
-                </StackPanel>
-              </Button>
-            </StackPanel>
-
-            <!-- Состояние видно из любого раздела: за этим сюда и заходят. -->
-            <Border Grid.Row="2" Classes="card" Padding="14,12">
-              <StackPanel Spacing="7">
-                <TextBlock Classes="sectionLabel" Text="СТАТУС" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <!--
-                    Цвет точки назначает стиль по разряду состояния, а не модель.
-                    Кисть из кода знала бы только про одно оформление, и в
-                    плакатном наборе точка осталась бы зелёной посреди красного.
-                  -->
-                  <Ellipse Width="8" Height="8" VerticalAlignment="Center"
-                           Classes="toneMuted"
-                           Classes.toneOk="{Binding IsConnected}"
-                           Classes.toneWarn="{Binding IsBusy}"
-                           Classes.toneBad="{Binding IsFailed}" />
-                  <TextBlock Text="{Binding StatusText}" FontSize="13"
-                             Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                </StackPanel>
-              </StackPanel>
-            </Border>
-          </Grid>
-        </Border>
-
-        <!-- Содержимое -->
-        <Panel Grid.Column="1">
-          <pages:OverviewPage IsVisible="{Binding IsOverview}" />
-          <pages:ServersPage IsVisible="{Binding IsServers}" />
-          <pages:ScenariosPage IsVisible="{Binding IsScenarios}" />
-          <pages:SettingsPage IsVisible="{Binding IsSettings}" />
-        </Panel>
-      </Grid>
+      <!-- Тело окна пересобирается при смене оформления, см. RootView. -->
+      <Panel Grid.Row="1" Name="Body" />
     </Grid>
+    </Panel>
   </Border>
 </Window>

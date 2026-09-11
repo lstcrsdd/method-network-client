@@ -12,6 +12,7 @@
 -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="using:Method.App.Controls"
         x:Class="Method.App.Views.ImportWindow"
         Title="Добавить серверы"
         Width="440" Height="420"
@@ -22,7 +23,7 @@
         ExtendClientAreaTitleBarHeightHint="-1"
         Background="Transparent">
 
-  <Border CornerRadius="12" ClipToBounds="True">
+  <Border Classes="shell" ClipToBounds="True">
     <Border.Background>
       <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
         <GradientStop Color="{DynamicResource BackgroundTopColor}" Offset="0" />
@@ -34,9 +35,12 @@
 
       <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Name="TitleBar" Background="Transparent"
             PointerPressed="OnTitleBarPressed" Height="30">
-        <TextBlock Text="Добавить серверы" FontSize="15" FontWeight="Bold"
+        <c:Caption Text="Добавить серверы" FontSize="15" FontWeight="Bold"
                    Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
       </Grid>
+
+      <!-- Линейка под заголовком видна только в плакатном оформлении. -->
+      <Border Grid.Row="0" Classes="rule" VerticalAlignment="Bottom" />
 
       <TextBlock Grid.Row="1" Margin="0,4,0,10" FontSize="12" TextWrapping="Wrap"
                  Foreground="{DynamicResource TextSecondaryBrush}"

@@ -31,10 +31,24 @@ public sealed class Sparkline : Control
     public static readonly StyledProperty<IBrush?> StrokeProperty =
         AvaloniaProperty.Register<Sparkline, IBrush?>(nameof(Stroke));
 
+    /// <summary>
+    /// Рисовать столбиками, а не линией. Плакату линия чужда: она мерит
+    /// непрерывную величину, а столбик — отработанный отрезок времени, и
+    /// именно так выглядели все графики, на язык которых мы опираемся.
+    /// </summary>
+    public static readonly StyledProperty<bool> BarsProperty =
+        AvaloniaProperty.Register<Sparkline, bool>(nameof(Bars));
+
     public IReadOnlyList<double>? Values
     {
         get => GetValue(ValuesProperty);
         set => SetValue(ValuesProperty, value);
+    }
+
+    public bool Bars
+    {
+        get => GetValue(BarsProperty);
+        set => SetValue(BarsProperty, value);
     }
 
     public IBrush? Stroke
@@ -44,7 +58,7 @@ public sealed class Sparkline : Control
     }
 
     static Sparkline() =>
-        AffectsRender<Sparkline>(ValuesProperty, StrokeProperty);
+        AffectsRender<Sparkline>(ValuesProperty, StrokeProperty, BarsProperty);
 
     public override void Render(DrawingContext context)
     {
@@ -60,6 +74,12 @@ public sealed class Sparkline : Control
         // Пол у масштаба нужен: без него на полном затишье шум в сотню байт
         // рисовался бы во всю высоту и выглядел бы бурей.
         if (max < 1024) max = 1024;
+
+        if (Bars)
+        {
+            DrawBars(context, values, width, height, max);
+            return;
+        }
 
         var step = width / (values.Count - 1);
         var points = new Point[values.Count];
@@ -106,5 +126,27 @@ public sealed class Sparkline : Control
         }
 
         context.DrawGeometry(null, new Pen(stroke, 1.5, lineJoin: PenLineJoin.Round), line);
+    }
+
+    /// <summary>
+    /// Столбики. Пустые замеры не рисуются вовсе: столбик высотой в пиксель
+    /// у самого низа читается сплошной чертой, то есть ровно тем, от чего мы
+    /// здесь и уходим.
+    /// </summary>
+    private void DrawBars(
+        DrawingContext context, IReadOnlyList<double> values, double width, double height, double max)
+    {
+        var brush = Stroke ?? Brushes.White;
+        var slot = width / values.Count;
+        var bar = Math.Max(1, slot * 0.62);
+
+        for (var i = 0; i < values.Count; i++)
+        {
+            var tall = values[i] / max * (height - 1);
+            if (tall < 1.5) continue;
+
+            var x = i * slot + (slot - bar) / 2;
+            context.FillRectangle(brush, new Rect(x, height - tall, bar, tall));
+        }
     }
 }

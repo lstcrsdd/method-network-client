@@ -11,11 +11,12 @@
   основном наборе, поэтому разметке всё равно, какой из двух подставлен:
   меняется вид, а не устройство.
 
-  Красный приглушённый, а не открытый. Чистый насыщенный красный на тёмном фоне
+  Красный глубокий, а не открытый. Чистый спектральный красный на тёмном фоне
   физически тяжёл: глаз наводится на красный и синий по-разному, и на большой
   площади граница начинает «дрожать». Плакатной краске это свойственно и на
-  бумаге — она пигментная, не светящаяся. Поэтому здесь кирпичный тон с убранной
-  насыщенностью: цвет остаётся тем же, а смотреть на него можно часами.
+  бумаге — она пигментная, не светящаяся. Поэтому насыщенность здесь взята
+  полная, а светлота убрана: цвет звучит в полный голос, но смотреть на него
+  можно часами.
 -->
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -26,27 +27,47 @@
   <SolidColorBrush x:Key="BackgroundBrush" Color="#110F0C" />
 
   <SolidColorBrush x:Key="SidebarBrush" Color="#1A1613" />
-  <SolidColorBrush x:Key="ChipBrush" Color="#E8DCC6" Opacity="0.09" />
+  <SolidColorBrush x:Key="ChipBrush" Color="#DBCFBA" Opacity="0.09" />
 
   <!-- Поверхности теплее и плотнее, чем в основном наборе. -->
-  <SolidColorBrush x:Key="SurfaceBrush" Color="#E8DCC6" Opacity="0.05" />
-  <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#E8DCC6" Opacity="0.09" />
-  <SolidColorBrush x:Key="GlassStrokeBrush" Color="#E8DCC6" Opacity="0.13" />
-  <SolidColorBrush x:Key="HoverBrush" Color="#BE5347" Opacity="0.15" />
+  <SolidColorBrush x:Key="SurfaceBrush" Color="#DBCFBA" Opacity="0.05" />
+  <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#DBCFBA" Opacity="0.09" />
+  <SolidColorBrush x:Key="GlassStrokeBrush" Color="#DBCFBA" Opacity="0.15" />
+  <SolidColorBrush x:Key="HoverBrush" Color="#A3222B" Opacity="0.18" />
 
   <!-- Текст кремовый, а не белый: чистый белый рядом с красным режет глаз. -->
-  <SolidColorBrush x:Key="TextPrimaryBrush" Color="#EDE4D4" />
-  <SolidColorBrush x:Key="TextSecondaryBrush" Color="#EDE4D4" Opacity="0.52" />
-  <SolidColorBrush x:Key="TextMutedBrush" Color="#EDE4D4" Opacity="0.34" />
+  <SolidColorBrush x:Key="TextPrimaryBrush" Color="#DBCFBA" />
+  <SolidColorBrush x:Key="TextSecondaryBrush" Color="#DBCFBA" Opacity="0.56" />
+  <SolidColorBrush x:Key="TextMutedBrush" Color="#DBCFBA" Opacity="0.38" />
 
   <!--
     Красный здесь — не тревога, а действие: им отмечено рабочее и включённое.
     Поэтому под отказ отведён отдельный цвет, заметно светлее и розовее, иначе
     «идёт как надо» и «сломалось» слились бы в один сигнал.
+
+    Кровяной, а не кирпичный. Прежний #BE5347 был приглушён до вежливости; этот
+    звучит в полный голос — тот самый красный, которым рисуют угрозу с той
+    стороны океана. Текст поверх него пишется кремовым, и на такой глубине он
+    читается даже лучше прежнего.
   -->
-  <Color x:Key="AccentColor">#BE5347</Color>
-  <SolidColorBrush x:Key="AccentBrush" Color="#BE5347" />
-  <SolidColorBrush x:Key="ConnectedBrush" Color="#BE5347" />
+  <Color x:Key="AccentColor">#A3222B</Color>
+  <SolidColorBrush x:Key="AccentBrush" Color="#A3222B" />
+
+  <!--
+    Ещё глубже — для изображения: знамёна, шестерня, бегущий код. Разница с
+    акцентом невелика и нужна не ради оттенка, а ради плана: знак и лента должны
+    лежать позади органов управления, а не вровень с ними, иначе страница
+    становится плоской.
+  -->
+  <SolidColorBrush x:Key="AccentDeepBrush" Color="#8E1C24" />
+
+  <!--
+    «На связи» остаётся светлее акцента, и это не забытая правка. Им набраны
+    метки в ленте и точка состояния — мелкий текст, а не заливка: кровяной на
+    тёмном фоне для такого кегля слишком тёмен, и «ГОТОВ» пришлось бы
+    выглядывать.
+  -->
+  <SolidColorBrush x:Key="ConnectedBrush" Color="#C0574A" />
   <SolidColorBrush x:Key="WarningBrush" Color="#C2A24E" />
   <SolidColorBrush x:Key="ErrorBrush" Color="#DC8B7E" />
 
@@ -55,7 +76,7 @@
     на нём нечитаем. В основном наборе тот же ключ держит противоположное
     значение — на то он и ключ.
   -->
-  <SolidColorBrush x:Key="OnAccentBrush" Color="#EDE4D4" />
+  <SolidColorBrush x:Key="OnAccentBrush" Color="#E6DAC6" />
 
   <!-- Латунь для эмблемы: приглушённая, а не сусальное золото. -->
   <SolidColorBrush x:Key="EmblemBrush" Color="#D2B778" />

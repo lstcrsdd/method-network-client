@@ -19,6 +19,14 @@ public enum RouteAim
 
     /// <summary>Мимо туннеля, напрямую.</summary>
     Direct,
+
+    /// <summary>
+    /// Через указанный узел — свою полосу. Какой именно, говорит
+    /// <see cref="RouteRule.Node"/>. Без узла — а так бывает, если узел удалили
+    /// после того, как правило написали, — оно работает как обычное «через
+    /// туннель»: терять трафик мимо туннеля из-за пропавшей ссылки нельзя.
+    /// </summary>
+    Node,
 }
 
 /// <summary>Чем правило сопоставляется.</summary>
@@ -62,6 +70,16 @@ public sealed record RouteRule
 
     [JsonPropertyName("aim")]
     public RouteAim Aim { get; init; } = RouteAim.Direct;
+
+    /// <summary>
+    /// Узел своей полосы: заполнен только у правил с <see cref="RouteAim.Node"/>.
+    ///
+    /// <para>Ссылка идёт по опознавателю профиля, а не по имени: имена приходят
+    /// из подписки и меняются вместе с ней, а правило обязано пережить
+    /// переименование узла.</para>
+    /// </summary>
+    [JsonPropertyName("node")]
+    public Guid? Node { get; init; }
 
     [JsonPropertyName("match")]
     public RouteMatch Match { get; init; } = RouteMatch.Domain;

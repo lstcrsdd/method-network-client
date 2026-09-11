@@ -1,0 +1,60 @@
+<!--
+  Вариант Б: то же самое минус орбита.
+
+  Орбита в иконке размером с ноготь работает против знака: тонкая дуга либо
+  теряется, либо мешает букве, а несёт она ровно ноль смысла — в отличие от
+  солнца, которое и есть примета жанра. Заодно буква опущена ниже и стоит на
+  солнце, а не висит в нём: так читается «закат за буквой», а не «две фигуры,
+  случайно оказавшиеся рядом».
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f1423"/>
+      <stop offset="70%" stop-color="#1f1838"/>
+      <stop offset="100%" stop-color="#5c1d38"/>
+    </linearGradient>
+
+    <linearGradient id="sunGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffd166"/>
+      <stop offset="55%" stop-color="#ff6b35"/>
+      <stop offset="100%" stop-color="#ff2a5f"/>
+    </linearGradient>
+
+    <linearGradient id="letterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe"/>
+      <stop offset="55%" stop-color="#4facfe"/>
+      <stop offset="100%" stop-color="#ff0844"/>
+    </linearGradient>
+
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <clipPath id="sunClip">
+      <circle cx="256" cy="300" r="150"/>
+    </clipPath>
+  </defs>
+
+  <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
+
+  <circle cx="256" cy="300" r="150" fill="#ff4b2b" opacity="0.35" filter="url(#glow)"/>
+  <circle cx="256" cy="300" r="150" fill="url(#sunGrad)" opacity="0.92"/>
+
+  <g clip-path="url(#sunClip)" fill="#0f1423">
+    <rect x="100" y="292" width="312" height="8"/>
+    <rect x="100" y="322" width="312" height="13"/>
+    <rect x="100" y="360" width="312" height="19"/>
+    <rect x="100" y="406" width="312" height="28"/>
+  </g>
+
+  <path d="M 120 384 L 120 154 L 190 154 L 256 269 L 322 154 L 392 154 L 392 384 L 332 384 L 332 254 L 276 349 L 236 349 L 180 254 L 180 384 Z"
+        fill="url(#letterGrad)"
+        stroke="#ffffff"
+        stroke-width="3"
+        filter="url(#glow)"/>
+</svg>

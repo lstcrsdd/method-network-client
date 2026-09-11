@@ -1,0 +1,337 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Обзор в плакатном оформлении.
+
+  Композиция здесь другая, а не перекрашенная. В основном оформлении всё стоит
+  по средней линии: кнопка, под ней подпись, под ней показатели — так строят
+  экран приложения. Плакат строится иначе: слева знак во всю высоту, справа
+  колонка сводки. Поля при этом заняты работой, а не пустотой, и глаз идёт по
+  странице слева направо, а не тычется в середину.
+
+  Показатели вынесены из коробок в строки «подпись — значение» с линейками: так
+  их читает сводка выполнения, и так они сравниваются между собой, а три
+  одинаковых прямоугольника рядом сравнивать нечем.
+
+  Прокрутки здесь нет, и это не упущение: в две колонки содержимое помещается
+  в окно любого допустимого размера. Взамен появилось то, чего не было в
+  одноколоночной раскладке, — знак масштабируется коробкой под свободное место
+  сам. Раньше приходилось держать две ступени размеров и переключать их из кода
+  по высоте страницы; теперь ступеней нет вовсе.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Method.App.ViewModels"
+             xmlns:c="using:Method.App.Controls"
+             x:Class="Method.App.Views.Pages.OverviewPoster"
+             x:DataType="vm:MainViewModel">
+
+  <UserControl.Styles>
+
+    <!-- Кнопка — сам знак: ни фона, ни рамки, шестерня себе оправа. -->
+    <Style Selector="Button.connectPoster">
+      <Setter Property="Width" Value="322" />
+      <Setter Property="Height" Value="322" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.connectPoster /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <!-- Отклик на курсор: без него знак остаётся картинкой. -->
+    <Style Selector="Button.connectPoster:pointerover c|Emblem">
+      <Setter Property="FieldBrush" Value="{DynamicResource SurfaceRaisedBrush}" />
+    </Style>
+
+    <!-- Подпись действия под знаком: внутрь кнопки она не помещается. -->
+    <Style Selector="TextBlock.action">
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="LetterSpacing" Value="3.4" />
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    </Style>
+
+    <!--
+      Строка сводки. Подпись слева в разрядку, значение справа — и значения
+      выстраиваются в колонку, по которой глаз идёт сверху вниз одним движением.
+    -->
+    <Style Selector="TextBlock.metricLabel">
+      <Setter Property="FontSize" Value="10.5" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="LetterSpacing" Value="2" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.metricValue">
+      <Setter Property="FontSize" Value="19" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+      <Setter Property="HorizontalAlignment" Value="Right" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Волосяная линейка между строками сводки. -->
+    <Style Selector="Border.hair">
+      <Setter Property="Height" Value="1" />
+      <Setter Property="Background" Value="{DynamicResource GlassStrokeBrush}" />
+      <Setter Property="Margin" Value="0,9" />
+    </Style>
+
+    <!--
+      Просторная страница: окно развёрнуто на весь монитор. Признак ставит
+      код по ширине, здесь только размеры.
+
+      Зачем это вообще. В обычном окне сводка занимает треть ширины и читается
+      наравне со знаком. На мониторе во всю стену та же колонка — шестая часть
+      ширины, и рядом с метровой эмблемой она выглядит припиской. Растёт при
+      этом только знак, потому что он один умеет расти; цифры остаются
+      прежними, хотя смотрят на них с того же расстояния.
+
+      Размеры заданы только для просторной страницы — в обычном окне всё
+      остаётся как выверено, и ни один из этих сеттеров там не применяется.
+    -->
+    <Style Selector="Grid.spacious TextBlock.metricLabel">
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style Selector="Grid.spacious TextBlock.metricValue">
+      <Setter Property="FontSize" Value="23" />
+    </Style>
+
+    <Style Selector="Grid.spacious Border.hair">
+      <Setter Property="Margin" Value="0,12" />
+    </Style>
+
+    <Style Selector="Grid.spacious TextBlock.nodeName">
+      <Setter Property="FontSize" Value="19" />
+    </Style>
+
+    <Style Selector="Grid.spacious c|Teletype">
+      <Setter Property="TextSize" Value="13" />
+    </Style>
+
+  </UserControl.Styles>
+
+  <!--
+    Колонка сводки задана долей, а не числом. При ширине числом на широком
+    экране знак растёт, а сводка остаётся прежней — и выглядит припиской сбоку,
+    хотя по смыслу это вторая половина страницы. Нижняя граница держит её
+    читаемой в узком окне, верхняя не даёт расплыться на мониторе во всю стену.
+  -->
+  <Grid Name="Page" Margin="36,14,36,26" RowDefinitions="Auto,Auto,*,Auto">
+
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="0.45*" MinWidth="318" MaxWidth="560" />
+    </Grid.ColumnDefinitions>
+
+
+    <c:PageHeading Grid.Row="0" Grid.ColumnSpan="2" Number="01" Text="Обзор"
+                   HorizontalAlignment="Left" />
+    <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="rule" Margin="0,11,0,0" />
+
+    <!--
+      Знак. Коробка масштабирования берёт композицию целиком, поэтому знамёна,
+      лучи, знак и подпись растут и ужимаются одним множителем и выверенные
+      зазоры между ними никуда не уезжают.
+    -->
+    <!--
+      Предел роста — про полноэкранный режим.
+
+      Без него коробка масштабирования тянет знак во всю высоту экрана. На
+      мониторе это метровая эмблема: собственные её изъяны — угловатость венка,
+      грубость шестерни — начинают разглядываться вместо того, чтобы работать
+      знаком, а подпись действия уезжает к нижней кромке окна, и страница
+      выглядит недокрученной, хотя крутить нечего.
+
+      В окне обычного размера ограничение не срабатывает вовсе: там знак и так
+      упирается в ширину колонки раньше, чем в эту высоту.
+
+    -->
+    <!--
+      Стекло над знаком чуть плотнее заводского: строка развёртки гасит сильнее,
+      дымка гуще. Знак от этого перестаёт быть наклейкой поверх фона и становится
+      тем, чем задуман, — изображением на лампе.
+
+      Мера выверена глазами, и предел тут снизу: при дымке гуще десятой доли знак
+      уходит в тень настолько, что его начинают разглядывать. Голограмма, ради
+      которой всё затевалось, читается и на этой глубине — а вот усилие, с каким
+      человек ищет рисунок, сводит на нет любую красоту.
+    -->
+    <c:TubeScreen Grid.Row="2" Grid.Column="0" Margin="0,10,24,0" MaxHeight="860"
+                  LineDepth="0.12" Haze="0.08" BandShare="0.3">
+    <Viewbox Stretch="Uniform" StretchDirection="Both">
+
+      <Panel Width="560" Height="470">
+
+        <c:Rays Width="386" Height="386" IsActive="{Binding IsConnected}"
+                RayBrush="{DynamicResource AccentBrush}" />
+
+        <c:Banners Width="560" Height="348"
+                   ClothBrush="{DynamicResource AccentDeepBrush}"
+                   PoleBrush="{DynamicResource EmblemOutlineBrush}" />
+
+        <Button Classes="connectPoster" Command="{Binding ToggleCommand}"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+          <c:Emblem Width="322" Height="322"
+                    Wreath="Wheat"
+                    IsJammed="{Binding IsBusy}" IsRunning="{Binding IsConnected}"
+                    IsNudged="{Binding $parent[Button].IsPointerOver}"
+                    FrameBrush="{DynamicResource AccentDeepBrush}"
+                    FlagBrush="{DynamicResource EmblemFlagBrush}"
+                    OutlineBrush="{DynamicResource EmblemOutlineBrush}"
+                    ToolBrush="{DynamicResource EmblemBrush}"
+                    LetterBrush="{DynamicResource EmblemBrush}"
+                    FieldBrush="{DynamicResource SurfaceBrush}"
+                    CutBrush="{DynamicResource EmblemOutlineBrush}" />
+        </Button>
+
+        <TextBlock Classes="action" Text="{Binding ActionText}"
+                   HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+      </Panel>
+    </Viewbox>
+    </c:TubeScreen>
+
+    <!-- Сводка -->
+    <!--
+      Колонка сводки, а под ней — лента журнала. Лента занимает остаток колонки
+      целиком: место под сводкой всё равно пустует, а ей нужно ровно то, что
+      дадут, — сколько строк влезет, столько она и покажет.
+    -->
+    <Grid Grid.Row="2" Grid.Column="1" RowDefinitions="Auto,Auto,*" Margin="0,26,0,0">
+
+    <StackPanel Grid.Row="0" VerticalAlignment="Top">
+
+      <TextBlock Classes="metricLabel" Text="УЗЕЛ" />
+      <TextBlock Classes="nodeName" Text="{Binding SelectedName}" FontSize="16" FontWeight="Bold"
+                 TextWrapping="Wrap" Margin="0,5,0,0"
+                 Foreground="{DynamicResource TextPrimaryBrush}"
+                 IsVisible="{Binding HasServers}" />
+
+      <Button Classes="quiet" Command="{Binding GoToCommand}" CommandParameter="Servers"
+              HorizontalAlignment="Left" Margin="-8,3,0,0">
+        <StackPanel Orientation="Horizontal" Spacing="7">
+          <Path Data="{DynamicResource IconPlus}" Stretch="Uniform" Width="14" Height="14"
+                StrokeThickness="2.1"
+                Stroke="{Binding $parent[Button].Foreground}" VerticalAlignment="Center" />
+          <TextBlock Text="Добавить конфигурацию" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+
+      <Border Classes="rule" Margin="0,16,0,14" />
+
+      <Grid ColumnDefinitions="Auto,*">
+        <TextBlock Classes="metricLabel" Text="ВРЕМЯ" />
+        <TextBlock Grid.Column="1" Classes="metricValue" Text="{Binding Elapsed}" />
+      </Grid>
+      <Border Classes="hair" />
+
+      <Grid ColumnDefinitions="Auto,*">
+        <TextBlock Classes="metricLabel" Text="IP-АДРЕС" />
+        <TextBlock Grid.Column="1" Classes="metricValue" Text="{Binding ExternalIp}" />
+      </Grid>
+      <Border Classes="hair" />
+
+      <Grid ColumnDefinitions="Auto,*">
+        <TextBlock Classes="metricLabel" Text="ПРОТОКОЛ" />
+        <TextBlock Grid.Column="1" Classes="metricValue" Text="{Binding ProtocolName}" />
+      </Grid>
+
+      <Border Classes="rule" Margin="0,18,0,14" />
+
+      <!--
+        Трафик стоит здесь всегда, в любом состоянии: появляясь только при
+        поднятом туннеле, он перекраивал бы колонку ровно в тот момент, когда
+        человек смотрит на знак. Что показывать в цифрах, решает модель: ноль,
+        когда туннеля нет, и прочерк, когда туннель чужой и считать нечем.
+      -->
+      <Grid ColumnDefinitions="Auto,*">
+        <TextBlock Classes="metricLabel" Text="ПРИЁМ" />
+        <TextBlock Grid.Column="1" Classes="metricValue" FontSize="16"
+                   Text="{Binding DownSpeed}" />
+      </Grid>
+      <Border Classes="hair" />
+
+      <Grid ColumnDefinitions="Auto,*">
+        <TextBlock Classes="metricLabel" Text="ОТДАЧА" />
+        <TextBlock Grid.Column="1" Classes="metricValue" FontSize="16"
+                   Foreground="{DynamicResource AccentBrush}"
+                   Text="{Binding UpSpeed}" />
+      </Grid>
+      <Border Classes="hair" />
+
+      <Grid ColumnDefinitions="Auto,*">
+        <TextBlock Classes="metricLabel" Text="ЗА СЕССИЮ" />
+        <TextBlock Grid.Column="1" Classes="metricValue" FontSize="16"
+                   Text="{Binding SessionVolume}" />
+      </Grid>
+
+      <Panel Height="54" Margin="0,16,0,0">
+        <c:Sparkline Bars="True" Values="{Binding DownHistoryView}" Stroke="{DynamicResource TextPrimaryBrush}" />
+        <c:Sparkline Bars="True" Values="{Binding UpHistoryView}" Stroke="{DynamicResource AccentBrush}" />
+      </Panel>
+    </StackPanel>
+
+    <!--
+      Лента идёт продолжением колонки: ни рамки, ни подложки, ни заголовка —
+      сводка и журнал читаются одним столбцом сверху вниз, и лишняя оправа
+      разбила бы его надвое.
+    -->
+    <!-- Приглушена на десятую: журнал — фон работы, а не её итог. Спорить в
+         яркости со сводкой ему незачем. -->
+    <c:Teletype Grid.Row="1" Name="Tape" Margin="0,20,0,0" TextSize="11" Opacity="0.9"
+                Foreground="{DynamicResource TextPrimaryBrush}"
+                Accent="{DynamicResource AccentBrush}"
+                Warning="{DynamicResource WarningBrush}"
+                Muted="{DynamicResource TextMutedBrush}" />
+
+    <!--
+      Бегущий исходный код клиента — украшение, и оно названо своим именем.
+      Работе оно ничего не добавляет, поэтому и живёт только там, где на экране
+      всё равно остаётся пустое место: под журналом, на развёрнутом окне.
+
+      В обычном окне место под журналом занимает сам журнал, и лента не
+      появляется вовсе — за этим следит признак просторной страницы.
+
+      Стекло лампового экрана взято то же, что под знаком, — оно и роднит ленту
+      со знаком слева, иначе она читалась бы чужой вставкой. Но ползущей полосы
+      здесь нет: на рисунке она работает кадровой рассинхронизацией, а по
+      бегущим строкам идёт вторым движением поперёк первого, и читать
+      становится нечего. Остаются строки развёртки и дыхание яркости.
+    -->
+    <!--
+      Высоту код не просит — берёт то, что осталось от журнала. Порядок здесь
+      важен: журнал говорит, сколько ему надо под свои записи, и получает это
+      первым; коду достаётся низ колонки. Задай коду свою высоту, и он начнёт
+      отнимать место у журнала — тот сожмётся до пары строк, и со стороны это
+      выглядит не теснотой, а тем, что клиент ничего не делает.
+
+      Растворения по краям нет намеренно. Мягкий край превращал ленту в
+      наклеенную картинку: у настоящего экрана изображение обрывается кромкой,
+      а не тает в воздухе.
+    -->
+    <c:TubeScreen Grid.Row="2" Name="CodeGlass" Margin="0,22,0,0" IsVisible="False"
+                  BandShare="0">
+      <c:CodeStream TextSize="9.5" Foreground="{DynamicResource AccentDeepBrush}" Opacity="0.8" />
+    </c:TubeScreen>
+    </Grid>
+
+    <!-- Ошибка или предупреждение. Молчать здесь нельзя. -->
+    <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Text="{Binding Detail}" Margin="0,14,0,0"
+               FontSize="12.5" TextWrapping="Wrap" MaxWidth="720"
+               HorizontalAlignment="Left"
+               Foreground="{DynamicResource TextSecondaryBrush}"
+               IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+  </Grid>
+</UserControl>

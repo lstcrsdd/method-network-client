@@ -7,6 +7,7 @@
 // version. See LICENSE for details.
 
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Method.Core.Tunnel;
 
@@ -22,7 +23,7 @@ namespace Method.Core.Tunnel;
 /// ключи Reality и секреты обфускации. Ошибку писать обязательно, сам конфиг —
 /// никогда.</para>
 /// </summary>
-public sealed class HelperLog
+public sealed partial class HelperLog
 {
     private readonly object _lock = new();
     private readonly string _path;
@@ -66,8 +67,21 @@ public sealed class HelperLog
         }
     }
 
-    /// <summary>Строка вывода самого движка. Помечается, чтобы отличать от наших записей.</summary>
-    public void WriteEngine(string line) => Write("движок| " + line);
+    /// <summary>
+    /// Строка вывода самого движка. Помечается, чтобы отличать от наших записей,
+    /// и очищается от путей: движок называет программу, открывшую соединение,
+    /// полным путём — вместе с именем пользователя и тем, где у него что лежит.
+    /// Журнал попадает в чужие руки при первом же разборе неполадки, и такой
+    /// подробности там быть не должно.
+    /// </summary>
+    public void WriteEngine(string line) => Write("движок| " + Clean(line));
+
+    /// <summary>
+    /// Оставить от пути только имя файла: полный путь — это и кто человек, и что
+    /// у него установлено, а для разбора хватает имени программы.
+    /// </summary>
+    internal static string Clean(string line) =>
+        WindowsPath().Replace(line, match => System.IO.Path.GetFileName(match.Value));
 
     private static void TryWriteFallback(string message)
     {
@@ -77,4 +91,13 @@ public sealed class HelperLog
 
     public override string ToString() =>
         string.Create(CultureInfo.InvariantCulture, $"HelperLog({_path})");
+
+    /// <summary>
+    /// Путь Windows: буква диска, двоеточие, дальше до пробела или кавычки.
+    /// Сетевые пути (два ведущих слэша) сюда не попадают нарочно — в выводе
+    /// движка их не бывает, а выражение, ловящее всё подряд, рано или поздно
+    /// съест кусок обычного текста.
+    /// </summary>
+    [GeneratedRegex("""[A-Za-z]:\\[^\s"]+""")]
+    private static partial Regex WindowsPath();
 }

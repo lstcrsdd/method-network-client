@@ -20,6 +20,18 @@ public class SingBoxConfigBuilderTests
     // MARK: TUN и маршруты
 
     [Fact]
+    public void Журнал_движка_не_пишет_каждое_соединение()
+    {
+        // На уровне «info» движок пишет каждое соединение, ответ DNS и путь к
+        // программе, которая соединение открыла, — то есть хронику того, чем
+        // человек пользуется. Для клиента, который ставят ровно затем, чтобы
+        // этого не было видно, такой журнал на диске — своя же дыра.
+        var log = Root(TestProfiles.Hysteria2()).GetProperty("log");
+
+        Assert.Equal("warn", log.GetProperty("level").GetString());
+    }
+
+    [Fact]
     public void Tun_собирается_по_виндовым_правилам()
     {
         var tun = Root(TestProfiles.Hysteria2()).GetProperty("inbounds")[0];

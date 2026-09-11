@@ -33,6 +33,13 @@ public sealed class CountryFlag : Control
     public static readonly StyledProperty<string?> CodeProperty =
         AvaloniaProperty.Register<CountryFlag, string?>(nameof(Code));
 
+    /// <summary>
+    /// Скругление углов. Оформление задаёт своё: плакат режет краской и
+    /// скруглений не терпит, а мягкий угол — почерк экранного интерфейса.
+    /// </summary>
+    public static readonly StyledProperty<double> RadiusProperty =
+        AvaloniaProperty.Register<CountryFlag, double>(nameof(Radius), 3);
+
     public static readonly StyledProperty<IBrush?> FallbackForegroundProperty =
         AvaloniaProperty.Register<CountryFlag, IBrush?>(nameof(FallbackForeground));
 
@@ -49,7 +56,14 @@ public sealed class CountryFlag : Control
         set => SetValue(FallbackForegroundProperty, value);
     }
 
-    static CountryFlag() => AffectsRender<CountryFlag>(CodeProperty, FallbackForegroundProperty);
+    public double Radius
+    {
+        get => GetValue(RadiusProperty);
+        set => SetValue(RadiusProperty, value);
+    }
+
+    static CountryFlag() =>
+        AffectsRender<CountryFlag>(CodeProperty, FallbackForegroundProperty, RadiusProperty);
 
     public override void Render(DrawingContext context)
     {
@@ -66,7 +80,7 @@ public sealed class CountryFlag : Control
             return;
         }
 
-        using (context.PushClip(new RoundedRect(rect, 3)))
+        using (context.PushClip(new RoundedRect(rect, Radius)))
         {
             switch (flag.Kind)
             {
@@ -86,7 +100,7 @@ public sealed class CountryFlag : Control
         }
 
         // Тонкая обводка: светлые флаги иначе сливаются с карточкой.
-        context.DrawRectangle(null, new Pen(new SolidColorBrush(Colors.White, 0.18), 1), new RoundedRect(rect, 3));
+        context.DrawRectangle(null, new Pen(new SolidColorBrush(Colors.White, 0.18), 1), new RoundedRect(rect, Radius));
     }
 
     private void DrawFallback(DrawingContext context, Rect rect, string? code)
@@ -96,7 +110,7 @@ public sealed class CountryFlag : Control
         context.DrawRectangle(
             new SolidColorBrush(Colors.White, 0.08),
             new Pen(new SolidColorBrush(Colors.White, 0.18), 1),
-            new RoundedRect(rect, 3));
+            new RoundedRect(rect, Radius));
 
         if (string.IsNullOrEmpty(code)) return;
 

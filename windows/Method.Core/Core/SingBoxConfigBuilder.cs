@@ -38,7 +38,21 @@ public static class SingBoxConfigBuilder
         /// </summary>
         public required string ClashSecret { get; init; }
 
-        public string LogLevel { get; init; } = "info";
+        /// <summary>
+        /// Уровень журнала движка.
+        ///
+        /// <para>Не «info», хотя для разбора неполадок он и удобнее. На этом
+        /// уровне движок пишет каждое соединение, каждый ответ DNS и путь к
+        /// программе, которая соединение открыла, — то есть в журнале на диске
+        /// оказывается подробная хроника: чем человек пользуется и куда ходит.
+        /// Для клиента, который ставят ровно затем, чтобы этого не было видно,
+        /// такой файл — своя же дыра, тем более что первым делом его прикладывают
+        /// к жалобе «не работает».</para>
+        ///
+        /// <para>На «warn» остаётся то, ради чего журнал и нужен: отказы, разрывы
+        /// и причины падения движка.</para>
+        /// </summary>
+        public string LogLevel { get; init; } = "warn";
 
         /// <summary>
         /// MTU. 1380, а не 1400: наружу пакет уходит внутри датаграммы QUIC вместе
@@ -87,14 +101,73 @@ public static class SingBoxConfigBuilder
         /// мимо туннеля, который они же и поднимают.</para>
         /// </summary>
         public IReadOnlyList<RouteRule> Rules { get; init; } = [];
+
+        /// <summary>
+        /// Узлы полос: те, на которые ссылаются правила с
+        /// <see cref="RouteAim.Node"/>.
+        ///
+        /// <para>Движок поднимает их вместе с основным, одним процессом: каждый
+        /// узел — свой исходящий, а правило уводит соединение на нужный. Поэтому
+        /// «Telegram через Финляндию, торренты мимо, остальное через Литву»
+        /// работает без переподключения и без второго туннеля.</para>
+        ///
+        /// <para>Список собирает вызывающий, и в нём должны быть ровно те узлы,
+        /// что названы правилами: лишний узел — это лишнее соединение, которое
+        /// движок будет держать впустую.</para>
+        /// </summary>
+        public IReadOnlyList<ServerProfile> LaneNodes { get; init; } = [];
+
+        /// <summary>
+        /// Доверить выбор узла клиенту: весь трафик, не описанный правилами,
+        /// идёт через тот узел, что отвечает быстрее прочих, и переезжает на
+        /// другой, когда обстановка меняется.
+        ///
+        /// <para>Автоматика — фон, а не замена сценариям. Правила стоят выше неё
+        /// и перекрывают её точечно: «Tor только через Hysteria2» выполняется
+        /// буквально, а всё остальное продолжает разбираться само.</para>
+        /// </summary>
+        public bool Autopilot { get; init; }
+
+        /// <summary>
+        /// Узлы, среди которых выбирает автоматика. Обычно это всё, что есть у
+        /// человека; пустой список означает, что выбирать не из чего — тогда
+        /// автоматика не собирается вовсе, и работает обычный узел.
+        /// </summary>
+        public IReadOnlyList<ServerProfile> AutoNodes { get; init; } = [];
+
+        /// <summary>
+        /// Выбор ведёт ядро, а не движок.
+        ///
+        /// <para>Группа автоматики тогда собирается переключателем: движок сам
+        /// ничего не решает и держит тот узел, на который его поставили. Решает
+        /// ядро — по своим замерам, полосам и порогам, общим для всех платформ.</para>
+        ///
+        /// <para>Разница не косметическая. Переключатель меняется на ходу, через
+        /// интерфейс управления: конфигурация остаётся прежней, движок не
+        /// перезапускается, адаптер не пересоздаётся, открытые соединения живут.
+        /// Собственный выбор движка (urltest) такой ручки не имеет — там смена
+        /// решения означала бы пересборку конфигурации и новый туннель, то есть
+        /// обрыв всего ради переезда одной полосы.</para>
+        ///
+        /// <para>Без библиотеки ядра остаётся прежний путь: движок выбирает сам.
+        /// Клиент обязан работать и так — ядро ускоряет и объясняет выбор, но не
+        /// является условием того, что туннель поднимется.</para>
+        /// </summary>
+        public bool CoreDriven { get; init; }
     }
 
     private static readonly string[] AllowedTunStacks = ["gvisor", "system", "mixed"];
 
     // MARK: Теги
 
-    private const string ProxyTag = "proxy";
+    public const string ProxyTag = "proxy";
     private const string DirectTag = "direct";
+
+    /// <summary>
+    /// Группа, выбирающая узел сама. Движок держит её как обычный исходящий и
+    /// сам переспрашивает узлы по кругу: правилу достаточно указать на неё.
+    /// </summary>
+    public const string AutoTag = "auto";
 
     /// <summary>Резолвер внутри туннеля — всё, что ядро разрешает само.</summary>
     private const string RemoteDnsTag = "remote";
@@ -122,16 +195,32 @@ public static class SingBoxConfigBuilder
         var proxy = Outbound(profile);
         proxy["domain_resolver"] = new Dictionary<string, object?> { ["server"] = BootstrapDnsTag };
 
+        // Узлы полос и автоматики идут рядом с основным, каждый под своим тегом.
+        // Адрес у них разрешается тем же резолвером мимо туннеля и по той же
+        // причине.
+        var outbounds = new List<object> { proxy };
+
+        foreach (var node in ExtraNodes(profile, options))
+        {
+            var lane = Outbound(node);
+            lane["tag"] = LaneTag(node.Id);
+            lane["domain_resolver"] = new Dictionary<string, object?> { ["server"] = BootstrapDnsTag };
+
+            outbounds.Add(lane);
+        }
+
+        // Группа автоматического выбора. Она нужна только когда человек доверил
+        // выбор клиенту: пустая группа гоняла бы проверки по кругу впустую.
+        if (AutoGroup(profile, options) is { } auto) outbounds.Add(auto);
+
+        outbounds.Add(new Dictionary<string, object?> { ["type"] = "direct", ["tag"] = DirectTag });
+
         return new Dictionary<string, object?>
         {
             ["log"] = new Dictionary<string, object?> { ["level"] = options.LogLevel, ["timestamp"] = true },
             ["dns"] = Dns(),
             ["inbounds"] = new object[] { TunInbound(options) },
-            ["outbounds"] = new object[]
-            {
-                proxy,
-                new Dictionary<string, object?> { ["type"] = "direct", ["tag"] = DirectTag },
-            },
+            ["outbounds"] = outbounds.ToArray(),
             ["route"] = Route(profile, options),
             ["experimental"] = new Dictionary<string, object?>
             {
@@ -260,7 +349,12 @@ public static class SingBoxConfigBuilder
         // ничего.
         ["default_domain_resolver"] = new Dictionary<string, object?> { ["server"] = RemoteDnsTag },
         ["rules"] = Rules(profile, options),
-        ["final"] = ProxyTag,
+
+        // Последнее слово. Обычно основной узел, а при доверенном выборе —
+        // группа автоматики. Правила стоят выше и перекрывают её точечно:
+        // «этот трафик только таким узлом» выполняется буквально, всё
+        // остальное продолжает разбираться само.
+        ["final"] = AutoUsable(profile, options) ? AutoTag : ProxyTag,
         ["auto_detect_interface"] = true,
     };
 
@@ -277,11 +371,22 @@ public static class SingBoxConfigBuilder
             ServerDirectRule(profile.Host),
         };
 
+        // Адрес каждого узла полосы — тоже мимо туннеля, и по той же причине,
+        // что и основной: пакеты к нему не должны идти в туннель, который они
+        // же и поднимают. Повторные адреса пропускаем: одно правило на адрес.
+        var known = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { profile.Host };
+
+        foreach (var node in ExtraNodes(profile, options))
+            if (known.Add(node.Host))
+                rules.Add(ServerDirectRule(node.Host));
+
+        var lanes = ExtraNodes(profile, options).Select(n => n.Id).ToHashSet();
+
         foreach (var rule in options.Rules)
         {
             if (!rule.Enabled || string.IsNullOrWhiteSpace(rule.Value)) continue;
 
-            rules.Add(UserRule(rule));
+            rules.Add(UserRule(rule, lanes));
         }
 
         rules.Add(new Dictionary<string, object?> { ["ip_is_private"] = true, ["outbound"] = DirectTag });
@@ -293,9 +398,21 @@ public static class SingBoxConfigBuilder
     /// Правило человека. Домен берём вместе с поддоменами: написав «example.com»,
     /// имеют в виду и «www.example.com» — обратное пришлось бы объяснять.
     /// </summary>
-    private static Dictionary<string, object?> UserRule(RouteRule rule)
+    private static Dictionary<string, object?> UserRule(RouteRule rule, IReadOnlySet<Guid> lanes)
     {
-        var outbound = rule.Aim == RouteAim.Tunnel ? ProxyTag : DirectTag;
+        var outbound = rule.Aim switch
+        {
+            RouteAim.Tunnel => ProxyTag,
+
+            // Узел полосы — только если он и правда поднят. Ссылка на удалённый
+            // узел не должна тихо выкидывать трафик мимо туннеля: правило
+            // писали, чтобы он шёл через VPN, и при пропаже узла оно работает
+            // как обычное «через туннель».
+            RouteAim.Node when rule.Node is { } id && lanes.Contains(id) => LaneTag(id),
+            RouteAim.Node => ProxyTag,
+
+            _ => DirectTag,
+        };
 
         var key = rule.Match switch
         {
@@ -307,6 +424,113 @@ public static class SingBoxConfigBuilder
 
         return new Dictionary<string, object?> { [key] = new[] { rule.Value }, ["outbound"] = outbound };
     }
+
+    /// <summary>
+    /// Все узлы, которые поднимаются рядом с основным: названные правилами
+    /// полосы и, если выбор доверен клиенту, те, среди которых он выбирает.
+    ///
+    /// <para>Без повторов и без основного: он уже стоит исходящим «proxy», и
+    /// второй раз занял бы соединение впустую.</para>
+    /// </summary>
+    private static IEnumerable<ServerProfile> ExtraNodes(ServerProfile main, Options options)
+    {
+        var nodes = options.Autopilot
+            ? options.LaneNodes.Concat(options.AutoNodes)
+            : options.LaneNodes;
+
+        return nodes.Where(node => node.Id != main.Id).DistinctBy(node => node.Id);
+    }
+
+    /// <summary>
+    /// Есть ли кому выбирать. Одинокий узел — это проверки по кругу ради
+    /// решения, которое предрешено; а «final» на несобранную группу движок
+    /// вовсе не принимает и падает с «outbound not found».
+    /// </summary>
+    private static bool AutoUsable(ServerProfile main, Options options) =>
+        options.Autopilot && ExtraNodes(main, options).Any();
+
+    /// <summary>
+    /// Из чего состоит группа автоматики: тег исходящего и узел за ним.
+    ///
+    /// <para>Открыто наружу нарочно. Тот, кто будет группу переключать и мерить
+    /// её маршруты, обязан знать ровно тот же состав, что попал в конфигурацию;
+    /// собери он его сам по тому же правилу — правило существовало бы в двух
+    /// местах и разошлось бы при первой же правке. Расхождение вышло бы немым:
+    /// замеры легли бы на маршруты, которых в группе нет.</para>
+    ///
+    /// <para>Пусто, когда группы нет вовсе.</para>
+    /// </summary>
+    public static IReadOnlyList<(string Tag, ServerProfile Node)> AutoMembers(ServerProfile main, Options options)
+    {
+        ArgumentNullException.ThrowIfNull(main);
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (!AutoUsable(main, options)) return [];
+
+        var members = new List<(string, ServerProfile)> { (ProxyTag, main) };
+        members.AddRange(ExtraNodes(main, options).Select(node => (LaneTag(node.Id), node)));
+
+        return members;
+    }
+
+    /// <summary>
+    /// Группа автоматического выбора: движок сам переспрашивает узлы и держит
+    /// тот, что отвечает быстрее. Пусто, когда выбор клиенту не доверен.
+    /// </summary>
+    private static Dictionary<string, object?>? AutoGroup(ServerProfile main, Options options)
+    {
+        if (!AutoUsable(main, options)) return null;
+
+        var members = AutoMembers(main, options).Select(m => m.Tag).ToList();
+
+        // Ядро ведёт выбор — группа становится переключателем, за который оно и
+        // дёргает через интерфейс управления, без пересборки конфигурации.
+        if (options.CoreDriven)
+        {
+            return new Dictionary<string, object?>
+            {
+                ["type"] = "selector",
+                ["tag"] = AutoTag,
+                ["outbounds"] = members.ToArray(),
+
+                // Пока ядро не набрало замеров, стоит основной узел — тот, что
+                // человек выбрал руками. Начинать с чужого узла нельзя: первые
+                // минуты после запуска ядро ещё не уверено ни в чём, и «умный»
+                // выбор в это время был бы просто случайным.
+                ["default"] = ProxyTag,
+
+                // Открытые соединения при переключении не рвём: полоса переезжает
+                // ради нового трафика, а не ради того, чтобы уронить идущую
+                // загрузку. Если прежний маршрут и правда умер, его соединения
+                // отвалятся сами — обрывать заодно живые смысла нет.
+                ["interrupt_exist_connections"] = false,
+            };
+        }
+
+        return new Dictionary<string, object?>
+        {
+            ["type"] = "urltest",
+            ["tag"] = AutoTag,
+            ["outbounds"] = members.ToArray(),
+
+            // Проверяем страницей без содержимого: она отвечает быстро и
+            // одинаково по всему миру, то есть меряет путь, а не чужой сервер.
+            ["url"] = "https://www.gstatic.com/generate_204",
+            ["interval"] = "3m",
+
+            // Запас, ниже которого узлы считаются равными. Без него клиент
+            // прыгал бы между двумя одинаково быстрыми на каждой проверке,
+            // обрывая соединения на ровном месте.
+            ["tolerance"] = 60,
+        };
+    }
+
+    /// <summary>
+    /// Тег исходящего для полосы. Берём начало опознавателя: имя узла сюда не
+    /// годится — оно приходит из подписки, меняется вместе с ней и вообще может
+    /// содержать что угодно, вплоть до эмодзи.
+    /// </summary>
+    public static string LaneTag(Guid id) => "lane-" + id.ToString("N")[..8];
 
     /// <summary>
     /// Сама нода — мимо туннеля. Без этого правила пакеты к ней уходили бы в

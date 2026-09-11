@@ -29,15 +29,29 @@ public sealed partial class MainViewModel
     [ObservableProperty]
     private string _newRuleValue = string.Empty;
 
-    /// <summary>Куда отправит новое правило. Мимо туннеля — частый случай, он и по умолчанию.</summary>
+    /// <summary>
+    /// Куда отправит новое правило. Мимо туннеля — частый случай, он и по
+    /// умолчанию. Узел выбирается здесь же, а не назначается потом уже
+    /// созданному правилу: дописывать назначение вдогонку — значит исправлять
+    /// то, что только что сделал.
+    /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NewRuleAimText))]
-    private bool _newRuleToTunnel;
+    private RouteAim _newRuleAim = RouteAim.Direct;
 
-    public string NewRuleAimText => NewRuleToTunnel ? "через туннель" : "мимо туннеля";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NewRuleAimText))]
+    private Guid? _newRuleNode;
 
-    [RelayCommand]
-    private void ToggleNewRuleAim() => NewRuleToTunnel = !NewRuleToTunnel;
+    public string NewRuleAimText => NewRuleAim switch
+    {
+        RouteAim.Direct => "мимо туннеля",
+        RouteAim.Node => NewRuleNode is { } id && NodeName(id) is { } name ? $"через {name}" : "через туннель",
+        _ => "через туннель",
+    };
+
+    /// <summary>Назначения для новой строки — те же, что и у готовых правил.</summary>
+    public ObservableCollection<RuleTarget> NewRuleTargets { get; } = [];
 
     /// <summary>Что не так с введённым. Пусто — всё в порядке.</summary>
     [ObservableProperty]
@@ -52,8 +66,7 @@ public sealed partial class MainViewModel
     [RelayCommand]
     private void AddRule()
     {
-        var aim = NewRuleToTunnel ? RouteAim.Tunnel : RouteAim.Direct;
-        var rule = RouteRule.TryParse(NewRuleValue, aim);
+        var rule = RouteRule.TryParse(NewRuleValue, NewRuleAim);
 
         if (rule is null)
         {
@@ -66,7 +79,9 @@ public sealed partial class MainViewModel
         var twin = Rules.FirstOrDefault(r => r.Rule.Value == rule.Value);
         if (twin is not null) Rules.Remove(twin);
 
-        Rules.Add(new RuleItem(rule));
+        // Узел прикладываем к разобранному правилу: разбор занят тем, что́
+        // ловить, а не тем, куда отправлять.
+        Rules.Add(Track(rule with { Node = NewRuleAim == RouteAim.Node ? NewRuleNode : null }));
 
         NewRuleValue = string.Empty;
         RuleError = null;
@@ -106,10 +121,49 @@ public sealed partial class MainViewModel
     private void LoadRules(IReadOnlyList<RouteRule> saved)
     {
         Rules.Clear();
-        foreach (var rule in saved) Rules.Add(new RuleItem(rule));
+
+        // Через Track, а не напрямую: строка, созданная без подписки на
+        // сохранение, меняется на экране и не доезжает до диска — выбор узла
+        // живёт до перезапуска и молча пропадает.
+        foreach (var rule in saved) Rules.Add(Track(rule));
 
         OnPropertyChanged(nameof(HasRules));
     }
+
+    /// <summary>
+    /// Обернуть правило в строку списка и подписать её на сохранение: цель
+    /// назначения применяется прямо из меню, минуя команды окна, и без этого
+    /// выбор узла жил бы только до перезапуска.
+    /// </summary>
+    private RuleItem Track(RouteRule rule) => new(rule, _ => CommitRules());
+
+    /// <summary>
+    /// Раздать строкам список узлов. Зовётся при всякой перемене в серверах:
+    /// узел могли добавить или удалить уже после того, как правило написали.
+    /// </summary>
+    private void RefreshRuleTargets()
+    {
+        var nodes = Servers.Select(s => (s.Profile.Id, s.Name)).ToArray();
+
+        foreach (var item in Rules) item.RefreshTargets(nodes, NodeName);
+
+        NewRuleTargets.Clear();
+        NewRuleTargets.Add(new RuleTarget("мимо туннеля", RouteAim.Direct, null, PickNewRuleTarget));
+        NewRuleTargets.Add(new RuleTarget("через туннель", RouteAim.Tunnel, null, PickNewRuleTarget));
+
+        foreach (var node in nodes)
+            NewRuleTargets.Add(new RuleTarget($"через {node.Name}", RouteAim.Node, node.Id, PickNewRuleTarget));
+    }
+
+    private void PickNewRuleTarget(RuleTarget target)
+    {
+        NewRuleAim = target.Aim;
+        NewRuleNode = target.Node;
+    }
+
+    /// <summary>Имя узла по опознавателю; пусто — узла больше нет.</summary>
+    private string? NodeName(Guid id) =>
+        Servers.FirstOrDefault(s => s.Profile.Id == id)?.Name;
 
     /// <summary>Сохранить и, если туннель поднят, предупредить об отложенном действии.</summary>
     private void CommitRules()

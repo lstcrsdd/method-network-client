@@ -74,6 +74,27 @@ public class SingBoxCheckTests : IDisposable
         Check(SingBoxConfigBuilder.BuildProbeJson(profile, 18080), profileName + " (проба)");
     }
 
+    [Fact]
+    public void Движок_принимает_переключаемую_группу()
+    {
+        // Форму селектора проверяем не глазами: поля «default» и
+        // «interrupt_exist_connections» есть в документации, но принимает их
+        // конкретная версия бинаря, а не документация. Ошибись здесь — и клиент
+        // упадёт при старте туннеля, когда человек включит автоматику.
+        var profile = TestProfiles.Hysteria2();
+        var other = TestProfiles.Hysteria2() with { Id = Guid.NewGuid(), Name = "Запасной", Host = "198.51.100.7" };
+
+        var json = SingBoxConfigBuilder.BuildJson(profile, new SingBoxConfigBuilder.Options
+        {
+            ClashSecret = "проверка",
+            Autopilot = true,
+            AutoNodes = [other],
+            CoreDriven = true,
+        });
+
+        Check(json, "переключаемая группа");
+    }
+
     private void Check(string json, string label)
     {
         var path = Path.Combine(_workDir, "config.json");

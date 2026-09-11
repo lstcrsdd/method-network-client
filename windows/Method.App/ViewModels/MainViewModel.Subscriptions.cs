@@ -227,6 +227,10 @@ public sealed partial class MainViewModel
             LooseServers.Add(server);
 
         Regroup(LooseCountries, LooseServers);
+
+        // Правила ссылаются на узлы по опознавателю: поменялся список узлов —
+        // поменялся и набор назначений, который предлагается в сценариях.
+        RefreshRuleTargets();
     }
 
     /// <summary>

@@ -22,7 +22,8 @@
   <ScrollViewer VerticalScrollBarVisibility="Auto" c:SmoothScroll.Enabled="True">
     <StackPanel Margin="40,10,40,32">
 
-      <TextBlock Classes="pageTitle" Text="Сценарии" Margin="0,0,0,8" />
+      <c:PageHeading Number="03" Text="Сценарии" HorizontalAlignment="Left" />
+      <Border Classes="rule" Margin="0,11,0,14" />
 
       <TextBlock Classes="subtitle" Margin="0,0,0,22" TextWrapping="Wrap" MaxWidth="640"
                  HorizontalAlignment="Left"
@@ -58,7 +59,6 @@
               заставлять исправлять только что созданное.
             -->
             <Button Grid.Column="2" Classes="quiet" Margin="10,0,0,0"
-                    Command="{Binding ToggleNewRuleAimCommand}"
                     ToolTip.Tip="Куда отправлять то, что подошло под правило">
               <StackPanel Orientation="Horizontal" Spacing="7">
                 <Path Data="{DynamicResource IconArrowOut}" Stretch="Uniform" Width="15" Height="15"
@@ -66,6 +66,18 @@
                       Stroke="{Binding $parent[Button].Foreground}" VerticalAlignment="Center" />
                 <TextBlock Text="{Binding NewRuleAimText}" VerticalAlignment="Center" />
               </StackPanel>
+
+              <Button.Flyout>
+                <MenuFlyout ItemsSource="{Binding NewRuleTargets}">
+                  <MenuFlyout.ItemContainerTheme>
+                    <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}"
+                                  x:DataType="vm:RuleTarget">
+                      <Setter Property="Header" Value="{Binding Title}" />
+                      <Setter Property="Command" Value="{Binding ApplyCommand}" />
+                    </ControlTheme>
+                  </MenuFlyout.ItemContainerTheme>
+                </MenuFlyout>
+              </Button.Flyout>
             </Button>
 
             <Button Grid.Column="3" Classes="pill" Margin="10,0,0,0" Content="Добавить"
@@ -90,7 +102,7 @@
       <ItemsControl ItemsSource="{Binding Rules}" Margin="0,0,0,22" IsVisible="{Binding HasRules}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:RuleItem">
-            <Border Classes="row" Padding="16,13" Margin="0,0,0,8">
+            <Border Classes="row" Padding="16,13">
               <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                 <CheckBox Grid.Column="0" IsChecked="{Binding Enabled, Mode=OneWay}"
                           Command="{Binding $parent[ItemsControl].((vm:MainViewModel)DataContext).ToggleRuleCommand}"
@@ -105,12 +117,28 @@
                              Foreground="{DynamicResource TextMutedBrush}" />
                 </StackPanel>
 
+                <!--
+                  Назначение выбирается списком, а не переключателем: кроме
+                  «мимо» и «в туннель» правило может уйти через названный узел —
+                  свою полосу, — и перебирать их по кругу нажатиями было бы
+                  издевательством при десятке узлов.
+                -->
                 <Button Grid.Column="2" Classes="lane" VerticalAlignment="Center" Margin="0,0,8,0"
-                        Command="{Binding $parent[ItemsControl].((vm:MainViewModel)DataContext).FlipRuleCommand}"
-                        CommandParameter="{Binding}"
-                        ToolTip.Tip="Переставить туда-обратно">
+                        ToolTip.Tip="Куда отправлять: мимо туннеля, в туннель или через выбранный узел">
                   <TextBlock Text="{Binding AimText}" FontSize="12"
                              Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                  <Button.Flyout>
+                    <MenuFlyout ItemsSource="{Binding Targets}">
+                      <MenuFlyout.ItemContainerTheme>
+                        <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}"
+                                      x:DataType="vm:RuleTarget">
+                          <Setter Property="Header" Value="{Binding Title}" />
+                          <Setter Property="Command" Value="{Binding ApplyCommand}" />
+                        </ControlTheme>
+                      </MenuFlyout.ItemContainerTheme>
+                    </MenuFlyout>
+                  </Button.Flyout>
                 </Button>
 
                 <Button Grid.Column="3" Classes="quiet" VerticalAlignment="Center"
@@ -203,7 +231,7 @@
           <TextBlock Text="Как это работает" FontSize="13"
                      Foreground="{DynamicResource TextPrimaryBrush}" />
           <TextBlock Classes="subtitle" TextWrapping="Wrap" MaxWidth="640" HorizontalAlignment="Left"
-                     Text="Домен ловится вместе с поддоменами: правило на example.com относится и к www.example.com. Адрес можно писать и одиночным — 8.8.8.8 равносильно 8.8.8.8/32. Ваши правила применяются раньше правила о локальной сети, поэтому домашние адреса при желании можно завернуть в туннель. Единственное, что не перебить, — адрес самого сервера." />
+                     Text="Домен ловится вместе с поддоменами: правило на example.com относится и к www.example.com. Адрес можно писать и одиночным — 8.8.8.8 равносильно 8.8.8.8/32. Ваши правила применяются раньше правила о локальной сети, поэтому домашние адреса при желании можно завернуть в туннель. Единственное, что не перебить — адрес самого сервера." />
         </StackPanel>
       </Border>
     </StackPanel>

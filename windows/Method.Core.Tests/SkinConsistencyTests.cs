@@ -53,6 +53,12 @@ public class SkinConsistencyTests
     /// молча перебивает оформление. Ровно на этом плакатный набор однажды не
     /// доехал до кнопки подключения: она просила печать, а страница отвечала
     /// радиусом семьдесят шесть, и побеждала страница.</para>
+    ///
+    /// <para>Исключение — представления, принадлежащие одному оформлению
+    /// (<c>…Plain.axaml</c> и <c>…Poster.axaml</c>). Правило запрещает перебивать
+    /// чужой набор, а над этими файлами второго набора не бывает: их подставляет
+    /// само оформление, и перебивать там нечего. Держать их размеры в общей
+    /// надстройке значило бы разносить одну композицию по двум файлам.</para>
     /// </summary>
     [Fact]
     public void Разметка_не_объявляет_стилей_мимо_общего_набора()
@@ -61,10 +67,14 @@ public class SkinConsistencyTests
 
         foreach (var file in Directory.EnumerateFiles(Path.Combine(AppRoot(), "Views"), "*.axaml", SearchOption.AllDirectories))
         {
+            var name = Path.GetFileName(file);
+            if (name.EndsWith("Plain.axaml", StringComparison.Ordinal) ||
+                name.EndsWith("Poster.axaml", StringComparison.Ordinal)) continue;
+
             var text = File.ReadAllText(file);
             if (!text.Contains("<Style Selector=", StringComparison.Ordinal)) continue;
 
-            offenders.Add(Path.GetFileName(file));
+            offenders.Add(name);
         }
 
         Assert.True(

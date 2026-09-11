@@ -53,10 +53,14 @@ public sealed partial class MainViewModel
     [ObservableProperty]
     private IReadOnlyList<double> _upHistoryView = [];
 
-    /// <summary>Начать считать трафик. Секрет свой на каждое подключение.</summary>
-    private void StartTraffic(string secret)
+    /// <summary>
+    /// Начать считать трафик. Секрет и адрес управления свои на каждое
+    /// подключение: порт выбирается при пуске, потому что привычный может быть
+    /// занят другим движком на этой же машине.
+    /// </summary>
+    private void StartTraffic(string secret, int controlPort)
     {
-        _clash = new ClashApiClient(TrafficHttp, "127.0.0.1:9090", secret);
+        _clash = new ClashApiClient(TrafficHttp, $"127.0.0.1:{controlPort}", secret);
         _previousTotals = null;
         _sessionStartDown = 0;
         _sessionStartUp = 0;

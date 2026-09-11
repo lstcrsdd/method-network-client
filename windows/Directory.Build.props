@@ -9,6 +9,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
+    <!-- Отладочная информация внутри сборок, а не отдельными .pdb. Иначе рядом
+         с самодостаточным Method.exe в публикации ложатся символы библиотек —
+         файлы, которые никому не нужны, но выглядят частью поставки. -->
+    <DebugType>embedded</DebugType>
+
     <Version>0.1.0</Version>
     <Product>Method</Product>
     <Authors>Kovalyov Georgiy</Authors>

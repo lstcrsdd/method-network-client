@@ -941,20 +941,56 @@ public static class TunnelHost
         catch { return false; }
     }
 
+    /// <summary>
+    /// Почему движок не поднялся.
+    ///
+    /// <para>Читаем оба потока, а не только поток ошибок: sing-box пишет свой
+    /// журнал в обычный вывод, и причина падения — «порт занят», «адаптер
+    /// существует», «конфигурация не разобрана» — оказывается именно там. Пока
+    /// смотрели один поток ошибок, наружу выходило «причина неизвестна» на любую
+    /// беду, и человек оставался с этим один на один.</para>
+    ///
+    /// <para>Читать так можно только до <c>BeginOutputReadLine</c>, то есть ровно
+    /// на пути неудачного запуска. После успешного старта потоки разбирают
+    /// обработчики.</para>
+    /// </summary>
     private static string ReadEngineError()
     {
         var process = _engine;
         if (process is null) return "причина неизвестна";
 
-        try
+        var said = new List<string>(2);
+
+        foreach (var reader in new[] { process.StandardError, process.StandardOutput })
         {
-            // Читать так можно только до BeginErrorReadLine, то есть ровно на пути
-            // неудачного запуска. После успешного старта поток читают обработчики.
-            return process.StandardError.ReadToEnd().Trim();
+            try
+            {
+                var text = reader.ReadToEnd().Trim();
+                if (text.Length > 0) said.Add(text);
+            }
+            catch
+            {
+                // Поток уже разбирают обработчики или процесс освобождён —
+                // спрашиваем второй.
+            }
         }
-        catch
-        {
-            return "причина неизвестна";
-        }
+
+        return said.Count == 0 ? "причина неизвестна" : Shorten(string.Join(" ", said));
+    }
+
+    /// <summary>
+    /// Оставить от вывода движка суть. Он многословен, а в сообщение об ошибке
+    /// идёт последняя строка — падение всегда объясняется в ней, и она же короче
+    /// всего остального.
+    /// </summary>
+    private static string Shorten(string text)
+    {
+        var last = text
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .LastOrDefault(line => line.Length > 0);
+
+        if (string.IsNullOrEmpty(last)) return "причина неизвестна";
+
+        return last.Length <= 300 ? last : last[..300] + "…";
     }
 }

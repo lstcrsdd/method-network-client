@@ -1,0 +1,132 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Тело окна: боковая панель с разделами и область содержимого.
+
+  Живёт отдельно от окна не для порядка, а по необходимости: при смене
+  оформления окно собирает тело заново. Снятый набор стилей оставляет за собой
+  следы в уже построенных шаблонах — Avalonia не пересчитывает то, что стиль
+  успел применить внутри шаблона элемента, — и переключившись обратно, человек
+  видел красную заливку выбранного раздела посреди зелёного оформления. Заново
+  построенное дерево берёт стили те, что действуют сейчас.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Method.App.ViewModels"
+             xmlns:pages="using:Method.App.Views.Pages"
+             xmlns:c="using:Method.App.Controls"
+             x:Class="Method.App.Views.RootView"
+             x:DataType="vm:MainViewModel">
+
+<Grid ColumnDefinitions="252,*">
+
+  <!-- Боковая панель -->
+  <Border Grid.Column="0" BorderThickness="0,0,1,0"
+          BorderBrush="{DynamicResource GlassStrokeBrush}"
+          Background="{DynamicResource SidebarBrush}">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="14,4,14,14">
+
+      <!--
+        Марка. В основном оформлении — знак в стеклянном квадрате, как на
+        других платформах. В плакатном — красная плашка со звездой и имя
+        прописными: скруглённый квадрат со светящейся обводкой в плакате
+        выглядит наклейкой от другого продукта.
+      -->
+      <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="6,4,0,18">
+        <Border Classes="brandGlass" Width="34" Height="34" CornerRadius="9"
+                Background="{DynamicResource SurfaceRaisedBrush}">
+          <Path Classes="icon" Data="{DynamicResource IconBrand}"
+                Stroke="{DynamicResource TextPrimaryBrush}"
+                HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+
+        <Border Classes="brandPlate" Width="34" Height="34"
+                Background="{DynamicResource AccentBrush}">
+          <Path Data="{DynamicResource IconStar}" Stretch="Uniform"
+                Width="19" Height="19"
+                Fill="{DynamicResource EmblemBrush}"
+                HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+
+        <TextBlock Classes="brandName" Text="Method" FontSize="17" FontWeight="Bold"
+                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+        <TextBlock Classes="brandCaps" Text="METHOD" FontSize="16" FontWeight="Bold"
+                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+      </StackPanel>
+
+      <StackPanel Grid.Row="1" Spacing="4">
+        <Button Classes="nav" Classes.active="{Binding IsOverview}"
+                Command="{Binding GoToCommand}" CommandParameter="Overview">
+          <StackPanel Orientation="Horizontal" Spacing="11">
+            <TextBlock Classes="navNo" Text="01" VerticalAlignment="Center" />
+            <Path Classes="icon navIcon" Data="{DynamicResource IconHome}" Stroke="{Binding $parent[Button].Foreground}" />
+            <c:Caption Text="Обзор" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <Button Classes="nav" Classes.active="{Binding IsServers}"
+                Command="{Binding GoToCommand}" CommandParameter="Servers">
+          <StackPanel Orientation="Horizontal" Spacing="11">
+            <TextBlock Classes="navNo" Text="02" VerticalAlignment="Center" />
+            <Path Classes="icon navIcon" Data="{DynamicResource IconServers}" Stroke="{Binding $parent[Button].Foreground}" />
+            <c:Caption Text="Серверы" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <Button Classes="nav" Classes.active="{Binding IsScenarios}"
+                Command="{Binding GoToCommand}" CommandParameter="Scenarios">
+          <StackPanel Orientation="Horizontal" Spacing="11">
+            <TextBlock Classes="navNo" Text="03" VerticalAlignment="Center" />
+            <Path Classes="icon navIcon" Data="{DynamicResource IconScenarios}" Stroke="{Binding $parent[Button].Foreground}" />
+            <c:Caption Text="Сценарии" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <Button Classes="nav" Classes.active="{Binding IsSettings}"
+                Command="{Binding GoToCommand}" CommandParameter="Settings">
+          <StackPanel Orientation="Horizontal" Spacing="11">
+            <TextBlock Classes="navNo" Text="04" VerticalAlignment="Center" />
+            <Path Classes="icon navIcon" Data="{DynamicResource IconSettings}" Stroke="{Binding $parent[Button].Foreground}" />
+            <c:Caption Text="Настройки" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
+
+      <!-- Состояние видно из любого раздела: за этим сюда и заходят. -->
+      <Border Grid.Row="2" Classes="card" Padding="14,12">
+        <StackPanel Spacing="7">
+          <TextBlock Classes="sectionLabel" Text="СТАТУС" />
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <!--
+              Точка шире самой точки: ореолу нужно место, и ядро в восемь
+              точек стоит в середине поля в шестнадцать. Промежуток до надписи
+              поэтому вдвое меньше прежнего — расстояние от ядра до буквы
+              осталось тем же.
+            -->
+            <c:StatusDot Width="16" Height="16" VerticalAlignment="Center"
+                         Classes.on="{Binding IsConnected}"
+                         Classes.busy="{Binding IsBusy}"
+                         Classes.bad="{Binding IsFailed}" />
+            <c:Caption Text="{Binding StatusText}" FontSize="13"
+                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Border>
+
+  <!-- Содержимое -->
+  <Panel Grid.Column="1">
+    <pages:OverviewPage IsVisible="{Binding IsOverview}" />
+    <pages:ServersPage IsVisible="{Binding IsServers}" />
+    <pages:ScenariosPage IsVisible="{Binding IsScenarios}" />
+    <pages:SettingsPage IsVisible="{Binding IsSettings}" />
+  </Panel>
+</Grid>
+</UserControl>

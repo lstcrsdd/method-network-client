@@ -1,0 +1,31 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Заголовок раздела. Две личины одного и того же названия: в основном
+  оформлении — просто крупная надпись, как на других платформах; в плакатном —
+  номер раздела и название прописными в разрядку.
+
+  Обе личины лежат здесь, а не на каждой странице, потому что иначе плакатную
+  шапку пришлось бы держать в трёх копиях и править их синхронно. Видимостью
+  распоряжается оформление, а не страница.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Method.App.Controls.PageHeading">
+  <Panel VerticalAlignment="Center">
+
+    <TextBlock Name="PlainTitleText" Classes="pageTitle plainTitle" VerticalAlignment="Center" />
+
+    <StackPanel Name="PosterTitleBlock" Classes="posterTitle" Spacing="2" VerticalAlignment="Center">
+      <TextBlock Name="NumberText" Classes="headingNumber" />
+      <TextBlock Name="CapsText" Classes="headingCaps" />
+    </StackPanel>
+
+  </Panel>
+</UserControl>
