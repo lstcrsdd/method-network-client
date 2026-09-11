@@ -35,7 +35,7 @@ public partial class OverviewPlain : UserControl
     private const double Zoomed = 1.5;
 
     /// <summary>Поля прокрутки по вертикали — они в масштаб не входят.</summary>
-    private const double Padding = 34;
+    private const double ScrollInset = 34;
 
     public OverviewPlain()
     {
@@ -62,7 +62,7 @@ public partial class OverviewPlain : UserControl
             // нижний край и заводит прокрутку на ровном месте; без самой высоты
             // растяжки внутри схлопнутся в ноль, и кнопка перестанет стоять по
             // центру.
-            composition.MinHeight = Math.Max(0, e.NewSize.Height - Padding) / scale;
+            composition.MinHeight = Math.Max(0, e.NewSize.Height - ScrollInset) / scale;
         };
     }
 }
