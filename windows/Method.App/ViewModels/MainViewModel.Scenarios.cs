@@ -90,9 +90,13 @@ public sealed partial class MainViewModel
     }
 
     [RelayCommand]
-    private void RemoveRule(RuleItem? item)
+    private async Task RemoveRuleAsync(RuleItem? item)
     {
         if (item is null) return;
+
+        if (!await ConfirmAsync("Удалить правило?", $"Правило «{item.Value}» пропадёт из сценариев.", "Удалить")
+                .ConfigureAwait(true))
+            return;
 
         Rules.Remove(item);
         CommitRules();

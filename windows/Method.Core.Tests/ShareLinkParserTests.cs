@@ -46,6 +46,27 @@ public class ShareLinkParserTests
     }
 
     [Fact]
+    public void Hysteria2_с_закреплённым_сертификатом_разрешает_самоподписанный()
+    {
+        // Так панель выдаёт узлы после перехода на квоты устройств: вместо
+        // insecure=1 — отпечаток сертификата. Без разрешения рукопожатие с
+        // самоподписанным сертификатом падает на каждом узле.
+        var profile = ShareLinkParser.Parse(
+            "hysteria2://pass@203.0.113.10:443?sni=example.com&obfs=salamander&obfs-password=o" +
+            "&pinSHA256=AB:CD:EF:01#Pinned");
+
+        Assert.True(profile.Parameters.Hysteria2!.AllowInsecure);
+    }
+
+    [Fact]
+    public void Hysteria2_без_флагов_проверяет_сертификат()
+    {
+        var profile = ShareLinkParser.Parse("hysteria2://pass@203.0.113.10:443?sni=example.com#Strict");
+
+        Assert.False(profile.Parameters.Hysteria2!.AllowInsecure);
+    }
+
+    [Fact]
     public void Hysteria2_без_порта_идёт_на_443()
     {
         var profile = ShareLinkParser.Parse("hy2://pass@203.0.113.10#Node");

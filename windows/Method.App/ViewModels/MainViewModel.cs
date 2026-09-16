@@ -339,6 +339,18 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
+        // Два туннеля на одной машине — это не два туннеля, а ни одного: оба
+        // забирают маршрут по умолчанию и перехватывают DNS, и новые соединения
+        // рвутся, пока старые живут. Подключаться поверх чужого VPN значит
+        // сломать человеку связь и выглядеть при этом виновником.
+        if (ForeignTunnel.Find() is { } foreign)
+        {
+            Detail = $"Уже работает другой VPN — «{foreign}». Два туннеля делят один маршрут, и сеть " +
+                     "начинает рваться. Выключите его режим TUN и подключитесь снова.";
+            WorkJournal.Add("Пуск", $"отказ: поднят чужой туннель «{foreign}»", JournalOutcome.Failed);
+            return;
+        }
+
         State = ConnectionState.Connecting;
         MarkTunnelAction();
         Detail = null;
@@ -388,7 +400,13 @@ public sealed partial class MainViewModel : ObservableObject
             // Автоматика — фон: выбирает узел для всего, что правилами не
             // описано. Выбирать ей есть из чего только при нескольких узлах.
             Autopilot = AutoRouting,
-            AutoNodes = AutoRouting ? Servers.Select(s => s.Profile).ToArray() : [],
+            // Узлы, не прошедшие проверку, в выбор не берутся: автоматика узнала
+            // бы об этом сама, но через минуты неудачных проб, а человек в это
+            // время сидел бы без сети. Непроверенные — берутся: незнание не довод.
+            AutoNodes = AutoRouting
+                ? Servers.Where(s => s.Reachable != false).Select(s => s.Profile).ToArray()
+                : [],
+
 
             // Есть ядро — группа собирается переключателем, и решения
             // применяются поворотом ручки, без переподключения. Нет ядра —
@@ -581,9 +599,21 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Замерить задержку до всех узлов разом. Замеры идут параллельно: последовательно
-    /// список из пятнадцати серверов обновлялся бы полминуты, и человек всё это время
-    /// смотрел бы на пустые строки.
+    /// Сколько пробных движков работает разом. Каждый — отдельный процесс со своими
+    /// десятками мегабайт; два десятка одновременно заметно нагружают машину, а по
+    /// одному проверка пула затягивается на минуту.
+    /// </summary>
+    private const int ProbesAtOnce = 4;
+
+    /// <summary>
+    /// Проверить все узлы делом — запросом через каждый, мимо любого туннеля.
+    ///
+    /// <para>Раньше здесь мерилось рукопожатие TCP, и оно врало: при поднятом
+    /// туннеле его завершает локальный стек за ноль миллисекунд, поэтому живыми
+    /// выглядели и адреса, заблокированные по дороге. См. <see cref="NodeProbe"/>.</para>
+    ///
+    /// <para>После проверки узлы разбираются по адресам: молчит весь адрес — это
+    /// блокировка адреса, и такие узлы уходят из автоматического выбора.</para>
     /// </summary>
     [RelayCommand]
     private async Task MeasurePingsAsync()
@@ -591,21 +621,73 @@ public sealed partial class MainViewModel : ObservableObject
         var items = Servers.ToArray();
         if (items.Length == 0) return;
 
-        foreach (var item in items) item.IsMeasuring = true;
+        var engine = AppPaths.ResolveEngine();
+        var iface = PhysicalInterface.Name();
+
+        foreach (var item in items)
+        {
+            item.IsMeasuring = true;
+            item.Ping = null;
+            item.Reachable = null;
+            item.AddressSilent = false;
+        }
+
+        WorkJournal.Add("Проверка узлов", iface is null
+            ? $"узлов {items.Length}; выход в сеть не определён — замер может идти через туннель"
+            : $"узлов {items.Length}, мимо туннеля через «{iface}»",
+            iface is null ? JournalOutcome.Warning : JournalOutcome.Waiting);
+
+        using var gate = new SemaphoreSlim(ProbesAtOnce);
 
         await Task.WhenAll(items.Select(async item =>
         {
-            var ms = await PingService.MeasureAsync(item.Profile.Host, item.Profile.Port).ConfigureAwait(true);
-            item.Ping = ms;
-            item.IsMeasuring = false;
-            item.MarkMeasured();
+            await gate.WaitAsync().ConfigureAwait(true);
+            try
+            {
+                var result = await NodeProbe.CheckAsync(item.Profile, engine, iface).ConfigureAwait(true);
+                item.Ping = result.Milliseconds;
+                item.Reachable = result.Reachable;
+            }
+            finally
+            {
+                item.IsMeasuring = false;
+                item.MarkMeasured();
+                gate.Release();
+            }
         })).ConfigureAwait(true);
+
+        var silent = AddressVerdict.Silent(items.Select(i => (i.Profile.Host, i.Reachable)));
+        foreach (var item in items) item.AddressSilent = silent.Contains(item.Profile.Host);
+
+        var alive = items.Count(i => i.Reachable == true);
+        WorkJournal.Resolve("Проверка узлов", $"проходят {alive} из {items.Length}",
+            alive == 0 ? JournalOutcome.Failed : alive < items.Length ? JournalOutcome.Warning : JournalOutcome.Ok);
+
+        if (silent.Count > 0)
+            WorkJournal.Add("Адреса", $"молчат из этой сети: {silent.Count} — узлы на них убраны из автоматического выбора",
+                JournalOutcome.Warning);
     }
 
+    /// <summary>
+    /// Спросить подтверждение необратимого действия. Задаёт окно; без окна (превью,
+    /// проверки) удаление проходит сразу — спрашивать там некого.
+    /// </summary>
+    public Func<string, string, string, Task<bool>> ConfirmAsync { get; set; } =
+        static (_, _, _) => Task.FromResult(true);
+
     [RelayCommand]
-    private void Remove(ServerItem? item)
+    private async Task RemoveAsync(ServerItem? item)
     {
         if (item is null) return;
+
+        var fromSubscription = item.Stored.SubscriptionId is not null;
+        if (!await ConfirmAsync(
+                "Удалить сервер?",
+                fromSubscription
+                    ? $"«{item.Name}» пропадёт из списка. Он пришёл из подписки и вернётся при её следующем обновлении."
+                    : $"«{item.Name}» пропадёт из списка. Вернуть его можно только заново добавив ссылку.",
+                "Удалить").ConfigureAwait(true))
+            return;
 
         Servers.Remove(item);
         if (ReferenceEquals(SelectedServer, item)) SelectedServer = Servers.FirstOrDefault();

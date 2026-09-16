@@ -30,6 +30,10 @@ public partial class MainWindow : Window
         AvaloniaXamlLoader.Load(this);
         DataContext = model;
 
+        // Удаление спрашивает подтверждение у окна: модель про окна не знает, а
+        // спросить обязана — иначе мисклик по корзине стоит человеку подписки.
+        model.ConfirmAsync = (heading, message, confirm) => ConfirmWindow.AskAsync(this, heading, message, confirm);
+
         Rebuild(SkinManager.Current);
         SkinManager.Changed += Rebuild;
         Closed += (_, _) => SkinManager.Changed -= Rebuild;

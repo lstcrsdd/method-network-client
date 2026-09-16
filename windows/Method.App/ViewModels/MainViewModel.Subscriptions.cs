@@ -95,6 +95,13 @@ public sealed partial class MainViewModel
         }
 
         Subscriptions.Add(item);
+
+        // Раскладку узлов по подпискам — заново, уже с новой подпиской в списке.
+        // Загрузка раскладывала их сама, но до того, как подписка сюда попала, и
+        // своей подписки не находила: узлы были загружены и сохранены, а в списке
+        // стояло «0 серверов» до перезапуска клиента.
+        RebuildGroups();
+
         SaveAll();
         NotifyGroupsChanged();
         return error;
@@ -121,9 +128,15 @@ public sealed partial class MainViewModel
     }
 
     [RelayCommand]
-    private void RemoveSubscription(SubscriptionItem? item)
+    private async Task RemoveSubscriptionAsync(SubscriptionItem? item)
     {
         if (item is null) return;
+
+        if (!await ConfirmAsync(
+                "Удалить подписку?",
+                $"Подписка и её серверы ({item.Servers.Count}) пропадут из списка. Вернуть их можно, только снова добавив ссылку.",
+                "Удалить").ConfigureAwait(true))
+            return;
 
         RemoveServersOf(item.Id);
         Subscriptions.Remove(item);

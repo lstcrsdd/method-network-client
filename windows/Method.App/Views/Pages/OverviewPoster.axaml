@@ -183,6 +183,7 @@
                    PoleBrush="{DynamicResource EmblemOutlineBrush}" />
 
         <Button Classes="connectPoster" Command="{Binding ToggleCommand}"
+                AutomationProperties.Name="{Binding ActionText}"
                 HorizontalAlignment="Center" VerticalAlignment="Center">
           <c:Emblem Width="322" Height="322"
                     Wreath="Wheat"

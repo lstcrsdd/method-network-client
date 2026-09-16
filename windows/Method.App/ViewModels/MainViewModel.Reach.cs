@@ -101,7 +101,22 @@ public sealed partial class MainViewModel
         // должно быть слышно.
         if (State != ConnectionState.Connected || _reconnecting || IsSettling) return;
 
+        // Чужой туннель, поднятый уже после нас, ломает связь так же, как поднятый
+        // до: сказать об этом важнее, чем мерить проходимость, — и чинить здесь
+        // нечего, переподключение его не уберёт.
+        if (ForeignTunnel.Find() is { } foreign)
+        {
+            var warning = $"Поднят ещё один VPN — «{foreign}». Два туннеля мешают друг другу; выключите один из них.";
+            if (Detail != warning)
+            {
+                Detail = warning;
+                WorkJournal.Add("Чужой туннель", foreign, JournalOutcome.Warning);
+            }
+            return;
+        }
+
         if (await IsTrafficFlowingAsync().ConfigureAwait(true))
+
         {
             if (_toldMute)
             {
@@ -161,9 +176,11 @@ public sealed partial class MainViewModel
         var current = SelectedServer;
 
         // Лучший по известной задержке; неизмеренные идут последними, но идут:
-        // молчащий узел хуже любого неизвестного.
+        // молчащий узел хуже любого неизвестного. Не прошедшие проверку не идут
+        // вовсе — уйти с молчащего узла на заведомо молчащий значит потерять ещё
+        // три минуты.
         var next = Servers
-            .Where(s => !ReferenceEquals(s, current))
+            .Where(s => !ReferenceEquals(s, current) && s.Reachable != false)
             .OrderBy(s => s.Ping ?? int.MaxValue)
             .FirstOrDefault();
 

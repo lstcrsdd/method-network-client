@@ -1,0 +1,54 @@
+<!--
+  Copyright (C) 2026  Kovalyov Georgiy
+  This file is part of Method.
+
+  Method is free software: you can redistribute it and/or modify it under the
+  terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. See LICENSE for details.
+
+  Подтверждение необратимого действия. Кнопка по умолчанию — «Отмена», а не
+  удаление: окно появляется от щелчка, и случайный Enter следом за мисскликом
+  не должен довершать ошибку.
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="using:Method.App.Controls"
+        x:Class="Method.App.Views.ConfirmWindow"
+        Title="Подтверждение"
+        Width="400" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        Background="Transparent">
+
+  <Border Classes="shell" ClipToBounds="True">
+    <Border.Background>
+      <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="{DynamicResource BackgroundTopColor}" Offset="0" />
+        <GradientStop Color="{DynamicResource BackgroundBottomColor}" Offset="1" />
+      </LinearGradientBrush>
+    </Border.Background>
+
+    <Grid Margin="20,14,20,18" RowDefinitions="Auto,Auto,Auto">
+
+      <Grid Grid.Row="0" Background="Transparent" PointerPressed="OnTitleBarPressed" Height="30">
+        <c:Caption Name="Heading" FontSize="15" FontWeight="Bold"
+                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+      </Grid>
+
+      <Border Grid.Row="0" Classes="rule" VerticalAlignment="Bottom" />
+
+      <TextBlock Grid.Row="1" Name="Message" Margin="0,8,0,0" FontSize="13" TextWrapping="Wrap"
+                 Foreground="{DynamicResource TextSecondaryBrush}" />
+
+      <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right"
+                  Margin="0,18,0,0" Spacing="10">
+        <Button Classes="secondary" Content="Отмена" Click="OnCancel" IsDefault="True" IsCancel="True" />
+        <Button Classes="primary" Name="ConfirmButton" Click="OnConfirm" />
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>

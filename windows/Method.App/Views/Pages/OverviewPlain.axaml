@@ -84,6 +84,7 @@
         написано в карточке состояния слева.
       -->
       <Button Classes="connect" Classes.lit="{Binding IsConnected}"
+              AutomationProperties.Name="{Binding ActionText}"
               Command="{Binding ToggleCommand}"
               ToolTip.Tip="{Binding ActionText}"
               HorizontalAlignment="Center" VerticalAlignment="Center">

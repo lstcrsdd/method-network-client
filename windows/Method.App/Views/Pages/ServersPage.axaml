@@ -148,7 +148,7 @@
       </Button>
 
       <Button Grid.Column="2" Classes="quiet" Margin="0,0,10,0" VerticalAlignment="Center"
-              Content="Замерить задержки"
+              Content="Проверить узлы"
               Command="{Binding MeasurePingsCommand}"
               IsVisible="{Binding HasServers}" />
 

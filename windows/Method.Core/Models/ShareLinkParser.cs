@@ -119,7 +119,16 @@ public static class ShareLinkParser
         {
             Password = password,
             Sni = Value(q, "sni", "peer"),
-            AllowInsecure = BoolFlag(Value(q, "insecure")),
+            // Закреплённый сертификат (pinSHA256) означает самоподписанный: панель
+            // перестала писать insecure=1 и вместо этого сообщает отпечаток. Строго
+            // проверять такой сертификат по цепочке бессмысленно — рукопожатие
+            // падает на каждом узле, проверено вживую. Сверить сам отпечаток нам
+            // нечем: движок умеет закреплять только хеш открытого ключа, а не всего
+            // сертификата, а достать сертификат своими силами мешает обфускация
+            // salamander поверх QUIC. Поэтому закрепление читается как разрешение
+            // на самоподписанный — ровно то, что раньше выражал insecure=1.
+            AllowInsecure = BoolFlag(Value(q, "insecure")) || Value(q, "pinSHA256", "pinsha256") is { Length: > 0 },
+
             ObfsPassword = NullIfEmpty(obfsPassword),
             UpMbps = ParseInt(Value(q, "upmbps")),
             DownMbps = ParseInt(Value(q, "downmbps")),

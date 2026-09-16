@@ -86,10 +86,35 @@ public sealed partial class ServerItem(StoredProfile stored) : ObservableObject
         get
         {
             if (IsMeasuring) return "…";
+            if (Reachable == false) return AddressSilent ? "адрес недоступен" : "не проходит";
             if (Ping is { } ms) return $"{ms} мс";
             return _measured ? "нет ответа" : "";
         }
     }
+
+    // MARK: Доступность
+
+    /// <summary>
+    /// Прошёл ли через узел настоящий запрос при последней проверке. Пусто — не
+    /// проверяли. Отдельно от задержки: «нет цифры» и «не проходит» — разные вещи,
+    /// и выбирать узел автоматически можно только по второму.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PingText))]
+    [NotifyPropertyChangedFor(nameof(IsPingPoor))]
+    [NotifyPropertyChangedFor(nameof(IsUnreachable))]
+    private bool? _reachable;
+
+    /// <summary>
+    /// Молчит весь адрес: ни один узел на нём не прошёл. Так выглядит блокировка
+    /// адреса по дороге — в отличие от случая, когда на том же сервере не проходит
+    /// один протокол, а другой работает.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PingText))]
+    private bool _addressSilent;
+
+    public bool IsUnreachable => Reachable == false;
 
     /// <summary>
     /// Разряд задержки. Пороги те же, что на других платформах: до восьмидесяти —
@@ -103,7 +128,7 @@ public sealed partial class ServerItem(StoredProfile stored) : ObservableObject
 
     public bool IsPingFair => Ping is { } ms && ms >= GoodBelowMs && ms < FairBelowMs;
 
-    public bool IsPingPoor => Ping is { } ms && ms >= FairBelowMs;
+    public bool IsPingPoor => Reachable == false || (Ping is { } ms && ms >= FairBelowMs);
 
     private const int GoodBelowMs = 80;
     private const int FairBelowMs = 160;

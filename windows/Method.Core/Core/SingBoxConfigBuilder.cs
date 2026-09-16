@@ -27,6 +27,12 @@ namespace Method.Core.Core;
 /// </summary>
 public static class SingBoxConfigBuilder
 {
+    /// <summary>
+    /// Имя нашего адаптера туннеля. Вынесено наружу, чтобы проверка на чужой VPN
+    /// не приняла за чужой наш собственный — поднятый, например, до открытия окна.
+    /// </summary>
+    public const string TunnelInterfaceName = "Method";
+
     public sealed record Options
     {
         /// <summary>Адрес Clash API (управление и статистика трафика).</summary>
@@ -66,7 +72,7 @@ public static class SingBoxConfigBuilder
         /// Имя сетевого адаптера. Задаётся явно, потому что иначе Wintun называет
         /// адаптер по-своему, и найти его потом, чтобы убрать за собой, не по чему.
         /// </summary>
-        public string InterfaceName { get; init; } = "Method";
+        public string InterfaceName { get; init; } = TunnelInterfaceName;
 
         /// <summary>
         /// Стек TUN. На Windows «gvisor», а не «system», как на macOS.
