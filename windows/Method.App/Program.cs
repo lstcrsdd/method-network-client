@@ -31,14 +31,18 @@ internal static class Program
             "--service" => RunHost(args),
             "--firewall-reset" => ResetFirewall(),
             "--wfp-check" => CheckFilters(),
-            "--install" => RunInstaller(install: true),
-            "--uninstall" => RunInstaller(install: false),
+            "--install" => RunInstaller(install: true, Dir(args)),
+            "--uninstall" => RunInstaller(install: false, Dir(args)),
             _ => UnknownMode(mode),
         };
     }
 
     private static int RunGui(string[] args)
     {
+        // Окно уже открыто — будим его и выходим. Два окна на общих файлах
+        // затирают друг другу подписки и дёргают один туннель.
+        if (!SingleInstance.TryClaim()) return 0;
+
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
     }
@@ -82,11 +86,22 @@ internal static class Program
     }
 
     /// <summary>Установка и удаление привилегированной части. Требуют прав администратора.</summary>
-    private static int RunInstaller(bool install)
+    /// <summary>
+    /// Каталог, названный мастером установки: «--dir путь». Своего каталога
+    /// клиент тогда не выбирает — ставится туда, куда указал человек.
+    /// </summary>
+    private static string? Dir(string[] args)
+    {
+        var at = Array.IndexOf(args, "--dir");
+
+        return at >= 0 && at + 1 < args.Length ? args[at + 1] : null;
+    }
+
+    private static int RunInstaller(bool install, string? dir)
     {
         AttachToParentConsole();
 
-        var outcome = install ? Installer.Install() : Installer.Uninstall();
+        var outcome = install ? Installer.Install(dir) : Installer.Uninstall(dir);
 
         Console.Error.WriteLine(outcome.Ok
             ? "Method: готово."
@@ -286,7 +301,7 @@ internal static class Program
 
     private static int UnknownMode(string mode)
     {
-        WriteLine($"Method: неизвестный режим «{mode}». Доступны: --service [--debug], --install, --uninstall, " +
+        WriteLine($"Method: неизвестный режим «{mode}». Доступны: --service [--debug], --install [--dir путь], --uninstall [--dir путь], " +
                   "--firewall-reset, --wfp-check.");
         return 64;
     }

@@ -36,13 +36,13 @@ AppUpdatesURL=https://github.com/lstcrsdd/method-network-client/releases
 VersionInfoVersion={#Version}
 VersionInfoProductName={#Name}
 
-; Каталог не выбирается, и это не небрежность. Клиент умеет ставить себя сам и
-; при установке копируется в %ProgramFiles%\Method — путь зашит в нём самом.
-; Дай выбрать другой, и после мастера файлы окажутся в двух местах: там, куда
-; указал человек, и там, куда клиент отнёс себя сам.
+; Каталог выбирается, как и положено. Страница была выключена, пока клиент
+; ставил себя сам: путь %ProgramFiles%\Method был зашит в нём, и выбор другого
+; каталога развёл бы файлы по двум местам. Теперь мастер называет свой каталог
+; прямо (--dir ниже), клиент ставится туда, куда указал человек, а умолчание
+; осталось прежним.
 DefaultDirName={commonpf}\{#Name}
 AppendDefaultDirName=no
-DisableDirPage=yes
 DisableProgramGroupPage=yes
 DefaultGroupName={#Name}
 UninstallDisplayIcon={app}\{#ExeName}
@@ -124,13 +124,13 @@ Name: "{autodesktop}\{#Name}"; Filename: "{app}\{#ExeName}"; Tasks: desktopicon
 ; какие права урезать у рабочего каталога и какие правила брандмауэра нужны
 ; движку. Повторять это в мастере значило бы завести второе описание того же,
 ; которое разойдётся с первым при первой же правке.
-Filename: "{app}\{#ExeName}"; Parameters: "--install"; StatusMsg: "Регистрация службы туннеля…"; Flags: runhidden waituntilterminated
+Filename: "{app}\{#ExeName}"; Parameters: "--install --dir ""{app}"""; StatusMsg: "Регистрация службы туннеля…"; Flags: runhidden waituntilterminated
 Filename: "{app}\{#ExeName}"; Description: "Запустить {#Name}"; Flags: nowait postinstall skipifsilent runasoriginaluser
 
 [UninstallRun]
 ; Снять службу, правила брандмауэра и блокировку исходящего трафика. Делает это
 ; тот же клиент и точечно — по своим путям: чужой VPN на машине не трогаем.
-Filename: "{app}\{#ExeName}"; Parameters: "--uninstall"; Flags: runhidden waituntilterminated; RunOnceId: "MethodUninstall"
+Filename: "{app}\{#ExeName}"; Parameters: "--uninstall --dir ""{app}"""; Flags: runhidden waituntilterminated; RunOnceId: "MethodUninstall"
 
 [Code]
 // Остановка клиента ДО копирования файлов.

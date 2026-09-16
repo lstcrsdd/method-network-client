@@ -10,6 +10,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Method.App.Services;
 using Method.App.ViewModels;
 using Method.App.Views;
@@ -33,6 +34,14 @@ public partial class App : Application
 
             _tray = new TrayPresence(model);
             _tray.Attach(window);
+
+            // Повторный запуск клиента поднимает это окно, а не второе.
+            SingleInstance.OnSecondLaunch(() => Dispatcher.UIThread.Post(() =>
+            {
+                window.Show();
+                window.WindowState = WindowState.Normal;
+                window.Activate();
+            }));
 
             desktop.MainWindow = window;
 

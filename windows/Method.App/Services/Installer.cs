@@ -41,10 +41,31 @@ public static class Installer
 
     private const string FirewallRuleName = "Method Core";
 
+    private static string? _dir;
+
+    /// <summary>
+    /// Куда поставлен клиент.
+    ///
+    /// <para>По умолчанию — <c>%ProgramFiles%\Method</c>: так ставит себя сам
+    /// клиент, когда его запустили из «Загрузок» и нажали установку. Но когда
+    /// его ставит мастер, каталог выбирает человек, и мастер называет его
+    /// прямо — иначе файлы разъехались бы по двум местам: туда, куда указали
+    /// мастеру, и туда, куда клиент отнёс себя сам.</para>
+    /// </summary>
     public static string InstallDir =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), AppPaths.ProductName);
+        _dir ??= Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), AppPaths.ProductName);
 
     public static string InstalledExe => Path.Combine(InstallDir, "Method.exe");
+
+    /// <summary>
+    /// Назвать каталог установки. Пустое имя оставляет умолчание: мастер
+    /// передаёт свой каталог, ручная установка не передаёт ничего.
+    /// </summary>
+    private static void UseDir(string? dir)
+    {
+        if (!string.IsNullOrWhiteSpace(dir)) _dir = Path.GetFullPath(dir);
+    }
 
     private static readonly HelperLog Log = new(Path.Combine(AppPaths.ProgramDataDir, "install.log"));
 
@@ -84,10 +105,12 @@ public static class Installer
 
     // MARK: Установка
 
-    public static InstallOutcome Install()
+    public static InstallOutcome Install(string? dir = null)
     {
         if (!Elevation.IsElevated())
             return new InstallOutcome(false, "установка требует прав администратора");
+
+        UseDir(dir);
 
         try
         {
@@ -162,10 +185,12 @@ public static class Installer
         return Fail(reason);
     }
 
-    public static InstallOutcome Uninstall()
+    public static InstallOutcome Uninstall(string? dir = null)
     {
         if (!Elevation.IsElevated())
             return new InstallOutcome(false, "удаление требует прав администратора");
+
+        UseDir(dir);
 
         try
         {
