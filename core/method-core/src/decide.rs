@@ -55,6 +55,22 @@ pub const LOST_STREAK_EMERGENCY: u32 = 3;
 /// дороге.
 pub const AXIS_DEAD_MIN_NODES: usize = 2;
 
+/// Сколько РАЗНЫХ осей должны умереть на узле при ни одной живой, чтобы его
+/// смерть считалась смертью АДРЕСА, а не осей. НАША константа: документ этого
+/// случая не разбирает.
+///
+/// Блокировка по адресу убивает на узле все способы разом. Такой узел — улика
+/// против себя, а не против способов обхода: прочитай его осевым вердиктом, и
+/// двух заблокированных адресов хватит, чтобы объявить непроходимой КАЖДУЮ
+/// ось. Штраф ляжет на все одинаково, разница между ними сотрётся до потолка,
+/// и настоящую фильтрацию, когда она придёт, отличить будет уже нечем.
+///
+/// Двух осей хватает: одновременная и независимая смерть двух разных способов
+/// на одном сервере — это не сеть, это сервер или его адрес. Узел с ОДНОЙ
+/// осью таким образом не классифицировать: по нему «умер адрес» от «умерла
+/// ось» не отличить, и его свидетельство остаётся осевым, как было.
+pub const NODE_DEAD_MIN_AXES: usize = 2;
+
 /// Осевой штраф за один цикл, пункты оценки. НАША константа: документ
 /// называет её `AXIS_PENALTY`, но числа не приводит.
 ///
@@ -394,8 +410,15 @@ pub fn classify_axes(
         }
     }
 
+    let silent = dead_addresses(&per_node);
+
     let mut out: BTreeMap<Axis, AxisVerdict> = BTreeMap::new();
     for ((axis, node), (alive, dead)) in per_node {
+        // Узел, молчащий всеми способами, свидетельствует против своего
+        // адреса. Против оси его смерть не говорит ничего.
+        if silent.contains(&node) {
+            continue;
+        }
         let v = out.entry(axis).or_default();
         if alive {
             v.alive_nodes.insert(node);
@@ -404,6 +427,28 @@ pub fn classify_axes(
         }
     }
     out
+}
+
+/// Узлы, мёртвые ЦЕЛИКОМ: ни одного живого маршрута и не меньше
+/// [`NODE_DEAD_MIN_AXES`] разных осей, мёртвых на нём. Неизвестные маршруты
+/// (нет свежих проб) не свидетельствуют ни за, ни против.
+fn dead_addresses(per_node: &BTreeMap<(Axis, NodeId), (bool, bool)>) -> BTreeSet<NodeId> {
+    let mut alive: BTreeSet<NodeId> = BTreeSet::new();
+    let mut dead_axes: BTreeMap<NodeId, BTreeSet<Axis>> = BTreeMap::new();
+
+    for ((axis, node), (is_alive, is_dead)) in per_node {
+        if *is_alive {
+            alive.insert(node.clone());
+        } else if *is_dead {
+            dead_axes.entry(node.clone()).or_default().insert(*axis);
+        }
+    }
+
+    dead_axes
+        .into_iter()
+        .filter(|(node, axes)| !alive.contains(node) && axes.len() >= NODE_DEAD_MIN_AXES)
+        .map(|(node, _)| node)
+        .collect()
 }
 
 // ──────────────────────── Ключ сглаженной серии ────────────────────────
@@ -1418,6 +1463,52 @@ mod tests {
         assert!(!род(&reasons, ReasonKind::AxisDead));
         assert_eq!(w.damper.axis_penalty_points(Axis::QuicUdp, сейчас()), 0.0);
         assert_eq!(выбран(&acts), Some(RouteId::new("fi.hy2")));
+    }
+
+    #[test]
+    fn заблокированные_адреса_не_выдаются_за_фильтрацию_осей() {
+        // Так выглядит блокировка по адресам: два узла молчат ВСЕМИ
+        // способами, третий отвечает всеми. Это свидетельство против двух
+        // адресов, а не против способов обхода. Прочти его осевым вердиктом —
+        // и ядро объявит «в этой сети не проходит» каждую ось сразу, штрафом
+        // до потолка сотрёт между ними разницу и ослепнет к настоящей
+        // фильтрации, когда та придёт.
+        let lane = полоса("web", OnEmpty::Block);
+        let mut w = Мир::new();
+        for node in ["fi", "il"] {
+            let hy = format!("{node}.hy2");
+            let tr = format!("{node}.trojan");
+            w.добавить(&lane, маршрут(&hy, node, Axis::QuicUdp), мёртвое(&hy, Axis::QuicUdp, 40.0), "XX");
+            w.добавить(&lane, маршрут(&tr, node, Axis::RealTls), мёртвое(&tr, Axis::RealTls, 120.0), "XX");
+        }
+        w.добавить(&lane, маршрут("lt.hy2", "lt", Axis::QuicUdp), живое("lt.hy2", Axis::QuicUdp, 40.0), "LT");
+        w.добавить(&lane, маршрут("lt.trojan", "lt", Axis::RealTls), живое("lt.trojan", Axis::RealTls, 120.0), "LT");
+
+        let (acts, reasons) = w.свести(std::slice::from_ref(&lane), сейчас());
+
+        assert!(!род(&reasons, ReasonKind::AxisDead), "мёртвые адреса приняты за фильтрацию: {reasons:?}");
+        assert_eq!(w.damper.axis_penalty_points(Axis::QuicUdp, сейчас()), 0.0);
+        assert_eq!(w.damper.axis_penalty_points(Axis::RealTls, сейчас()), 0.0);
+        assert_eq!(выбран(&acts), Some(RouteId::new("lt.hy2")));
+    }
+
+    #[test]
+    fn узел_с_одной_осью_по_прежнему_свидетельствует_против_оси() {
+        // Узел, на котором есть всего один способ, по его смерти не отличить
+        // «умер адрес» от «умерла ось». Такое свидетельство остаётся осевым,
+        // как было: иначе фильтрация QUIC на пуле из одних Hysteria2-узлов
+        // перестала бы замечаться вовсе.
+        let lane = полоса("web", OnEmpty::Block);
+        let mut w = Мир::new();
+        w.добавить(&lane, маршрут("fi.hy2", "fi", Axis::QuicUdp), мёртвое("fi.hy2", Axis::QuicUdp, 40.0), "FI");
+        w.добавить(&lane, маршрут("il.hy2", "il", Axis::QuicUdp), мёртвое("il.hy2", Axis::QuicUdp, 40.0), "IL");
+        w.добавить(&lane, маршрут("lt.hy2", "lt", Axis::QuicUdp), живое("lt.hy2", Axis::QuicUdp, 30.0), "LT");
+        w.добавить(&lane, маршрут("lt.trojan", "lt", Axis::RealTls), живое("lt.trojan", Axis::RealTls, 120.0), "LT");
+
+        let (_, reasons) = w.свести(std::slice::from_ref(&lane), сейчас());
+
+        assert!(род(&reasons, ReasonKind::AxisDead));
+        assert!(w.damper.axis_penalty_points(Axis::QuicUdp, сейчас()) > 0.0);
     }
 
     // ── 3. Человек сильнее математики, но не сильнее фактов ──
