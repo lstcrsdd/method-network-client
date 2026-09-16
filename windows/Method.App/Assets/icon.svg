@@ -1,60 +1,57 @@
 <!--
-  Вариант Б: то же самое минус орбита.
+  Знак приложения: то же, что человек видит в окне, — неоновое кольцо, тёмный
+  диск и литера «М» со штрихами уровня под ней.
 
-  Орбита в иконке размером с ноготь работает против знака: тонкая дуга либо
-  теряется, либо мешает букве, а несёт она ровно ноль смысла — в отличие от
-  солнца, которое и есть примета жанра. Заодно буква опущена ниже и стоит на
-  солнце, а не висит в нём: так читается «закат за буквой», а не «две фигуры,
-  случайно оказавшиеся рядом».
+  Прежний знак был синтвейвом сам по себе: закат, полосы, холодная литера. Он
+  был хорош, но жил отдельной жизнью от клиента, а знак на панели задач и знак
+  на главном экране обязаны быть одним знаком. Цвета взяты из основного
+  оформления: слива в подложке, закатный коралл в неоне.
+
+  Свечение здесь набрано размытием, а не слоями обводок, как в самом клиенте:
+  в SVG размытие есть, и спорить с ним незачем. Порядок тот же — широкий
+  ореол, трубка, выбеленная сердцевина.
+
+  Тёмного диска под литерой, в отличие от окна, нет. В окне он служит кнопкой,
+  которую нажимают; здесь нажимать нечего, а лишняя фигура на значке в
+  тридцать две точки — это пятно, съедающее просветы литеры.
+
+  Ступень для крупных размеров: 128–256.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#0f1423"/>
-      <stop offset="70%" stop-color="#1f1838"/>
-      <stop offset="100%" stop-color="#5c1d38"/>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#181320"/>
+      <stop offset="100%" stop-color="#241520"/>
     </linearGradient>
 
-    <linearGradient id="sunGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffd166"/>
-      <stop offset="55%" stop-color="#ff6b35"/>
-      <stop offset="100%" stop-color="#ff2a5f"/>
-    </linearGradient>
-
-    <linearGradient id="letterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#00f2fe"/>
-      <stop offset="55%" stop-color="#4facfe"/>
-      <stop offset="100%" stop-color="#ff0844"/>
-    </linearGradient>
-
-    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
-      <feGaussianBlur stdDeviation="7" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <filter id="halo" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="13"/>
     </filter>
 
-    <clipPath id="sunClip">
-      <circle cx="256" cy="300" r="150"/>
-    </clipPath>
+    <filter id="haloTight" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
   </defs>
 
-  <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
 
-  <circle cx="256" cy="300" r="150" fill="#ff4b2b" opacity="0.35" filter="url(#glow)"/>
-  <circle cx="256" cy="300" r="150" fill="url(#sunGrad)" opacity="0.92"/>
+  <!-- Кольцо: ореол, трубка, сердцевина. -->
+  <circle cx="256" cy="256" r="172" fill="none" stroke="#EE7A4E" stroke-width="26"
+          opacity="0.45" filter="url(#halo)"/>
+  <circle cx="256" cy="256" r="172" fill="none" stroke="#EE7A4E" stroke-width="11"/>
+  <circle cx="256" cy="256" r="172" fill="none" stroke="#F9D0C1" stroke-width="4"/>
 
-  <g clip-path="url(#sunClip)" fill="#0f1423">
-    <rect x="100" y="292" width="312" height="8"/>
-    <rect x="100" y="322" width="312" height="13"/>
-    <rect x="100" y="360" width="312" height="19"/>
-    <rect x="100" y="406" width="312" height="28"/>
+  <!--
+    Литера и штрихи — тот же путь, что в клиенте, в тех же единицах. Середина
+    пути (12; 15.1) ставится в середину холста, дальше масштаб.
+  -->
+  <g transform="translate(256 256) scale(7.8) translate(-12 -15.1)"
+     fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4,17.5 L4,4 L12,12 L20,4 L20,17.5 M8.5,19.8 V23.6 M12,21.1 V26.2 M15.5,19.8 V23.6"
+          stroke="#EE7A4E" stroke-width="3.6" opacity="0.6" filter="url(#haloTight)"/>
+    <path d="M4,17.5 L4,4 L12,12 L20,4 L20,17.5 M8.5,19.8 V23.6 M12,21.1 V26.2 M15.5,19.8 V23.6"
+          stroke="#EE7A4E" stroke-width="1.55"/>
+    <path d="M4,17.5 L4,4 L12,12 L20,4 L20,17.5 M8.5,19.8 V23.6 M12,21.1 V26.2 M15.5,19.8 V23.6"
+          stroke="#F9D0C1" stroke-width="0.55"/>
   </g>
-
-  <path d="M 120 384 L 120 154 L 190 154 L 256 269 L 322 154 L 392 154 L 392 384 L 332 384 L 332 254 L 276 349 L 236 349 L 180 254 L 180 384 Z"
-        fill="url(#letterGrad)"
-        stroke="#ffffff"
-        stroke-width="3"
-        filter="url(#glow)"/>
 </svg>

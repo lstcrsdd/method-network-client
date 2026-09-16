@@ -22,6 +22,22 @@ if (args.Length >= 2 && args[0].EndsWith(".svg", StringComparison.OrdinalIgnoreC
         return 1;
     }
 
+    // Знак трея — один вектор на все размеры, в отличие от знака приложения:
+    // он мелкий по назначению, ступеней ему не нужно, а рисуется всё равно
+    // каждый размер из вектора.
+    if (args[1].EndsWith(".ico", StringComparison.OrdinalIgnoreCase))
+    {
+        int[] traySizes = [16, 20, 24, 32, 40, 48, 64];
+
+        WriteIco(args[1], traySizes
+            .Select(size => (size, Render(one.Picture!, one.Picture!.CullRect, size)))
+            .ToList());
+
+        Console.WriteLine($"иконка: {args[1]}, кадров {traySizes.Length}, {new FileInfo(args[1]).Length} Б");
+
+        return 0;
+    }
+
     var side = args.Length > 2 ? int.Parse(args[2]) : 256;
     File.WriteAllBytes(args[1], Render(one.Picture!, one.Picture!.CullRect, side));
     Console.WriteLine($"{args[1]}: {side}×{side}");

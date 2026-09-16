@@ -1,58 +1,42 @@
 <!--
-  Ступень для средних размеров: 32–64 px.
+  Ступень для средних размеров: 32–64.
 
-  От полного вектора отличается тем, что убрано всё, чего на этих размерах не
-  видно, а мешает оно вполне: внешняя белая обводка буквы (3 единицы холста —
-  это четверть пикселя на 40 px, но она съедает край свечения), две из четырёх
-  полос заката (на 32 px соседние сливаются в серое) и ореол под солнцем.
-  Размытие уменьшено втрое: на 512 это ореол, на 40 — туман поверх знака.
+  Размытие здесь втрое слабее, чем на крупной ступени, и не потому, что так
+  красивее: ореол задан в единицах холста 512, и на сорока восьми пикселях
+  тринадцать единиц размытия накрывают знак целиком — вместо неона выходит
+  оранжевое облако.
+
+  Штрихи уровня оставлены, но стали толще: на 32 px линия в полторы единицы
+  холста — это девятая часть пикселя, то есть её нет.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#0f1423"/>
-      <stop offset="70%" stop-color="#1f1838"/>
-      <stop offset="100%" stop-color="#5c1d38"/>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#181320"/>
+      <stop offset="100%" stop-color="#241520"/>
     </linearGradient>
 
-    <linearGradient id="sunGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffd166"/>
-      <stop offset="55%" stop-color="#ff6b35"/>
-      <stop offset="100%" stop-color="#ff2a5f"/>
-    </linearGradient>
-
-    <linearGradient id="letterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#00f2fe"/>
-      <stop offset="55%" stop-color="#4facfe"/>
-      <stop offset="100%" stop-color="#ff0844"/>
-    </linearGradient>
-
-    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <filter id="halo" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5"/>
     </filter>
-
-    <clipPath id="sunClip">
-      <circle cx="256" cy="318" r="126"/>
-    </clipPath>
   </defs>
 
-  <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
+  <rect width="512" height="512" rx="88" fill="url(#bg)"/>
 
-  <!-- Солнце меньше и ниже полного вектора: на 32 px диск в 150 единиц
-       выходит за края литеры и спорит с ней за внимание. -->
-  <circle cx="256" cy="318" r="126" fill="url(#sunGrad)"/>
+  <!-- Кольцо ближе к краю и толще: на мелком размере тонкая окружность
+       превращается в пунктир из-за сглаживания. -->
+  <circle cx="256" cy="256" r="174" fill="none" stroke="#EE7A4E" stroke-width="22"
+          opacity="0.4" filter="url(#halo)"/>
+  <circle cx="256" cy="256" r="174" fill="none" stroke="#EE7A4E" stroke-width="15"/>
+  <circle cx="256" cy="256" r="174" fill="none" stroke="#F9D0C1" stroke-width="5"/>
 
-  <g clip-path="url(#sunClip)" fill="#0f1423">
-    <rect x="130" y="340" width="252" height="16"/>
-    <rect x="130" y="396" width="252" height="26"/>
+  <g transform="translate(256 256) scale(6.9) translate(-12 -15.1)"
+     fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4,17.5 L4,4 L12,12 L20,4 L20,17.5 M8.5,19.8 V23.6 M12,21.1 V26.2 M15.5,19.8 V23.6"
+          stroke="#EE7A4E" stroke-width="3.6" opacity="0.45" filter="url(#halo)"/>
+    <path d="M4,17.5 L4,4 L12,12 L20,4 L20,17.5 M8.5,19.8 V23.6 M12,21.1 V26.2 M15.5,19.8 V23.6"
+          stroke="#EE7A4E" stroke-width="2.1"/>
+    <path d="M4,17.5 L4,4 L12,12 L20,4 L20,17.5 M8.5,19.8 V23.6 M12,21.1 V26.2 M15.5,19.8 V23.6"
+          stroke="#F9D0C1" stroke-width="0.75"/>
   </g>
-
-  <!-- Буква чуть шире: на 32 px узкая середина смыкается и М читается как П. -->
-  <path d="M 112 388 L 112 148 L 190 148 L 256 264 L 322 148 L 400 148 L 400 388 L 330 388 L 330 250 L 280 338 L 232 338 L 182 250 L 182 388 Z"
-        fill="url(#letterGrad)"
-        filter="url(#glow)"/>
 </svg>
