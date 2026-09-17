@@ -51,6 +51,16 @@ public sealed record Subscription
     [JsonPropertyName("lastUpdatedAt")]
     public DateTimeOffset? LastUpdatedAt { get; init; }
 
+    /// <summary>
+    /// Какой версией клиента разобраны узлы этой подписки. Разбор меняется между
+    /// версиями — однажды из-за этого узлы Hysteria2 перестали подниматься, — а
+    /// сохранённые узлы остаются в старом разборе, пока подписку не обновят. Не
+    /// совпало с текущей версией — подписка обновляется при запуске сразу, а не
+    /// по расписанию через часы.
+    /// </summary>
+    [JsonPropertyName("parsedBy")]
+    public string? ParsedBy { get; init; }
+
     [JsonPropertyName("lastError")]
     public string? LastError { get; init; }
 

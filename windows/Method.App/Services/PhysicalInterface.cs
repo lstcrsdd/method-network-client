@@ -20,8 +20,16 @@ namespace Method.App.Services;
 /// </summary>
 public static class PhysicalInterface
 {
+    /// <summary>
+    /// Туннели, а не выходы. Виртуальные адаптеры Hyper-V, VirtualBox и VMware
+    /// сюда нарочно не входят: у внешнего коммутатора Hyper-V именно он и есть
+    /// выход машины в сеть — сетевая карта отдана коммутатору и своего адреса не
+    /// имеет. Исключи его, и на такой машине проверка узлов не находила выхода
+    /// вовсе и шла через туннель. Внутренние виртуальные сети шлюза не имеют и
+    /// отсекаются им.
+    /// </summary>
     private static readonly string[] Virtual =
-        ["sing-tun", "wintun", "wireguard", "tap-windows", "tap-", "hyper-v", "virtualbox", "vmware", "loopback"];
+        ["sing-tun", "wintun", "wireguard", "tap-windows", "tap-", "openvpn", "tunnel", "vpn", "tailscale", "zerotier", "loopback"];
 
     /// <summary>Имя интерфейса с маршрутом наружу. Пусто — определить не вышло.</summary>
     public static string? Name()

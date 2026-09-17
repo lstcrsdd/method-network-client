@@ -173,6 +173,7 @@ public sealed partial class MainViewModel
                 UpdateIntervalHours = result.UpdateIntervalHours,
                 LastSkippedCount = result.SkippedCount,
                 LastUpdatedAt = DateTimeOffset.Now,
+                ParsedBy = ParserVersion,
                 LastError = null,
                 TrafficUsed = result.TrafficUsed,
                 TrafficTotal = result.TrafficTotal,
@@ -292,8 +293,27 @@ public sealed partial class MainViewModel
     /// Проверка раз в четверть часа: не пора ли обновить какую-нибудь подписку.
     /// Срок берётся у самой подписки, а если она его не назвала — сутки.
     /// </summary>
+    /// <summary>Версия клиента, которой разбираются подписки сейчас.</summary>
+    private static readonly string ParserVersion =
+        typeof(MainViewModel).Assembly.GetName().Version?.ToString() ?? "?";
+
     private void StartAutoUpdate()
     {
+        // Подписки, разобранные другой версией клиента, обновляем сразу при
+        // запуске. Их узлы собраны прежним разборщиком и могут не работать — так
+        // и было: после обновления клиента узлы Hysteria2 оставались
+        // неподключаемыми до планового обновления через два часа.
+        Dispatcher.UIThread.Post(async () =>
+        {
+            var stale = Subscriptions.Where(s => s.Subscription.ParsedBy != ParserVersion).ToArray();
+            if (stale.Length == 0) return;
+
+            foreach (var item in stale) await RefreshAsync(item).ConfigureAwait(true);
+
+            SaveAll();
+            NotifyGroupsChanged();
+        });
+
         _autoUpdateTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(15) };
         _autoUpdateTimer.Tick += async (_, _) => await AutoUpdateDueAsync().ConfigureAwait(true);
         _autoUpdateTimer.Start();
