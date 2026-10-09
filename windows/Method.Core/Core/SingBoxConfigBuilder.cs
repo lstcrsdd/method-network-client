@@ -224,7 +224,7 @@ public static class SingBoxConfigBuilder
         return new Dictionary<string, object?>
         {
             ["log"] = new Dictionary<string, object?> { ["level"] = options.LogLevel, ["timestamp"] = true },
-            ["dns"] = Dns(),
+            ["dns"] = Dns(profile),
             ["inbounds"] = new object[] { TunInbound(options) },
             ["outbounds"] = outbounds.ToArray(),
             ["route"] = Route(profile, options),
@@ -285,18 +285,19 @@ public static class SingBoxConfigBuilder
 
     // MARK: Секции
 
-    private static Dictionary<string, object?> Dns() => new()
+    private static Dictionary<string, object?> Dns(ServerProfile profile) => new()
     {
         ["servers"] = new object[]
         {
-            // Обычный UDP внутрь туннеля, а не DNS-over-TLS. DoT держит долгоживущий
+            // Обычный DNS внутрь туннеля, а не DNS-over-TLS. DoT держит долгоживущий
             // сеанс TCP, и внутри QUIC он залипал: соединение к 1.1.1.1:853 висело
             // десятками секунд и валилось в «context deadline exceeded», из-за чего
             // вставал резолв и весь клиент выглядел нерабочим при живом туннеле.
             // Приватность не страдает — запрос идёт внутри шифрованного канала.
             new Dictionary<string, object?>
             {
-                ["tag"] = RemoteDnsTag, ["type"] = "udp", ["server"] = "1.1.1.1", ["detour"] = ProxyTag,
+                ["tag"] = RemoteDnsTag, ["type"] = RemoteDnsTransport(profile), ["server"] = "1.1.1.1",
+                ["detour"] = ProxyTag,
             },
             // Единственный резолвер, ходящий мимо туннеля, и нужен он ровно для
             // одного: узнать адрес самой ноды до того, как туннель встал. Ссылается
@@ -317,6 +318,25 @@ public static class SingBoxConfigBuilder
         // дыру на записях AAAA.
         ["strategy"] = "ipv4_only",
     };
+
+    /// <summary>
+    /// Транспорт DNS внутри туннеля: UDP, а через узлы с транспортом gRPC — TCP.
+    ///
+    /// <para>UDP через gRPC не проходит: каждый запрос падает с «read/write on
+    /// closed pipe» — замерено на живых узлах VLESS Reality, по TCP через те же узлы
+    /// ответ приходит. Сбой тихий и дорогой: DNS туннеля молчит, Windows идёт к
+    /// резолверу провайдера мимо туннеля, и тот отвечает «имени нет» на всё, что
+    /// заблокировано. На живой машине так «не существовал» YouTube при исправном
+    /// туннеле, а Google открывался, отчего поломка выглядела выборочной.</para>
+    ///
+    /// <para>Через остальные транспорты UDP оставлен: на нём DNS работал всегда, и
+    /// одно постоянное соединение TCP на весь резолв — лишняя точка залипания.</para>
+    /// </summary>
+    internal static string RemoteDnsTransport(ServerProfile profile) =>
+        !string.IsNullOrEmpty(profile.Parameters.VlessReality?.GrpcServiceName)
+        || !string.IsNullOrEmpty(profile.Parameters.Trojan?.GrpcServiceName)
+            ? "tcp"
+            : "udp";
 
     private static Dictionary<string, object?> TunInbound(Options options) => new()
     {

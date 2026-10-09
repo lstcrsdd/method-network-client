@@ -123,6 +123,22 @@ public class SingBoxConfigBuilderTests
         Assert.Equal("bootstrap", proxy.GetProperty("domain_resolver").GetProperty("server").GetString());
     }
 
+    [Fact]
+    public void DNS_через_gRPC_идёт_по_TCP_через_остальные_по_UDP()
+    {
+        // UDP через gRPC не проходит («read/write on closed pipe»), и DNS туннеля
+        // тогда молчит целиком — Windows уходит к резолверу провайдера мимо туннеля.
+        string Transport(ServerProfile p) =>
+            Root(p).GetProperty("dns").GetProperty("servers")[0].GetProperty("type").GetString()!;
+
+        Assert.Equal("tcp", Transport(TestProfiles.VlessGrpc()));
+        Assert.Equal("tcp", Transport(TestProfiles.TrojanGrpc()));
+        Assert.Equal("udp", Transport(TestProfiles.VlessVision()));
+        Assert.Equal("udp", Transport(TestProfiles.Hysteria2()));
+        Assert.Equal("udp", Transport(TestProfiles.TrojanWs()));
+        Assert.Equal("udp", Transport(TestProfiles.Shadowsocks()));
+    }
+
     // MARK: Outbound по протоколам
 
     [Fact]
