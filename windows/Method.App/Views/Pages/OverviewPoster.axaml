@@ -219,6 +219,11 @@
                  TextWrapping="Wrap" Margin="0,5,0,0"
                  Foreground="{DynamicResource TextPrimaryBrush}"
                  IsVisible="{Binding HasServers}" />
+      <!-- Выбранный узел не проходит — говорим здесь же, под его именем. -->
+      <TextBlock Text="{Binding SelectedHealthText}" FontSize="12" TextWrapping="Wrap"
+                 Margin="0,4,0,0" MaxWidth="520"
+                 Foreground="{DynamicResource ErrorBrush}"
+                 IsVisible="{Binding HasSelectedHealth}" />
 
       <Button Classes="quiet" Command="{Binding GoToCommand}" CommandParameter="Servers"
               HorizontalAlignment="Left" Margin="-8,3,0,0">
@@ -328,11 +333,22 @@
     </c:TubeScreen>
     </Grid>
 
-    <!-- Ошибка или предупреждение. Молчать здесь нельзя. -->
-    <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Text="{Binding Detail}" Margin="0,14,0,0"
-               FontSize="12.5" TextWrapping="Wrap" MaxWidth="720"
-               HorizontalAlignment="Left"
-               Foreground="{DynamicResource TextSecondaryBrush}"
-               IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,14,0,0" Spacing="12" HorizontalAlignment="Left">
+      <!-- Ошибка или предупреждение. Молчать здесь нельзя. -->
+      <TextBlock Text="{Binding Detail}"
+                 FontSize="12.5" TextWrapping="Wrap" MaxWidth="720"
+                 Foreground="{DynamicResource TextSecondaryBrush}"
+                 IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+      <!-- Чужой системный прокси: состояние машины, а не событие, поэтому своей строкой. -->
+      <StackPanel Spacing="10" IsVisible="{Binding HasProxyWarning}">
+        <TextBlock Text="{Binding ProxyWarning}"
+                   FontSize="12.5" TextWrapping="Wrap" MaxWidth="720"
+                   Foreground="{DynamicResource WarningBrush}" />
+        <Button Classes="secondary" HorizontalAlignment="Left"
+                Content="Снять системный прокси"
+                Command="{Binding DisableSystemProxyCommand}" />
+      </StackPanel>
+    </StackPanel>
   </Grid>
 </UserControl>

@@ -55,6 +55,17 @@ public sealed partial class ServerItem(StoredProfile stored) : ObservableObject
     };
 
     /// <summary>Метка выделения, которую поставил провайдер. Пусто — обычный сервер.</summary>
+    /// <summary>
+    /// Протокол вместе с транспортом — то, что живёт или умирает целиком. gRPC и
+    /// Vision одного протокола режут по-разному, поэтому это разные семейства.
+    /// </summary>
+    public string Family => Profile.Parameters.Kind switch
+    {
+        VpnProtocol.Hysteria2 => "Hysteria2",
+        _ when Transport.Contains("gRPC", StringComparison.Ordinal) => $"{Profile.Protocol.DisplayName()} · gRPC",
+        _ => Profile.Protocol.DisplayName(),
+    };
+
     public string? FeaturedLabel => Profile.FeaturedLabel;
 
     public bool IsFeatured => Profile.IsFeatured;

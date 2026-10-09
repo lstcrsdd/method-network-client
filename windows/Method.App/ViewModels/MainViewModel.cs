@@ -50,7 +50,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public MainViewModel() : this(
         ProfileStore.Default(new DpapiSecretBox()),
-        new SubscriptionService(new HttpClient(), new WindowsDeviceIdentity()))
+        new SubscriptionService(new HttpClient(DirectHttp.Handler()), new WindowsDeviceIdentity()))
     {
     }
 
@@ -86,6 +86,9 @@ public sealed partial class MainViewModel : ObservableObject
         // мёртвом узле, и тогда клиент показывает «Подключено» при отсутствии
         // сети.
         StartReachWatch();
+
+        // А этот — что живо из всех узлов, не дожидаясь кнопки.
+        StartHealthWatch();
 
         // Заставка показывает эти же шаги человеку. Записи идут после того, как
         // шаг сделан, а не вместо него: журнал докладывает о работе, а не
@@ -227,6 +230,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (oldValue is not null) oldValue.IsSelected = false;
         if (newValue is not null) newValue.IsSelected = true;
         SaveSettings();
+        UpdateHealthSummary();
     }
 
     // MARK: Состояние подключения
@@ -496,6 +500,9 @@ public sealed partial class MainViewModel : ObservableObject
 
         WorkJournal.Resolve("Пуск", item.Name, JournalOutcome.Ok);
         WorkJournal.Add("Итог", $"готов за {Seconds(started)}", JournalOutcome.Ok);
+
+        // Туннель поднят — живой чужой прокси теперь уводит программы мимо него.
+        await RefreshSystemProxyAsync().ConfigureAwait(true);
     }
 
     private async Task DisconnectAsync()
@@ -517,6 +524,8 @@ public sealed partial class MainViewModel : ObservableObject
         WorkJournal.Resolve("Останов",
             ok ? warning ?? "туннель снят, маршруты возвращены" : error ?? "причина неизвестна",
             ok ? warning is null ? JournalOutcome.Ok : JournalOutcome.Warning : JournalOutcome.Failed);
+
+        await RefreshSystemProxyAsync().ConfigureAwait(true);
     }
 
     /// <summary>
@@ -585,17 +594,43 @@ public sealed partial class MainViewModel : ObservableObject
             Save();
             RebuildGroups();
             SelectedServer ??= Servers.FirstOrDefault();
+            ProbeSoon(TimeSpan.FromSeconds(3));
         }
 
         NotifyListChanged();
         return new ImportResult(added, profiles.Count - added, errors);
     }
 
+    /// <summary>
+    /// Выбор узла человеком.
+    ///
+    /// <para>При поднятом туннеле выбор обязан его переносить. Раньше здесь только
+    /// менялась подсветка: окно показывало новый узел, а движок продолжал работать
+    /// на прежнем. На живой машине это выглядело как «литовская Hysteria
+    /// работает», хотя трафик шёл через финский Reality, а сама Hysteria молчала.
+    /// Хуже неработающего узла только узел, который врёт о том, через что идёт
+    /// трафик.</para>
+    ///
+    /// <para>Переносим именно здесь, а не в обработчике смены свойства: свойство
+    /// меняют и обновление подписки (возвращает выбор на тот же узел), и сторож
+    /// (сам переподключает), и каждое такое изменение рвало бы связь впустую.</para>
+    /// </summary>
     [RelayCommand]
-    private void Select(ServerItem? item)
+    private async Task SelectAsync(ServerItem? item)
     {
         if (item is null) return;
+
+        var moving = !ReferenceEquals(item, SelectedServer)
+                     && State is ConnectionState.Connected or ConnectionState.Connecting;
+
         SelectedServer = item;
+        if (!moving) return;
+
+        WorkJournal.Add("Узел", $"переход на {item.Name}: выбран вручную");
+        Detail = $"Переключаемся на {item.Name}…";
+
+        await DisconnectAsync().ConfigureAwait(true);
+        await ConnectAsync().ConfigureAwait(true);
     }
 
     /// <summary>
@@ -616,56 +651,85 @@ public sealed partial class MainViewModel : ObservableObject
     /// блокировка адреса, и такие узлы уходят из автоматического выбора.</para>
     /// </summary>
     [RelayCommand]
-    private async Task MeasurePingsAsync()
+    private Task MeasurePingsAsync() => ProbeNodesAsync(background: false);
+
+    /// <summary>Идёт ли проверка прямо сейчас. Две разом — двойная нагрузка и гонка за отметки.</summary>
+    private bool _probing;
+
+    /// <summary>
+    /// Проверка узлов.
+    ///
+    /// <para>Ручная сбрасывает отметки и показывает «…» на каждой строке: человек
+    /// нажал кнопку и ждёт свежих цифр. Фоновая отметок не трогает до прихода
+    /// результата: иначе раз в десять минут список мигал бы и на полминуты терял
+    /// знание о мёртвых узлах — ровно то, ради чего фоновая проверка заведена.</para>
+    /// </summary>
+    private async Task ProbeNodesAsync(bool background)
     {
+        if (_probing) return;
+
         var items = Servers.ToArray();
         if (items.Length == 0) return;
 
-        var engine = AppPaths.ResolveEngine();
-        var iface = PhysicalInterface.Name();
-
-        foreach (var item in items)
+        _probing = true;
+        try
         {
-            item.IsMeasuring = true;
-            item.Ping = null;
-            item.Reachable = null;
-            item.AddressSilent = false;
+            var engine = AppPaths.ResolveEngine();
+            var iface = PhysicalInterface.Name();
+
+            if (!background)
+            {
+                foreach (var item in items)
+                {
+                    item.IsMeasuring = true;
+                    item.Ping = null;
+                    item.Reachable = null;
+                    item.AddressSilent = false;
+                }
+            }
+
+            WorkJournal.Add("Проверка узлов", iface is null
+                ? $"узлов {items.Length}; выход в сеть не определён — замер может идти через туннель"
+                : $"узлов {items.Length}, мимо туннеля через «{iface}»",
+                iface is null ? JournalOutcome.Warning : JournalOutcome.Waiting);
+
+            using var gate = new SemaphoreSlim(ProbesAtOnce);
+
+            await Task.WhenAll(items.Select(async item =>
+            {
+                await gate.WaitAsync().ConfigureAwait(true);
+                try
+                {
+                    var result = await NodeProbe.CheckAsync(item.Profile, engine, iface).ConfigureAwait(true);
+                    item.Ping = result.Milliseconds;
+                    item.Reachable = result.Reachable;
+                }
+                finally
+                {
+                    item.IsMeasuring = false;
+                    item.MarkMeasured();
+                    gate.Release();
+                }
+            })).ConfigureAwait(true);
+
+            var silent = AddressVerdict.Silent(items.Select(i => (i.Profile.Host, i.Reachable)));
+            foreach (var item in items) item.AddressSilent = silent.Contains(item.Profile.Host);
+
+            var alive = items.Count(i => i.Reachable == true);
+            WorkJournal.Resolve("Проверка узлов", $"проходят {alive} из {items.Length}",
+                alive == 0 ? JournalOutcome.Failed : alive < items.Length ? JournalOutcome.Warning : JournalOutcome.Ok);
+
+            if (silent.Count > 0)
+                WorkJournal.Add("Адреса", $"молчат из этой сети: {silent.Count} — узлы на них убраны из автоматического выбора",
+                    JournalOutcome.Warning);
+
+            _lastProbeAt = DateTimeOffset.Now;
+            UpdateHealthSummary();
         }
-
-        WorkJournal.Add("Проверка узлов", iface is null
-            ? $"узлов {items.Length}; выход в сеть не определён — замер может идти через туннель"
-            : $"узлов {items.Length}, мимо туннеля через «{iface}»",
-            iface is null ? JournalOutcome.Warning : JournalOutcome.Waiting);
-
-        using var gate = new SemaphoreSlim(ProbesAtOnce);
-
-        await Task.WhenAll(items.Select(async item =>
+        finally
         {
-            await gate.WaitAsync().ConfigureAwait(true);
-            try
-            {
-                var result = await NodeProbe.CheckAsync(item.Profile, engine, iface).ConfigureAwait(true);
-                item.Ping = result.Milliseconds;
-                item.Reachable = result.Reachable;
-            }
-            finally
-            {
-                item.IsMeasuring = false;
-                item.MarkMeasured();
-                gate.Release();
-            }
-        })).ConfigureAwait(true);
-
-        var silent = AddressVerdict.Silent(items.Select(i => (i.Profile.Host, i.Reachable)));
-        foreach (var item in items) item.AddressSilent = silent.Contains(item.Profile.Host);
-
-        var alive = items.Count(i => i.Reachable == true);
-        WorkJournal.Resolve("Проверка узлов", $"проходят {alive} из {items.Length}",
-            alive == 0 ? JournalOutcome.Failed : alive < items.Length ? JournalOutcome.Warning : JournalOutcome.Ok);
-
-        if (silent.Count > 0)
-            WorkJournal.Add("Адреса", $"молчат из этой сети: {silent.Count} — узлы на них убраны из автоматического выбора",
-                JournalOutcome.Warning);
+            _probing = false;
+        }
     }
 
     /// <summary>

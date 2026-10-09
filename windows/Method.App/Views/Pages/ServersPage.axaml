@@ -179,6 +179,16 @@
                   c:SmoothScroll.Enabled="True">
       <StackPanel Spacing="14">
 
+        <!--
+          Мёртвый протокол называем прямо и сверху. Иначе он теряется среди
+          строк: отметка «не проходит» у каждого узла по отдельности не говорит,
+          что протокол не работает нигде.
+        -->
+        <Border Classes="card" Padding="14,11" IsVisible="{Binding HasDeadFamilies}">
+          <TextBlock Text="{Binding DeadFamiliesText}" FontSize="12.5" TextWrapping="Wrap"
+                     Foreground="{DynamicResource ErrorBrush}" />
+        </Border>
+
         <!-- Группы подписок -->
         <ItemsControl ItemsSource="{Binding Subscriptions}">
           <ItemsControl.ItemTemplate>

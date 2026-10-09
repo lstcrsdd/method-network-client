@@ -112,6 +112,11 @@
       <TextBlock Text="{Binding SelectedName}" FontSize="13.5" HorizontalAlignment="Center"
                  Foreground="{DynamicResource TextPrimaryBrush}"
                  IsVisible="{Binding HasServers}" />
+      <!-- Выбранный узел не проходит — говорим здесь же, под его именем. -->
+      <TextBlock Text="{Binding SelectedHealthText}" FontSize="12" HorizontalAlignment="Center"
+                 TextAlignment="Center" TextWrapping="Wrap" MaxWidth="420"
+                 Foreground="{DynamicResource ErrorBrush}"
+                 IsVisible="{Binding HasSelectedHealth}" />
       <Button Classes="quiet" Command="{Binding GoToCommand}" CommandParameter="Servers"
               HorizontalAlignment="Center">
         <StackPanel Orientation="Horizontal" Spacing="7">
@@ -194,12 +199,24 @@
       </StackPanel>
     </Border>
 
-    <!-- Ошибка или предупреждение. Молчать здесь нельзя. -->
-    <TextBlock Grid.Row="5" Text="{Binding Detail}" Margin="0,22,0,0"
-               FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="520"
-               HorizontalAlignment="Center" VerticalAlignment="Top"
-               Foreground="{DynamicResource TextSecondaryBrush}"
-               IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <StackPanel Grid.Row="5" Margin="0,22,0,0" Spacing="14" VerticalAlignment="Top">
+      <!-- Ошибка или предупреждение. Молчать здесь нельзя. -->
+      <TextBlock Text="{Binding Detail}"
+                 FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="520"
+                 HorizontalAlignment="Center"
+                 Foreground="{DynamicResource TextSecondaryBrush}"
+                 IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+      <!-- Чужой системный прокси: состояние машины, а не событие, поэтому своей строкой. -->
+      <StackPanel Spacing="10" HorizontalAlignment="Center" IsVisible="{Binding HasProxyWarning}">
+        <TextBlock Text="{Binding ProxyWarning}"
+                   FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="520"
+                   Foreground="{DynamicResource WarningBrush}" />
+        <Button Classes="secondary" HorizontalAlignment="Center"
+                Content="Снять системный прокси"
+                Command="{Binding DisableSystemProxyCommand}" />
+      </StackPanel>
+    </StackPanel>
   </Grid>
   </LayoutTransformControl>
   </ScrollViewer>

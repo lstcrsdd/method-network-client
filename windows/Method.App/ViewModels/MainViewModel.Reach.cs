@@ -45,6 +45,8 @@ public sealed partial class MainViewModel
     {
         PooledConnectionLifetime = TimeSpan.Zero,
         ConnectTimeout = TimeSpan.FromSeconds(5),
+        // Мимо системного прокси: мерим наш туннель, а не чужой порт (см. DirectHttp).
+        UseProxy = false,
     })
     {
         Timeout = TimeSpan.FromSeconds(7),
@@ -129,6 +131,7 @@ public sealed partial class MainViewModel
 
             _mutedInARow = 0;
             _toldMute = false;
+            NoteActiveNodeVerdict(flowing: true);
             return;
         }
 
@@ -146,6 +149,7 @@ public sealed partial class MainViewModel
         {
             _toldMute = true;
             Detail = MuteText;
+            NoteActiveNodeVerdict(flowing: false);
             WorkJournal.Add("Проходимость", "трафик не идёт через туннель", JournalOutcome.Warning);
         }
 

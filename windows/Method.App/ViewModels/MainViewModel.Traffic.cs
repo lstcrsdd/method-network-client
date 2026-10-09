@@ -9,6 +9,7 @@
 using System.Globalization;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Method.App.Services;
 using Method.Core.Services;
 
 namespace Method.App.ViewModels;
@@ -23,7 +24,7 @@ namespace Method.App.ViewModels;
 /// </summary>
 public sealed partial class MainViewModel
 {
-    private static readonly HttpClient TrafficHttp = new() { Timeout = TimeSpan.FromSeconds(4) };
+    private static readonly HttpClient TrafficHttp = DirectHttp.Create(TimeSpan.FromSeconds(4));
 
     private ClashApiClient? _clash;
     private DispatcherTimer? _trafficTimer;

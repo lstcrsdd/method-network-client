@@ -24,7 +24,7 @@ namespace Method.App.ViewModels;
 /// </summary>
 public sealed partial class MainViewModel
 {
-    private static readonly HttpClient Probe = new() { Timeout = TimeSpan.FromSeconds(8) };
+    private static readonly HttpClient Probe = DirectHttp.Create(TimeSpan.FromSeconds(8));
 
     private DispatcherTimer? _watchdog;
     private bool _reconnecting;
@@ -66,8 +66,17 @@ public sealed partial class MainViewModel
         // Опрос состояния — на случай, когда движок умер тихо и ни одно событие
         // системы об этом не сказало.
         _watchdog = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
-        _watchdog.Tick += async (_, _) => await CheckTunnelAliveAsync().ConfigureAwait(true);
+        _watchdog.Tick += async (_, _) =>
+        {
+            await CheckTunnelAliveAsync().ConfigureAwait(true);
+
+            // Чужой клиент пишет и стирает системный прокси когда вздумается —
+            // включился, выключился. Поэтому смотрим на каждом опросе, а не раз.
+            await RefreshSystemProxyAsync().ConfigureAwait(true);
+        };
         _watchdog.Start();
+
+        Dispatcher.UIThread.Post(async () => await RefreshSystemProxyAsync().ConfigureAwait(true));
     }
 
     /// <summary>События системы приходят с чужого потока — состояние трогаем только со своего.</summary>

@@ -181,6 +181,10 @@ public sealed partial class MainViewModel
             };
 
             RestoreSelection(selected);
+
+            // Узлы новые — прежние отметки к ним не относятся. Проверяем сразу,
+            // а не через десять минут.
+            ProbeSoon(TimeSpan.FromSeconds(3));
             return null;
         }
         catch (SubscriptionException e)
