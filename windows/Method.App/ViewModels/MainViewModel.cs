@@ -656,6 +656,9 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Идёт ли проверка прямо сейчас. Две разом — двойная нагрузка и гонка за отметки.</summary>
     private bool _probing;
 
+    /// <summary>Итог прошлой проверки: какие узлы прошли и какие адреса молчат.</summary>
+    private string? _lastProbeVerdict;
+
     /// <summary>
     /// Проверка узлов.
     ///
@@ -688,10 +691,15 @@ public sealed partial class MainViewModel : ObservableObject
                 }
             }
 
-            WorkJournal.Add("Проверка узлов", iface is null
-                ? $"узлов {items.Length}; выход в сеть не определён — замер может идти через туннель"
-                : $"узлов {items.Length}, мимо туннеля через «{iface}»",
-                iface is null ? JournalOutcome.Warning : JournalOutcome.Waiting);
+            // Фоновая проверка не объявляет о себе заранее: что она идёт, знать
+            // незачем, важно только, если она что-то нашла. Иначе раз в десять
+            // минут в ленту ложилась бы одна и та же пара строк, и за вечер
+            // журнал превращался в простыню повторов.
+            if (!background)
+                WorkJournal.Add("Проверка узлов", iface is null
+                    ? $"узлов {items.Length}; выход в сеть не определён — замер может идти через туннель"
+                    : $"узлов {items.Length}, мимо туннеля через «{iface}»",
+                    iface is null ? JournalOutcome.Warning : JournalOutcome.Waiting);
 
             using var gate = new SemaphoreSlim(ProbesAtOnce);
 
@@ -715,13 +723,39 @@ public sealed partial class MainViewModel : ObservableObject
             var silent = AddressVerdict.Silent(items.Select(i => (i.Profile.Host, i.Reachable)));
             foreach (var item in items) item.AddressSilent = silent.Contains(item.Profile.Host);
 
-            var alive = items.Count(i => i.Reachable == true);
-            WorkJournal.Resolve("Проверка узлов", $"проходят {alive} из {items.Length}",
-                alive == 0 ? JournalOutcome.Failed : alive < items.Length ? JournalOutcome.Warning : JournalOutcome.Ok);
+            // Идущему подключению — сразу, без переподключения: иначе контур
+            // мерил бы мёртвые адреса до самого отключения.
+            var sidelined = SyncSilent();
 
-            if (silent.Count > 0)
-                WorkJournal.Add("Адреса", $"молчат из этой сети: {silent.Count} — узлы на них убраны из автоматического выбора",
-                    JournalOutcome.Warning);
+            var alive = items.Count(i => i.Reachable == true);
+            var outcome = alive == 0 ? JournalOutcome.Failed : alive < items.Length ? JournalOutcome.Warning : JournalOutcome.Ok;
+
+            // Итог сравниваем по составу, а не по числам: «проходят 9 из 17» при
+            // других девяти — уже новость.
+            var verdict = string.Join("|",
+                items.Where(i => i.Reachable == true).Select(i => i.Profile.Id.ToString()).Order()
+                    .Concat(silent.Order()).Append(iface ?? "?"));
+            var news = !background || verdict != _lastProbeVerdict;
+            _lastProbeVerdict = verdict;
+
+            if (news)
+            {
+                // Ручная проверка дописывает ответ к своей строке «жду»; у фоновой
+                // такой строки нет, и Resolve переписал бы итог прошлой проверки.
+                if (background) WorkJournal.Add("Проверка узлов", $"проходят {alive} из {items.Length}", outcome);
+                else WorkJournal.Resolve("Проверка узлов", $"проходят {alive} из {items.Length}", outcome);
+
+                // Говорим, что сделано на самом деле. Группа автоматики собирается
+                // при подключении, и узлы, проверенные позже, в ней уже стоят:
+                // «убраны из выбора» было бы неправдой до следующего подключения.
+                if (silent.Count > 0)
+                    WorkJournal.Add("Адреса", sidelined switch
+                    {
+                        null => $"молчат из этой сети: {silent.Count} — узлы на них в автоматический выбор не попадут",
+                        0 => $"молчат из этой сети: {silent.Count} — в текущем выборе их узлов нет",
+                        _ => $"молчат из этой сети: {silent.Count} — их маршруты ({sidelined}) сняты с замеров и не выбираются",
+                    }, JournalOutcome.Warning);
+            }
 
             _lastProbeAt = DateTimeOffset.Now;
             UpdateHealthSummary();

@@ -205,6 +205,32 @@ public class LanePilotTests
     }
 
     [SkippableFact]
+    public async Task Выбор_стоящего_маршрута_виден_как_решение()
+    {
+        Skip.IfNot(Available(), "библиотека ядра не собрана");
+
+        var (engine, _, tags) = Ready();
+        using var _ = engine;
+
+        // Ядро выбрало узел человека — переезда нет, но решение есть. Без этого
+        // строка прогрева в ленте висела бы «жду» до конца сеанса: снаружи
+        // «ядро ещё не выбирает» и «выбрало то же самое» неотличимы.
+        var pilot = new LanePilot(engine, new Knob(obeys: true), "auto", tags, standing: "proxy");
+
+        var moved = 0;
+        LaneMove? kept = null;
+
+        pilot.Moved += _ => moved++;
+        pilot.Kept += m => kept = m;
+
+        await pilot.ApplyAsync(Round(warmingUp: false));
+
+        Assert.Equal(0, moved);
+        Assert.NotNull(kept);
+        Assert.Equal("proxy", kept.Tag);
+    }
+
+    [SkippableFact]
     public async Task Закреплённый_человеком_маршрут_и_ставится()
     {
         Skip.IfNot(Available(), "библиотека ядра не собрана");

@@ -14,7 +14,7 @@
          файлы, которые никому не нужны, но выглядят частью поставки. -->
     <DebugType>embedded</DebugType>
 
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <Product>Method</Product>
     <Authors>Kovalyov Georgiy</Authors>
     <Copyright>Copyright (C) 2026 Kovalyov Georgiy. GNU GPL v3 or later.</Copyright>

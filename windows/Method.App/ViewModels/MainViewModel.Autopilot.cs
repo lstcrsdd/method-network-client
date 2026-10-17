@@ -39,11 +39,18 @@ public sealed partial class MainViewModel
     private ProbeLoop? _loop;
     private int _lastAlive = -1;
 
-    /// <summary>Дескриптор ядра → тег исходящего и человеческое имя узла.</summary>
-    private readonly Dictionary<uint, (string Tag, string Name)> _routes = [];
+    /// <summary>Дескриптор ядра → тег исходящего, человеческое имя узла и его адрес.</summary>
+    private readonly Dictionary<uint, (string Tag, string Name, string Host)> _routes = [];
 
     /// <summary>Уже сказали, что ядро не может выбрать. Второй раз — шум.</summary>
     private bool _toldEmpty;
+
+    /// <summary>
+    /// Ядро на этом подключении уже хоть раз выбрало маршрут. До этого его
+    /// «живых маршрутов нет» — не тревога, а прогрев: замеров мало, и ядро
+    /// честно не доверяет никому.
+    /// </summary>
+    private bool _engaged;
 
     /// <summary>Уже сказали, что круги срываются. То же самое — второй раз не пишем.</summary>
     private bool _toldBroken;
@@ -105,7 +112,7 @@ public sealed partial class MainViewModel
             var route = core.AddRoute(RouteCatalog.Describe(node));
 
             targets.Add(new ProbeTarget(tag, route));
-            _routes[route] = (tag, node.Name);
+            _routes[route] = (tag, node.Name, node.Host);
         }
 
         core.AddLane(new CoreLane("web", "Весь трафик"));
@@ -125,6 +132,7 @@ public sealed partial class MainViewModel
         pilot.Moved += move => Switched(Named(move.Tag), move.Reason);
         pilot.Refused += move => Refused(Named(move.Tag));
         pilot.Held += Held;
+        pilot.Kept += move => Kept(Named(move.Tag));
 
         var loop = new ProbeLoop(clash, core, targets)
         {
@@ -146,7 +154,12 @@ public sealed partial class MainViewModel
         _core = core;
         _loop = loop;
         _toldEmpty = false;
+        _engaged = false;
         _toldBroken = false;
+
+        // Проверка узлов могла закончиться до подключения: что она нашла, контур
+        // должен знать с первого же круга.
+        SyncSilent();
         _lastAlive = -1;
         _sinceSaved = 0;
 
@@ -175,12 +188,18 @@ public sealed partial class MainViewModel
         var task = _probeTask;
         var core = _core;
 
+        // Отключились, пока ядро прогревалось, — строка ожидания не должна
+        // висеть с «жду» до конца сеанса: ждать больше нечего.
+        if (!_engaged && _toldEmpty)
+            WorkJournal.Resolve("Маршрут", "отключено до первого решения ядра", JournalOutcome.Idle);
+
         _probes = null;
         _probeTask = null;
         _core = null;
         _loop = null;
         _lastAlive = -1;
         _toldEmpty = false;
+        _engaged = false;
         _toldBroken = false;
         _routes.Clear();
 
@@ -263,6 +282,22 @@ public sealed partial class MainViewModel
     private void NoteNetworkChanged() => _loop?.NoteNetworkChanged();
 
     /// <summary>
+    /// Передать контуру, какие адреса молчат по последней проверке узлов.
+    /// Вызывается с потока окна: список узлов живёт на нём.
+    /// </summary>
+    /// <returns>Сколько маршрутов текущего подключения сняты с замеров; null — контура нет.</returns>
+    private int? SyncSilent()
+    {
+        if (_loop is not { } loop) return null;
+
+        var silent = Servers.Where(s => s.AddressSilent).Select(s => s.Profile.Host).ToHashSet();
+        var tags = _routes.Values.Where(r => silent.Contains(r.Host)).Select(r => r.Tag).ToArray();
+
+        loop.MarkSilent(tags);
+        return tags.Length;
+    }
+
+    /// <summary>
     /// Доложить о круге — но только когда изменилось число живых маршрутов.
     /// Строка на каждый круг забила бы ленту одним и тем же: круги идут раз в
     /// несколько секунд, а лента обрезается, и осмысленные записи о подключении
@@ -303,16 +338,42 @@ public sealed partial class MainViewModel
     /// Полоса переехала. Вместе с причиной, слово в слово от ядра: автоматика
     /// без объяснения читается как своеволие, и её выключают первой.
     /// </summary>
-    private void Switched(string node, string reason)
-    {
-        _toldEmpty = false;
-
+    private void Switched(string node, string reason) =>
         Dispatcher.UIThread.Post(() =>
         {
+            // Строка прогрева закрывается тем, что ядро заработало, а уже под
+            // ней — куда оно повело полосу.
+            if (!_engaged && _toldEmpty)
+                WorkJournal.Resolve("Маршрут", "ядро набрало замеры", JournalOutcome.Ok);
+
+            _engaged = true;
+            _toldEmpty = false;
+
             WorkJournal.Add("Маршрут", node, JournalOutcome.Ok);
             WorkJournal.Add("Причина", reason);
         });
-    }
+
+    /// <summary>
+    /// Ядро выбрало то, что и так стоит. Говорим об этом один раз — при первом
+    /// решении на подключении и при возвращении после «выбирать не из чего»:
+    /// иначе человек не узнает, что автоматика вообще включилась, а молчание
+    /// после строки прогрева читается как зависание.
+    /// </summary>
+    private void Kept(string node) =>
+        Dispatcher.UIThread.Post(() =>
+        {
+            if ((_engaged && !_toldEmpty) || _loop is null) return;
+
+            var text = $"ядро выбрало: остаётся {node}";
+
+            // Ждали прогрева — дописываем ответ к той же строке, а не заводим
+            // новую под ней.
+            if (!_engaged && _toldEmpty) WorkJournal.Resolve("Маршрут", text, JournalOutcome.Ok);
+            else WorkJournal.Add("Маршрут", text, JournalOutcome.Ok);
+
+            _engaged = true;
+            _toldEmpty = false;
+        });
 
     /// <summary>Движок не принял переключение: маршрут остался прежним, и это надо видеть.</summary>
     private static void Refused(string node) =>
@@ -322,13 +383,25 @@ public sealed partial class MainViewModel
     /// <summary>
     /// Ядру не из чего выбирать. Говорим один раз: пока положение не изменилось,
     /// повторять это каждые полминуты значит вытеснить из ленты всё остальное.
+    ///
+    /// <para>До первого решения на подключении это прогрев, а не тревога: ядро
+    /// не доверяет короткой серии замеров и отвечает «живых маршрутов нет —
+    /// трафик блокируется». Показать эти слова как есть — значит напугать
+    /// человека тем, чего не происходит: блокировку клиент не исполняет, стоит
+    /// его узел. Поэтому до первого решения — строка ожидания, которую закроет
+    /// само решение; после — предупреждение со словами ядра, потому что тогда
+    /// маршруты и правда перестали отвечать.</para>
     /// </summary>
-    private void Held(string reason)
-    {
-        if (_toldEmpty) return;
-        _toldEmpty = true;
-
+    private void Held(string reason) =>
         Dispatcher.UIThread.Post(() =>
-            WorkJournal.Add("Маршрут", "оставлен ручной выбор: " + reason, JournalOutcome.Warning));
-    }
+        {
+            // Контур уже остановлен — это эхо прежнего подключения.
+            if (_toldEmpty || _loop is null) return;
+            _toldEmpty = true;
+
+            if (_engaged)
+                WorkJournal.Add("Маршрут", "оставлен ручной выбор: " + reason, JournalOutcome.Warning);
+            else
+                WorkJournal.Add("Маршрут", "ядро набирает замеры, пока стоит ручной выбор", JournalOutcome.Waiting);
+        });
 }

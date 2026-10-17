@@ -122,6 +122,26 @@ public sealed class ProbeLoop
     private int _networkChanged;
 
     /// <summary>
+    /// Маршруты, чьи адреса молчат из этой сети. Набор заменяется целиком, а не
+    /// правится по месту: пишут его с потока окна, читает контур, и замена
+    /// ссылки — единственное, что здесь безопасно без замка.
+    /// </summary>
+    private volatile IReadOnlySet<string> _silent = new HashSet<string>();
+
+    /// <summary>
+    /// Отметить маршруты, адреса которых молчат: проверка узлов только что
+    /// установила это настоящим протоколом мимо туннеля.
+    ///
+    /// <para>Такие маршруты не меряются, но и не выпадают из учёта: ядро
+    /// получает по ним отказ каждый круг, как если бы мерило само. Просто
+    /// перестать о них сообщать нельзя — тогда у маршрута, который ещё недавно
+    /// был хорош, осталась бы прежняя оценка, и ядро выбрало бы его по старой
+    /// памяти. Перестанет адрес молчать — следующая проверка снимет отметку, и
+    /// маршрут вернётся в замеры без переподключения.</para>
+    /// </summary>
+    public void MarkSilent(IEnumerable<string> tags) => _silent = tags.ToHashSet();
+
+    /// <summary>
     /// Сообщить, что сеть сменилась. Обесценивание накопленного делает сам
     /// контур в начале следующего круга: ядро не терпит одновременных вызовов,
     /// а событие о смене сети приходит с чужого потока в любой момент.
@@ -191,8 +211,14 @@ public sealed class ProbeLoop
         }
 
         var alive = 0;
+        var silent = _silent;
 
-        foreach (var batch in Batches())
+        // Молчащие адреса не меряем: их проба — это таймаут целиком, впустую
+        // и в каждом круге. Отказ ядру подаём сразу, без замера.
+        foreach (var target in _targets.Where(t => silent.Contains(t.Tag)))
+            _engine.Observe(target.Route, CoreOutcome.Timeout, 0, Now());
+
+        foreach (var batch in Batches(silent))
         {
             var probes = await Task.WhenAll(batch.Select(async target =>
                 (Target: target, Delay: await _source.DelayAsync(target.Tag, ct).ConfigureAwait(false))))
@@ -250,10 +276,12 @@ public sealed class ProbeLoop
         return best;
     }
 
-    private IEnumerable<ProbeTarget[]> Batches()
+    private IEnumerable<ProbeTarget[]> Batches(IReadOnlySet<string> silent)
     {
-        for (var i = 0; i < _targets.Count; i += AtOnce)
-            yield return _targets.Skip(i).Take(AtOnce).ToArray();
+        var measured = _targets.Where(t => !silent.Contains(t.Tag)).ToArray();
+
+        for (var i = 0; i < measured.Length; i += AtOnce)
+            yield return measured.Skip(i).Take(AtOnce).ToArray();
     }
 
     /// <summary>

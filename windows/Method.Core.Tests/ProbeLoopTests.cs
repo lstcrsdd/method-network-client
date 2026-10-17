@@ -104,6 +104,45 @@ public class ProbeLoopTests
     }
 
     [SkippableFact]
+    public async Task Молчащий_адрес_не_меряется_но_ядро_получает_отказ()
+    {
+        Skip.IfNot(Available(), "библиотека ядра не собрана");
+
+        var (engine, targets) = Catalog();
+        using var _ = engine;
+
+        var source = new Dictated(new Dictionary<string, int?> { ["proxy"] = 40, ["lane-1"] = 60 });
+        var loop = new ProbeLoop(source, engine, targets);
+
+        for (var i = 0; i < 40; i++) await loop.RoundAsync(CancellationToken.None);
+
+        var before = engine.Score(targets[1].Route, CoreSla.Browse, (ulong)Environment.TickCount64);
+
+        // Проверка узлов нашла адрес молчащим. Мерить его — таймаут каждый
+        // круг впустую; забыть о нём — оставить ядру старую хорошую оценку.
+        loop.MarkSilent(["lane-1"]);
+        source.Asked.Clear();
+
+        ProbeRound round = null!;
+        for (var i = 0; i < 40; i++) round = await loop.RoundAsync(CancellationToken.None);
+
+        var after = engine.Score(targets[1].Route, CoreSla.Browse, (ulong)Environment.TickCount64);
+
+        Assert.DoesNotContain("lane-1", source.Asked);
+        Assert.Equal(1, round.Alive);
+        Assert.Equal(2, round.Total);
+        Assert.True(after.Value < before.Value,
+            $"молчащий адрес сохранил оценку: было {before.Value}, стало {after.Value}");
+
+        // Адрес ожил — следующая проверка снимает отметку, и маршрут снова меряется.
+        loop.MarkSilent([]);
+        source.Asked.Clear();
+        await loop.RoundAsync(CancellationToken.None);
+
+        Assert.Contains("lane-1", source.Asked);
+    }
+
+    [SkippableFact]
     public async Task Уверенность_набирается_замерами_а_не_временем()
     {
         Skip.IfNot(Available(), "библиотека ядра не собрана");

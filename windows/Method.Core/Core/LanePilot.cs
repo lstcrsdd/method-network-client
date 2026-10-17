@@ -76,6 +76,13 @@ public sealed class LanePilot
     /// <summary>Ядру не из чего выбирать: остаётся то, что стоит.</summary>
     public event Action<string>? Held;
 
+    /// <summary>
+    /// Ядро выбрало то, что и так стоит на полосе. Переезда нет, но это тоже
+    /// решение: без него нельзя отличить «ядро ещё не выбирает» от «ядро
+    /// выбрало и оставило как есть» — снаружи оба выглядят тишиной.
+    /// </summary>
+    public event Action<LaneMove>? Kept;
+
     /// <summary>Применить то, что ядро решило по итогам круга.</summary>
     public async Task ApplyAsync(ProbeRound round, CancellationToken ct = default)
     {
@@ -110,7 +117,11 @@ public sealed class LanePilot
 
             _engine.LaneApplied(action.Lane, action.Route);
 
-            if (Standing == tag) continue;
+            if (Standing == tag)
+            {
+                Kept?.Invoke(move);
+                continue;
+            }
 
             Standing = tag;
             Moved?.Invoke(move);
