@@ -28,7 +28,21 @@ public enum JournalOutcome
 }
 
 /// <summary>Строка журнала: слева название шага, справа чем кончился.</summary>
-public sealed record JournalLine(string Label, string Value, JournalOutcome Outcome);
+/// <param name="Times">Сколько раз подряд пришла ровно эта строка.</param>
+public sealed record JournalLine(string Label, string Value, JournalOutcome Outcome, int Times = 1)
+{
+    /// <summary>Ответ так, как его показывать: с числом повторов, если они были.</summary>
+    public string Shown => Times > 1 ? $"{Value} ×{Times}" : Value;
+
+    /// <summary>
+    /// Та же запись: шаг, ответ и исход совпадают. Число повторов не в счёт —
+    /// именно его такая запись и увеличивает.
+    /// </summary>
+    public bool SameAs(JournalLine other) =>
+        string.Equals(Label, other.Label, StringComparison.OrdinalIgnoreCase)
+        && Value == other.Value
+        && Outcome == other.Outcome;
+}
 
 /// <summary>
 /// Журнал работы: что клиент делает и чем это кончается.
@@ -68,13 +82,27 @@ public static class WorkJournal
     /// </summary>
     public static event Action? Finished;
 
+    /// <summary>
+    /// Добавить строку. Если она слово в слово повторяет последнюю, новой строки
+    /// не заводится: у последней растёт счётчик повторов. Сорок одинаковых строк
+    /// подряд — это не сорок событий, а одно, и столбец из них вытесняет из
+    /// ленты всё остальное.
+    /// </summary>
     public static void Add(string label, string value, JournalOutcome outcome = JournalOutcome.Ok)
     {
         var line = new JournalLine(label, value, outcome);
 
         lock (Guard)
         {
-            Records.Add(line);
+            if (Records.Count > 0 && Records[^1].SameAs(line))
+            {
+                line = Records[^1] with { Times = Records[^1].Times + 1 };
+                Records[^1] = line;
+            }
+            else
+            {
+                Records.Add(line);
+            }
 
             // Тот же расчёт, что и у ленты: журнал нужен для показа, а не для
             // разбирательств — для них есть журнал службы на диске.

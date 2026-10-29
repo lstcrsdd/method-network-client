@@ -127,6 +127,13 @@ public sealed class ClashApiClient(HttpClient http, string address, string secre
 
             return body?.Delay > 0 ? body.Delay : null;
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // Замер отменил тот, кто его заказал: контур останавливается. Это не
+            // молчание маршрута, и выдать его за молчание значит доложить ядру и
+            // в ленту ложное «отвечают 0 из N» последним кругом перед остановкой.
+            throw;
+        }
         catch (Exception)
         {
             return null;

@@ -60,6 +60,12 @@ public sealed class Teletype : Control
     public static readonly StyledProperty<IBrush?> MutedProperty =
         AvaloniaProperty.Register<Teletype, IBrush?>(nameof(Muted));
 
+    public static readonly StyledProperty<IBrush?> DoneProperty =
+        AvaloniaProperty.Register<Teletype, IBrush?>(nameof(Done));
+
+    public static readonly StyledProperty<IBrush?> ErrorProperty =
+        AvaloniaProperty.Register<Teletype, IBrush?>(nameof(Error));
+
     public static readonly StyledProperty<double> TextSizeProperty =
         AvaloniaProperty.Register<Teletype, double>(nameof(TextSize), 12.5);
 
@@ -93,6 +99,27 @@ public sealed class Teletype : Control
     {
         get => GetValue(WarningProperty);
         set => SetValue(WarningProperty, value);
+    }
+
+    /// <summary>
+    /// Цвет метки «ГОТОВ». Не задан — берётся акцент. Отдельный, потому что
+    /// удачный исход — самая частая метка ленты: в плакатном оформлении акцент
+    /// красный, и столбец красных «ГОТОВ» читается чередой тревог.
+    /// </summary>
+    public IBrush? Done
+    {
+        get => GetValue(DoneProperty);
+        set => SetValue(DoneProperty, value);
+    }
+
+    /// <summary>
+    /// Цвет метки «ОТКАЗ». Не задан — берётся цвет предупреждения. Отказ должен
+    /// отличаться от «внимания» с одного взгляда, а не только по слову.
+    /// </summary>
+    public IBrush? Error
+    {
+        get => GetValue(ErrorProperty);
+        set => SetValue(ErrorProperty, value);
     }
 
     /// <summary>Цвет точек-выносок между названием шага и ответом.</summary>
@@ -131,6 +158,7 @@ public sealed class Teletype : Control
     static Teletype() =>
         AffectsRender<Teletype>(
             FontFamilyProperty, ForegroundProperty, AccentProperty,
+            WarningProperty, MutedProperty, DoneProperty, ErrorProperty,
             TextSizeProperty, MaxLinesProperty);
 
     public Teletype()
@@ -174,6 +202,24 @@ public sealed class Teletype : Control
     /// <summary>Поставить строку в очередь на печать.</summary>
     public void Enqueue(JournalLine line)
     {
+        // Повтор последней строки: печатать его заново не надо, у строки на
+        // месте только растёт счётчик.
+        if (line.Times > 1)
+        {
+            if (_queue.Count > 0 && _queue[^1].SameAs(line))
+            {
+                _queue[^1] = line;
+                return;
+            }
+
+            if (_queue.Count == 0 && _printed.Count > 0 && _printed[^1].SameAs(line))
+            {
+                _printed[^1] = line;
+                InvalidateVisual();
+                return;
+            }
+        }
+
         // Ответ, дописанный к уже напечатанному шагу, перепечатывать не надо:
         // строка стоит на своём месте, меняется только её хвост.
         var printed = _printed.FindLastIndex(l => Same(l.Label, line.Label));
@@ -238,7 +284,7 @@ public sealed class Teletype : Control
         }
 
         var line = _queue[0];
-        var length = line.Label.Length + line.Value.Length;
+        var length = line.Label.Length + line.Shown.Length;
 
         _typed += PerFrame;
 
@@ -277,10 +323,10 @@ public sealed class Teletype : Control
 
     private IBrush? MarkBrush(JournalOutcome outcome) => outcome switch
     {
-        JournalOutcome.Ok => Accent,
+        JournalOutcome.Ok => Done ?? Accent,
         JournalOutcome.Idle => Muted,
         JournalOutcome.Warning => Warning,
-        JournalOutcome.Failed => Warning,
+        JournalOutcome.Failed => Error ?? Warning,
         _ => Muted,
     };
 
@@ -334,7 +380,7 @@ public sealed class Teletype : Control
     private double DrawRow(DrawingContext context, JournalLine line, double y, double width, int typed)
     {
         var label = line.Label.ToUpperInvariant();
-        var value = line.Value.ToUpperInvariant();
+        var value = line.Shown.ToUpperInvariant();
 
         // Набираются название и ответ; выноски с меткой — не текст, а разметка
         // строки, и появляются они разом, когда ответ дописан.

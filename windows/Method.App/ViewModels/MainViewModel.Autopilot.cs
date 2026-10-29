@@ -39,6 +39,12 @@ public sealed partial class MainViewModel
     private ProbeLoop? _loop;
     private int _lastAlive = -1;
 
+    /// <summary>
+    /// Просевшее число живых, которое ещё ждёт подтверждения следующим кругом.
+    /// -1 — ничего не ждёт.
+    /// </summary>
+    private int _pendingAlive = -1;
+
     /// <summary>Дескриптор ядра → тег исходящего, человеческое имя узла и его адрес.</summary>
     private readonly Dictionary<uint, (string Tag, string Name, string Host)> _routes = [];
 
@@ -129,10 +135,15 @@ public sealed partial class MainViewModel
             _routes.ToDictionary(r => r.Key, r => r.Value.Tag),
             SingBoxConfigBuilder.ProxyTag);
 
-        pilot.Moved += move => Switched(Named(move.Tag), move.Reason);
-        pilot.Refused += move => Refused(Named(move.Tag));
-        pilot.Held += Held;
-        pilot.Kept += move => Kept(Named(move.Tag));
+        // Говорить в ленту может только действующий контур. Остановленный ещё
+        // дорабатывает свой круг, и его слова относятся к подключению, которого
+        // уже нет: «отвечают 0 из N» от снятого движка — не отказ узлов, а эхо.
+        bool Current() => ReferenceEquals(_core, core);
+
+        pilot.Moved += move => { if (Current()) Switched(Named(move.Tag), move.Reason); };
+        pilot.Refused += move => { if (Current()) Refused(Named(move.Tag)); };
+        pilot.Held += reason => { if (Current()) Held(reason); };
+        pilot.Kept += move => { if (Current()) Kept(Named(move.Tag)); };
 
         var loop = new ProbeLoop(clash, core, targets)
         {
@@ -148,8 +159,8 @@ public sealed partial class MainViewModel
                 Remember(core);
             },
         };
-        loop.RoundDone += Report;
-        loop.RoundFailed += Broke;
+        loop.RoundDone += round => { if (Current()) Report(round); };
+        loop.RoundFailed += e => { if (Current()) Broke(e); };
 
         _core = core;
         _loop = loop;
@@ -161,6 +172,7 @@ public sealed partial class MainViewModel
         // должен знать с первого же круга.
         SyncSilent();
         _lastAlive = -1;
+        _pendingAlive = -1;
         _sinceSaved = 0;
 
         _probes = new CancellationTokenSource();
@@ -198,6 +210,7 @@ public sealed partial class MainViewModel
         _core = null;
         _loop = null;
         _lastAlive = -1;
+        _pendingAlive = -1;
         _toldEmpty = false;
         _engaged = false;
         _toldBroken = false;
@@ -302,12 +315,33 @@ public sealed partial class MainViewModel
     /// Строка на каждый круг забила бы ленту одним и тем же: круги идут раз в
     /// несколько секунд, а лента обрезается, и осмысленные записи о подключении
     /// вытеснились бы отчётом о том, что всё по-прежнему.
+    ///
+    /// <para>Просадку докладываем, только когда её подтвердил второй круг подряд.
+    /// Один пропущенный замер — это моргнувшая сеть, а не отказ узла, и строка
+    /// «отказ» о нём тревожит зря. Восстановление же докладываем сразу: хорошая
+    /// новость задержки не требует.</para>
     /// </summary>
     private void Report(ProbeRound round)
     {
         _toldBroken = false;
 
-        if (round.Alive == _lastAlive) return;
+        if (round.Alive == _lastAlive)
+        {
+            _pendingAlive = -1;
+            return;
+        }
+
+        // Первый круг сравниваем с полным составом: «отвечают не все» на старте
+        // — такая же просадка, как и посреди работы.
+        var drop = round.Alive < (_lastAlive < 0 ? round.Total : _lastAlive);
+
+        if (drop && _pendingAlive != round.Alive)
+        {
+            _pendingAlive = round.Alive;
+            return;
+        }
+
+        _pendingAlive = -1;
         _lastAlive = round.Alive;
 
         // Контур крутится не на потоке окна, а лента живёт на нём.

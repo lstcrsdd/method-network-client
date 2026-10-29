@@ -298,4 +298,38 @@ public class ProbeLoopTests
 
         Assert.Equal(1, rounds);
     }
+
+    /// <summary>Замер, который висит до отмены и на отмене бросает её, как и положено.</summary>
+    private sealed class Hanging : IRouteDelaySource
+    {
+        public async Task<int?> DelayAsync(string route, CancellationToken ct = default)
+        {
+            await Task.Delay(Timeout.Infinite, ct);
+            return null;
+        }
+    }
+
+    [SkippableFact]
+    public async Task Остановка_посреди_круга_не_докладывает_ложный_отказ()
+    {
+        Skip.IfNot(Available(), "библиотека ядра не собрана");
+
+        var (engine, targets) = Catalog();
+        using var _ = engine;
+
+        var loop = new ProbeLoop(new Hanging(), engine, targets);
+
+        // Круг, оборванный отменой, — не круг, в котором все молчат. Доложи его
+        // контур — в ленте при каждом отключении появлялось бы «отвечают 0 из N».
+        var rounds = 0;
+        var failures = 0;
+        loop.RoundDone += _ => Interlocked.Increment(ref rounds);
+        loop.RoundFailed += _ => Interlocked.Increment(ref failures);
+
+        using var stop = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+        await loop.RunAsync(stop.Token);
+
+        Assert.Equal(0, rounds);
+        Assert.Equal(0, failures);
+    }
 }

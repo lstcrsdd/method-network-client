@@ -74,7 +74,9 @@
       <c:Teletype Grid.Row="3" Name="Tape"
                   Foreground="{DynamicResource TextPrimaryBrush}"
                   Accent="{DynamicResource AccentBrush}"
+                  Done="{DynamicResource TextSecondaryBrush}"
                   Warning="{DynamicResource WarningBrush}"
+                  Error="{DynamicResource ErrorBrush}"
                   Muted="{DynamicResource TextMutedBrush}" />
 
       <StackPanel Grid.Row="4" Spacing="10">

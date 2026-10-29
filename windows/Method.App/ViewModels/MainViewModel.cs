@@ -308,6 +308,12 @@ public sealed partial class MainViewModel : ObservableObject
     // MARK: Подключение
 
     /// <summary>
+    /// Номер последней попытки подключения или отключения. Попытка, чей номер
+    /// уже не последний, свой контур замеров не заводит.
+    /// </summary>
+    private int _attempt;
+
+    /// <summary>
     /// Подключить или отключить — смотря по состоянию.
     ///
     /// <para>Команде разрешено запускаться поверх себя, и это не небрежность.
@@ -358,6 +364,12 @@ public sealed partial class MainViewModel : ObservableObject
         State = ConnectionState.Connecting;
         MarkTunnelAction();
         Detail = null;
+
+        // Номер этой попытки. Пока служба поднимает туннель, человек может
+        // выбрать другой узел или нажать «отмену», и тогда следом начнётся новое
+        // подключение. Эта попытка всё равно доработает до конца — и, не зная о
+        // новой, завела бы второй контур замеров поверх её контура.
+        var attempt = ++_attempt;
 
         // Время пуска считаем от нажатия и до внешнего адреса: это ровно то, что
         // человек ощущает как «сколько оно поднимается».
@@ -479,7 +491,17 @@ public sealed partial class MainViewModel : ObservableObject
         // Контур замеров заводим сразу за туннелем: ядро набирает уверенность
         // десятками проб, и каждая минута без замеров — это минута, в которую
         // выбор маршрута нечем обосновать.
-        if (_clash is not null) StartAutopilot(item.Profile, options, _clash);
+        //
+        // Только если эта попытка всё ещё последняя. Устаревшая попытка с
+        // контуром — это два контура сразу: старый меряет узлы прежней
+        // конфигурации через снятый движок и каждый круг докладывает «отвечают
+        // 0 из N», новый — «отвечают все», и лента превращается в чересполосицу
+        // ложных отказов.
+        if (attempt == _attempt)
+        {
+            await StopAutopilotAsync().ConfigureAwait(true);
+            if (attempt == _attempt && _clash is not null) StartAutopilot(item.Profile, options, _clash);
+        }
 
         // Предупреждение показываем именно как предупреждение: туннель поднят, но
         // часть защиты не применилась. Промолчать здесь — значит нарисовать защиту,
@@ -507,6 +529,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task DisconnectAsync()
     {
+        // Отключение тоже делает устаревшей любую попытку, которая ещё в пути.
+        _attempt++;
+
         _sessionTimer.Stop();
         MarkTunnelAction();
         Elapsed = "00:00";

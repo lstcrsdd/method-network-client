@@ -301,12 +301,16 @@
       разбила бы его надвое.
     -->
     <!-- Приглушена на десятую: журнал — фон работы, а не её итог. Спорить в
-         яркости со сводкой ему незачем. -->
+         яркости со сводкой ему незачем. «ГОТОВ» кремовым, а не красным: это
+         самая частая метка, и столбец красных удач читался чередой тревог.
+         Отказу — свой цвет, отличный от «внимания». -->
     <c:Teletype DockPanel.Dock="Top" Name="Tape" Margin="0,20,0,0" TextSize="11" Opacity="0.9"
                 ClipToBounds="True"
                 Foreground="{DynamicResource TextPrimaryBrush}"
                 Accent="{DynamicResource AccentBrush}"
+                Done="{DynamicResource TextSecondaryBrush}"
                 Warning="{DynamicResource WarningBrush}"
+                Error="{DynamicResource ErrorBrush}"
                 Muted="{DynamicResource TextMutedBrush}" />
 
     <!--
