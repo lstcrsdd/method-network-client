@@ -149,3 +149,45 @@ sing-box распространяется на своих условиях; ег
 [Psiphon](https://github.com/Psiphon-Labs/psiphon-tunnel-core). Method
 заимствует у них честно и говорит об этом прямо. Новое здесь — выбор маршрута
 по способу обхода, а не по задержке узла.
+
+## P.S.
+
+```text
+                                    Ii~?})//|(1}-i:
+                              <|Xwha*#*ahdqqwwpbha*hmu-
+                           -Ua%%8#kOCXcvcXvnvvucvXJZa&B*c!
+                         td%WhwQXj/||/tfrxxrrrnnur/1()xOh#O!
+                       [*@hLYuffjxrjrrjfffjfjft/ttfjf({|/jqMt
+                      ?@%m/urvXunuxrjrjjrrrrtft/|tfffjrxxj(CWC_
+                      b%btfrnXUxfunt|/ttttjrt/|//tfftfrrrxu|Qbw{
+                     ?@du|xnYYYuxnnjt/|(//t|/||(|t/trjxxjrztfQJd?
+                     X@J|fnXUYXcvrfjrjftttt/ttt//t/trrxxrjXzxujQw
+                   i:d%CnXYCUYUXcvrtrxjfttff/tfttfttfjrjxxYvnnuua1
+                I!IhwQhmUXXYJvzur(//1[)())(1{))1|//|((/ttvzrucXc0C+!
+                !? O#u0qCXXXUYvvXYQQJQCXXzfjnxfjrnvvvczXxtjzUzQQXh*!<>
+               -I?:|dJhZQYYUzLdkmmwwdo#*h#mYzvUkk*#ahbmLOpQXvvmdu*U -}i:
+              ;}?[~!JdqYOJYUu/rJLYCZZCCZQk*v}fhawdbbmCmq0w0vuuOomJ;~[]>
+             i!}[[?l/ZcX0ZUUXx/tft/trrxnru0u</bzxuvuxjtxut)tcQLJ0<i][[[
+            ;{][[[]+lYOLQqZXvurftfffrrt)|uv/-)vC/(jrjrrrfjnjXqUL)l?][[[>:
+            >{[[[[]?>-YqZwZXucznjt/|((/uJJvt//xLJ|)({1/trvuvUmm1;-][][[}?
+            :}[[[[[]?~;)bZwCUXzzvunrxYwduxu)_}ftuOCxxnuuvuXUdw/l_?][[[[?
+             }[[[[[]]]l!hmmpdpOQCYzJ0JXQmqOzvvJZO0OQJYXYUCZh&i _??[[[[[!
+             _{[[[[]]?~:qbOJ0ddO00LYnt/tjXm*MdZQznjcCQOwpkbhZ ~?]][[[}_I
+              }}[[[[]]] +#dLcvZQcX0mwpw0CJJJJCznzCO00Zm0ZJJM| -]][[[[-
+               +{[[[}?I+?{*hCuv0XXLYvcYJJYYCJQOmpmZwZYuCYC#Y ~?][[[{!
+                >[{]! 1&) +mMdYJCXuxnuYYJL0OQLUYcnnruXQmpm1:+]][[[[+
+                  :;[Z$${ !:}OM*bqOUvrrrt(/t|/jfrxnYmhaJ- ![{}}}{{;
+                I1Ua$$%@B~ _!:_YaW#hpZOQJXXYYzJJOZda&p{qz?I;l>++I
+           !]x0k%$$B&W&%$8~ _?i ifmhabdddbdbhaohqd*ov  q$$*Ov(}<
+    :~1uQbM@$$$B&WMWW&&&&@@1 ~?_>;l]xLmwpppmZmmqqwz+ : /$%B$$$$@8MadmLXnt1?<l
+fXmo8$$$$@%8%W#W&&&&W&&WW&@$| i+++<!;!+{|(|O#ooQ]  :>l I%@&MMW&&8B@$$$$$$$$$@8#kZYf[i
+$$$B8&WMW&&8&#MWWWWWW&&W&W&B$t l>>iiil   -Q&%&8*bQ}  l+ x$%&&&&&&&WWWWWMMWW&88%@$$$$$8awYj
+MMMWWWWWW&&%&WWMMMWWWW&&WW&&B$f :i>il  1h$$*hhhb*$$Z~ ll o$8&&&&&&&&&&&W&8&&&&WWWWW&&%@$$$
+&&&&&&&&&&&&&8888&WWWWWWWWWW&B$t  I  _xdpqM$$Mahk@Qp8C>; }$B&&&&&&&&&&&88&WWWW&&&&&&&&WWWM
+WWWWW&&&&&&&WWW&&&WWWWWWWWWWW&B${  )vr}(+ l}U%Bak$t l?}{; a$8&&&&&&&&&8&&WWWW&&&&&&&&&&&&W
+WWWWW&&&&W&W&WWWWMWWWWWWWWWWWW&@%~ +}-->_!   8B8qa$n  I?} f$@&&&&&&&&&&&&&&&&&8&W&&&&&&&&W
+WWWWW&&&&&&&8&MMWWWWWWWWWWWWWWW&$*; :!i<]?  t$&%&wo$#( l>I 0$8&W&&WWWW&&&&&&&W%&W&&&&&&&&W
+WWWWW&&&&&&&W88MMWWWWWWWWWWWWWWW8$Z  i<<_[; X@M&8hma@$Q ;i +$B&WWWW&&&&&&&&&&&%&&&&&&&&&&W
+```
+
+<p align="center"><b>РКН, не блокируйте!</b></p>
