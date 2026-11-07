@@ -153,41 +153,55 @@ sing-box распространяется на своих условиях; ег
 ## P.S.
 
 ```text
-                                    Ii~?})//|(1}-i:
-                              <|Xwha*#*ahdqqwwpbha*hmu-
-                           -Ua%%8#kOCXcvcXvnvvucvXJZa&B*c!
-                         td%WhwQXj/||/tfrxxrrrnnur/1()xOh#O!
-                       [*@hLYuffjxrjrrjfffjfjft/ttfjf({|/jqMt
-                      ?@%m/urvXunuxrjrjjrrrrtft/|tfffjrxxj(CWC_
-                      b%btfrnXUxfunt|/ttttjrt/|//tfftfrrrxu|Qbw{
-                     ?@du|xnYYYuxnnjt/|(//t|/||(|t/trjxxjrztfQJd?
-                     X@J|fnXUYXcvrfjrjftttt/ttt//t/trrxxrjXzxujQw
-                   i:d%CnXYCUYUXcvrtrxjfttff/tfttfttfjrjxxYvnnuua1
-                I!IhwQhmUXXYJvzur(//1[)())(1{))1|//|((/ttvzrucXc0C+!
-                !? O#u0qCXXXUYvvXYQQJQCXXzfjnxfjrnvvvczXxtjzUzQQXh*!<>
-               -I?:|dJhZQYYUzLdkmmwwdo#*h#mYzvUkk*#ahbmLOpQXvvmdu*U -}i:
-              ;}?[~!JdqYOJYUu/rJLYCZZCCZQk*v}fhawdbbmCmq0w0vuuOomJ;~[]>
-             i!}[[?l/ZcX0ZUUXx/tft/trrxnru0u</bzxuvuxjtxut)tcQLJ0<i][[[
-            ;{][[[]+lYOLQqZXvurftfffrrt)|uv/-)vC/(jrjrrrfjnjXqUL)l?][[[>:
-            >{[[[[]?>-YqZwZXucznjt/|((/uJJvt//xLJ|)({1/trvuvUmm1;-][][[}?
-            :}[[[[[]?~;)bZwCUXzzvunrxYwduxu)_}ftuOCxxnuuvuXUdw/l_?][[[[?
-             }[[[[[]]]l!hmmpdpOQCYzJ0JXQmqOzvvJZO0OQJYXYUCZh&i _??[[[[[!
-             _{[[[[]]?~:qbOJ0ddO00LYnt/tjXm*MdZQznjcCQOwpkbhZ ~?]][[[}_I
-              }}[[[[]]] +#dLcvZQcX0mwpw0CJJJJCznzCO00Zm0ZJJM| -]][[[[-
-               +{[[[}?I+?{*hCuv0XXLYvcYJJYYCJQOmpmZwZYuCYC#Y ~?][[[{!
-                >[{]! 1&) +mMdYJCXuxnuYYJL0OQLUYcnnruXQmpm1:+]][[[[+
-                  :;[Z$${ !:}OM*bqOUvrrrt(/t|/jfrxnYmhaJ- ![{}}}{{;
-                I1Ua$$%@B~ _!:_YaW#hpZOQJXXYYzJJOZda&p{qz?I;l>++I
-           !]x0k%$$B&W&%$8~ _?i ifmhabdddbdbhaohqd*ov  q$$*Ov(}<
-    :~1uQbM@$$$B&WMWW&&&&@@1 ~?_>;l]xLmwpppmZmmqqwz+ : /$%B$$$$@8MadmLXnt1?<l
-fXmo8$$$$@%8%W#W&&&&W&&WW&@$| i+++<!;!+{|(|O#ooQ]  :>l I%@&MMW&&8B@$$$$$$$$$@8#kZYf[i
-$$$B8&WMW&&8&#MWWWWWW&&W&W&B$t l>>iiil   -Q&%&8*bQ}  l+ x$%&&&&&&&WWWWWMMWW&88%@$$$$$8awYj
-MMMWWWWWW&&%&WWMMMWWWW&&WW&&B$f :i>il  1h$$*hhhb*$$Z~ ll o$8&&&&&&&&&&&W&8&&&&WWWWW&&%@$$$
-&&&&&&&&&&&&&8888&WWWWWWWWWW&B$t  I  _xdpqM$$Mahk@Qp8C>; }$B&&&&&&&&&&&88&WWWW&&&&&&&&WWWM
-WWWWW&&&&&&&WWW&&&WWWWWWWWWWW&B${  )vr}(+ l}U%Bak$t l?}{; a$8&&&&&&&&&8&&WWWW&&&&&&&&&&&&W
-WWWWW&&&&W&W&WWWWMWWWWWWWWWWWW&@%~ +}-->_!   8B8qa$n  I?} f$@&&&&&&&&&&&&&&&&&8&W&&&&&&&&W
-WWWWW&&&&&&&8&MMWWWWWWWWWWWWWWW&$*; :!i<]?  t$&%&wo$#( l>I 0$8&W&&WWWW&&&&&&&W%&W&&&&&&&&W
-WWWWW&&&&&&&W88MMWWWWWWWWWWWWWWW8$Z  i<<_[; X@M&8hma@$Q ;i +$B&WWWW&&&&&&&&&&&%&&&&&&&&&&W
+                                        ........
+                            .:;=*CwZa$KK&&gDO&HOHKKmoJvr,.
+                       '+CU80000MM@WR#OKbaXhhhkhmm&RW0000WKn~.
+                    ;CO0N00M@@8DOKahCCT*s*ccvvvc=zvvThmD@0NNNQo:
+                 -sO0N0MW@@RUwz;:,'::~;=zzr;r+==cc==+r;~<CXUWNNNK<.
+               ra@N0WQR#mCz:.    ....'-,-:~~::,,~:~r~:'    .~zXHMN@z
+             ~K000Qmae+:-...'--.-'''..'.''--'--,:''-.....     .,rCDNO:
+            CNNBWksvc:,~:~;r;~,',:,,''---,,'',-.   ...''''.. .'.'':oW@*.
+           CN0M8r-vr,rv=r;;;~:,,,,,'-,,,,,,,'.'...   ...'.'--,:::~,;CRQh;
+          ~0M@8s.;:.~=zz+::;;;~-..-''',:,,~:'........''....-,::::::,;ZQUUJ
+          aNM8a'-:-~<cssr,,~r;'.   .......-,'...  ........'-:~:,-,;r'~aRwaJ
+         .00RUr.:-:+x*sT<~:~;~,... .   . ..         ....'-'-::~:::=>' rahhK*
+         JN#a=.-,:rvusT*c=r~;~;:--..  ........... . ....'~:::~::,-<=;:~sn=hKr
+         mNRo:''-rcsJxsz==+~:.',:,-'.........'..... .....-,:~~::::>*vr:;=;=Ka
+         gNOhr,;=zCTJTJY=c=r~'..,:,,.......-...''.'''.....'-'-,~:-=Tcr;-:r;XQ;
+      :-=N0Dhz*uJ*Jwss*Jsc<<r~-..,''...'..'. ....  .......''-,':~r*z+;r<ccrv&h
+     <0aoaQ&moscvzzCz==zz;r-.-,..                  ..........-,-:==>-:+;x=cuhX~
+     :N0ZCa&KhTsz*xuC=<<-,,  .'.   .  ....         .. ..         ~=r+zv<vCCxCa$h.
+      RWJoZmmwC*z**vuJ*+>sJemRRKdUOKZkoCnr:~r=r~:;r;rcv==c=sJT*=-.-~=**zJZbCoKMN:
+      h8C*abkaCYzvCvvob##g$mmehmgW000W#8WmhCT*zzCa$U#M00NNN@KmU#OmY=cx=cJUOa*wNa
+      -aU&00XaCJC*JTcvTZUUaoXamaZZmUD##DWWaz~--+Z@0@@WQKaoJoZC==CH8mT+r=zmR$nX8-
+       coOKC*aZJ*s*=:..:vCZwCoKDRDhZhmhaDWDv. .CWWKmHHQ00WOmgM0RKKaT=<==Ym@RmK:
+       ~oCzccemaC*Tz;,.....    ...':r=;;xZUc   eQoc**zz<+r~,--;;;,  .~cJkamhh<
+        saTCeoamXCunT=~'':~~:~;+=<r;:,:~~=v,   vZu=~,:::,::-.'-,,..'.~semn=*n
+         JZwXeaUdZJ=r;:..  .'..',-'..  .;<;.   '~C=. .:;;~~;~;~,'';~~rCba=xa-
+         ;C*XmaKKhsc+==<;-..         .'~vz;.   -:oJ,          ..-~;,:=CmUme'
+          =h#badUZCv<<==r;,-'..'...'~*aZu=:..  '~=eo;...    ..-~r<=cYCemCs.
+            ;UmmKXCTszc=>=r;r;,'-,roOK=~=vr.   .-,z*Zac;::~~;;~r+r*noh$Qo=
+             $UmdKmZZwoCTJz<+r;<vhKmUUnr:;:    .....rHdC*=<<===c==zTwK@J-
+             a&dmbg#DHUahooCszswaC<+*wK@@OZuJTczod#W&hhZeCCuTTnCChm&80Q
+             CRUUaoa&RRK$mahhoCn+'..,~;=CKWM00B@WWKCvv+=CoooweZmK#8WQ8k
+             ,8UKbonToKUZoweewnv=<r:-'-:;voKD&ZT+:.-,~~~cCoZmUHH&OKamQ+
+              YMKKaCz>saaszxCwabHQQDUXCuJTCzvz*z+~r+=uCkCowaKmhZawoa#g.
+               CWKUoJ=rJZC=r*ZUZCnoam$mUaXZhha&OD#8W@@@@WRKZscnXCsoO@r
+            ,o' s0R$hC==ChJsC*r~:-:~~r~:::;ccr+=vsCCJzcs*z*<+JZo*h8Q+
+           JNk   ;R0#ao*CeC*c=r++rvCooXmKDRQ#HUaooJxc+==r<c*oahoKQo.
+         ,UNN;     x808UaaZCJz=rr~:;>rr;~,,,':;r+>r~:~;:rzomUmUDw-
+       ~aNNNN#      .cON0Q88RKZscr~-,.    '-.  ....,;~;vo&R#ROc.
+   .~n#NNNNNNNX        ;m00W888RKmooC*c<;~;+=;:;+rcCnwKQWQW@Jxa='
+,zmMNNN000NNNNNo         :o#WWR##R#DO&KKmaXZXamUHOOgR88R#WK~ 'NNN$='
+NNNN00000000NNNNC          .=mQ8R&UUKOgD##DQ8WWW8QOKUKg8Qn.   QNNNNN8msr:.
+0000000000000NNNNa            -zZ&#HKmmmmmmmKKKK&KmmKR#o,     oNNN0NNNNNNN0QKaeJz=;~-..
+000000000000000NNNH              .;skmUKUmKUaa$bmK&UX='       ~NNNN000000NNNNNNNNNNNNN0WR&
+0000000000000000N0ND.                .'~>=coQ@8Q#ar.           WNNN00000000000000000NNNNNN
+00000000000000000NNNR.                    ~mNNNNN#C=,          =NNN00000000000000000000000
+000000000000000000NNNR.                 vRNN000000NNNQY.        ONNN0000000000000000000000
+0000000000000000000NNN#.              =QNN0@WWW88##WNNNWr       ,NNNN000000000000000000000
+00000000000000000000NNNR.          .sWNNNN00@W8QRQgR0NNB0m:      oNNN000000000000000000000
+000000000000000000000NNNO.        ,>JhJwmR0000MW88RR0NXCaR0w.    .0NNN00000000000000000000
 ```
 
 <p align="center"><b>РКН, не блокируйте!</b></p>
